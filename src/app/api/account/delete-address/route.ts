@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";
+import { clearAuthCookies, getAuthenticatedCustomer } from "@/lib/auth";
+import { deleteAddress, fetchCustomerByUid } from "@/lib/commerce";
+export async function POST(request: Request) { try { const session = await getAuthenticatedCustomer(); if (!session.uid) { const r = NextResponse.json({ error: "Unauthorized." }, { status: 401 }); clearAuthCookies(r); return r; } const { addressId, id } = await request.json(); const safeId = String(addressId || id || "").trim(); if (!safeId) return NextResponse.json({ error: "Address id is required." }, { status: 400 }); await deleteAddress(session.uid, safeId); return NextResponse.json({ ok: true, customer: await fetchCustomerByUid(session.uid) }); } catch (error) { return NextResponse.json({ error: (error as Error).message || "Unable to delete address." }, { status: 500 }); } }

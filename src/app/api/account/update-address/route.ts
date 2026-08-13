@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";
+import { clearAuthCookies, getAuthenticatedCustomer } from "@/lib/auth";
+import { fetchCustomerByUid, updateAddress } from "@/lib/commerce";
+export async function POST(request: Request) { try { const session = await getAuthenticatedCustomer(); if (!session.uid) { const r = NextResponse.json({ error: "Unauthorized." }, { status: 401 }); clearAuthCookies(r); return r; } const body = await request.json(); const id = String(body.id || "").trim(); if (!id) return NextResponse.json({ error: "Address id is required." }, { status: 400 }); const { id: _, ...address } = body; await updateAddress(session.uid, id, address); return NextResponse.json({ ok: true, customer: await fetchCustomerByUid(session.uid) }); } catch (error) { return NextResponse.json({ error: (error as Error).message || "Unable to update address." }, { status: 500 }); } }

@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/admin-token/refresh", "schedule": "0 22 * * *" },
+    { "path": "/api/shipments/process?limit=25", "schedule": "*/15 * * * *" }
+  ]
+}

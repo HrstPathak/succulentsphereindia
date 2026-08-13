@@ -1,0 +1,8 @@
+import { NextResponse } from "next/server";
+import { clearAuthCookies, getAuthenticatedCustomer } from "@/lib/auth";
+import { fetchProductsByIds } from "@/lib/commerce";
+import { getFirebaseDb } from "@/lib/firebase-admin";
+
+function ids(value: unknown) { return Array.isArray(value) ? [...new Set(value.map((item) => String(item || "").trim()).filter(Boolean))].slice(0, 100) : []; }
+export async function GET() { try { const session = await getAuthenticatedCustomer(); if (!session.uid) { const response = NextResponse.json({ authenticated: false, items: [], ids: [], products: [] }); if (session.error) clearAuthCookies(response); return response; } const user = await getFirebaseDb().collection("users").doc(session.uid).get(); const productIds = ids(user.get("wishlistProductIds")); return NextResponse.json({ authenticated: true, items: productIds, ids: productIds, products: await fetchProductsByIds(productIds) }); } catch (error) { return NextResponse.json({ error: (error as Error).message }, { status: 500 }); } }
+export async function POST(request: Request) { try { const session = await getAuthenticatedCustomer(); if (!session.uid) return NextResponse.json({ error: "Unauthorized." }, { status: 401 }); const body = await request.json(); const productIds = ids(body.ids || body.productIds); await getFirebaseDb().collection("users").doc(session.uid).set({ wishlistProductIds: productIds, updatedAt: new Date().toISOString() }, { merge: true }); return NextResponse.json({ ok: true, ids: productIds, products: await fetchProductsByIds(productIds) }); } catch (error) { return NextResponse.json({ error: (error as Error).message }, { status: 500 }); } }

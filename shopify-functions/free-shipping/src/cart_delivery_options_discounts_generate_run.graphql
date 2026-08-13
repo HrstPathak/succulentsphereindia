@@ -1,0 +1,19 @@
+query Input {
+  cart {
+    lines {
+      merchandise {
+        ... on ProductVariant {
+          product {
+            hasAnyTag(tags: ["free_shipping", "Free_Shipping", "FREE_SHIPPING", "Free Shipping", "free shipping"])
+          }
+        }
+      }
+    }
+    deliveryGroups {
+      id
+    }
+  }
+  discount {
+    discountClasses
+  }
+}

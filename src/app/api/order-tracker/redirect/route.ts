@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";
+export async function POST(request: Request) { const { orderNumber, email } = await request.json(); if (!orderNumber || !email) return NextResponse.json({ error: "Order number and email are required." }, { status: 400 }); return NextResponse.json({ redirectUrl: `/order-tracker?order=${encodeURIComponent(String(orderNumber))}&email=${encodeURIComponent(String(email))}` }); }
