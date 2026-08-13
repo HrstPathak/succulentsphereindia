@@ -7,8 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "firebase:images:dry-run": "node --env-file=.env.local scripts/rewrite-firestore-product-image-urls.cjs --base-url=https://whitesmoke-cattle-754161.hostingersite.com --dry-run",
-    "firebase:images:migrate": "node --env-file=.env.local scripts/rewrite-firestore-product-image-urls.cjs --base-url=https://whitesmoke-cattle-754161.hostingersite.com --confirm",
     "firebase:auth:smoke": "node --env-file=.env.local scripts/firebase-auth-smoke.cjs",
     "firebase:session:smoke": "node --env-file=.env.local scripts/firebase-session-handoff-smoke.cjs"
   },

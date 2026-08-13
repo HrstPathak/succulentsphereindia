@@ -188,7 +188,7 @@ async function translateArticleWithLLM(payload: TranslationPayload): Promise<{ d
       {
         role: "system",
         content: [
-          "You translate Shopify blog articles for Succulent Sphere.",
+          "You translate Succulent Sphere blog articles.",
           `Translate the article into ${language.name} (${language.nativeName}).`,
           "Preserve the HTML structure exactly and translate only visible text.",
           "Do not add explanations, notes, or extra text.",
