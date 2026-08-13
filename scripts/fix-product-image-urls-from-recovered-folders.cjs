@@ -37,7 +37,11 @@ function argValue(name, fallback = "") {
 
 const options = {
   apply: hasFlag("--apply"),
+  local: hasFlag("--local"),
   limit: Number(argValue("--limit", "0")) || 0,
+  mediaBaseUrl: clean(
+    argValue("--media-base-url", process.env.NEXT_PUBLIC_MEDIA_BASE_URL || "https://whitesmoke-cattle-754161.hostingersite.com")
+  ).replace(/\/+$/, ""),
 };
 
 function required(name) {
@@ -61,6 +65,11 @@ function getDb() {
 
 function clean(value) {
   return String(value || "").trim();
+}
+
+function publicUrlFor(root, relativePath) {
+  if (options.local) return `${root.publicBase}/${relativePath}`;
+  return `${options.mediaBaseUrl}/products/${relativePath}`;
 }
 
 function isImageFile(filePath) {
@@ -98,7 +107,7 @@ function buildImageIndex() {
   for (const root of IMAGE_ROOTS) {
     for (const fullPath of walkFiles(root.dir)) {
       const relativePath = normalizeRelativePath(path.relative(root.dir, fullPath));
-      const publicUrl = `${root.publicBase}/${relativePath}`;
+      const publicUrl = publicUrlFor(root, relativePath);
       const handle = relativePath.split("/")[0] || "";
       const entry = { ...root, relativePath, publicUrl, handle };
 
@@ -252,6 +261,8 @@ async function main() {
 
   const summary = {
     applied: options.apply,
+    localUrls: options.local,
+    mediaBaseUrl: options.local ? "" : options.mediaBaseUrl,
     productsChecked: products.length,
     productsToUpdate: updates.length,
     unresolvedProducts: unresolved.length,
