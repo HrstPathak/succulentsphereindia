@@ -1,0 +1,27 @@
+{
+  "applied": false,
+  "localUrls": false,
+  "verifiedRemoteUrls": true,
+  "mediaBaseUrl": "https://whitesmoke-cattle-754161.hostingersite.com",
+  "productsChecked": 147,
+  "productsToUpdate": 147,
+  "unresolvedProducts": 0,
+  "imageRoots": [
+    {
+      "label": "recovered-product-images-2-products",
+      "exists": true,
+      "files": 137
+    },
+    {
+      "label": "recovered-product-images-2",
+      "exists": true,
+      "files": 137
+    },
+    {
+      "label": "recovered-product-images",
+      "exists": true,
+      "files": 357
+    }
+  ],
+  "runDir": "D:\\Succulent Sphere - Copy\\SucculentSphere_google\\tmp\\product-image-url-fix\\2026-08-13T18-15-23-086Z"
+}

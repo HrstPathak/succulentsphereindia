@@ -37,12 +37,14 @@ function argValue(name, fallback = "") {
 
 const options = {
   apply: hasFlag("--apply"),
-  local: hasFlag("--local"),
+  verifyRemote: hasFlag("--verify-remote"),
   limit: Number(argValue("--limit", "0")) || 0,
   mediaBaseUrl: clean(
     argValue("--media-base-url", process.env.NEXT_PUBLIC_MEDIA_BASE_URL || "https://whitesmoke-cattle-754161.hostingersite.com")
   ).replace(/\/+$/, ""),
 };
+
+const remoteOkCache = new Map();
 
 function required(name) {
   const value = String(process.env[name] || "").trim();
@@ -68,8 +70,23 @@ function clean(value) {
 }
 
 function publicUrlFor(root, relativePath) {
-  if (options.local) return `${root.publicBase}/${relativePath}`;
   return `${options.mediaBaseUrl}/products/${relativePath}`;
+}
+
+async function remoteUrlLoads(url) {
+  if (!options.verifyRemote) return true;
+  if (remoteOkCache.has(url)) return remoteOkCache.get(url);
+
+  let ok = false;
+  try {
+    const response = await fetch(url, { method: "HEAD" });
+    ok = response.ok;
+  } catch {
+    ok = false;
+  }
+
+  remoteOkCache.set(url, ok);
+  return ok;
 }
 
 function isImageFile(filePath) {
@@ -150,14 +167,23 @@ function extractRelativeCandidates(value) {
   return [...new Set(candidates.map(normalizeRelativePath).filter(Boolean))];
 }
 
-function resolveImageUrl(value, product, imageIndex) {
+async function firstLoadingEntry(entries) {
+  for (const entry of entries) {
+    if (await remoteUrlLoads(entry.publicUrl)) return entry;
+  }
+  return null;
+}
+
+async function resolveImageUrl(value, product, imageIndex) {
   for (const candidate of extractRelativeCandidates(value)) {
     const exact = imageIndex.byRelativePath.get(candidate);
-    if (exact) return { url: exact.publicUrl, source: exact.label, matched: candidate };
+    if (exact && (await remoteUrlLoads(exact.publicUrl))) {
+      return { url: exact.publicUrl, source: exact.label, matched: candidate };
+    }
   }
 
   const handle = clean(product.handle || product.id).toLowerCase();
-  const firstForHandle = imageIndex.byHandle.get(handle)?.[0];
+  const firstForHandle = await firstLoadingEntry(imageIndex.byHandle.get(handle) || []);
   if (firstForHandle) {
     return { url: firstForHandle.publicUrl, source: firstForHandle.label, matched: firstForHandle.relativePath };
   }
@@ -165,14 +191,14 @@ function resolveImageUrl(value, product, imageIndex) {
   return null;
 }
 
-function normalizeImageEntry(entry, product, imageIndex) {
+async function normalizeImageEntry(entry, product, imageIndex) {
   if (entry && typeof entry === "object" && !Array.isArray(entry)) {
-    const resolved = resolveImageUrl(entry.url, product, imageIndex);
+    const resolved = await resolveImageUrl(entry.url, product, imageIndex);
     if (!resolved) return { next: entry, resolved: null };
     return { next: { ...entry, url: resolved.url }, resolved };
   }
 
-  const resolved = resolveImageUrl(entry, product, imageIndex);
+  const resolved = await resolveImageUrl(entry, product, imageIndex);
   return { next: resolved?.url || entry, resolved };
 }
 
@@ -180,15 +206,18 @@ function valuesEqual(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-function buildProductPatch(product, imageIndex) {
+async function buildProductPatch(product, imageIndex) {
   const images = Array.isArray(product.images) ? product.images : [];
-  const normalizedImages = images.map((entry) => normalizeImageEntry(entry, product, imageIndex));
+  const normalizedImages = [];
+  for (const entry of images) {
+    normalizedImages.push(await normalizeImageEntry(entry, product, imageIndex));
+  }
   const nextImages = normalizedImages.map((item) => item.next).filter((item) => {
     if (item && typeof item === "object") return clean(item.url);
     return clean(item);
   });
 
-  const primaryResolved = resolveImageUrl(product.image, product, imageIndex);
+  const primaryResolved = await resolveImageUrl(product.image, product, imageIndex);
   const firstImageUrl = nextImages[0] && typeof nextImages[0] === "object" ? nextImages[0].url : nextImages[0];
   const nextImage = primaryResolved?.url || clean(firstImageUrl) || product.image;
 
@@ -215,7 +244,7 @@ async function main() {
   const unresolved = [];
 
   for (const product of products) {
-    const result = buildProductPatch(product, imageIndex);
+    const result = await buildProductPatch(product, imageIndex);
     if (result) {
       updates.push({
         id: product.id,
@@ -228,7 +257,7 @@ async function main() {
       continue;
     }
 
-    if (!resolveImageUrl(product.image, product, imageIndex)) {
+    if (!(await resolveImageUrl(product.image, product, imageIndex))) {
       unresolved.push({
         id: product.id,
         handle: product.handle || "",
@@ -261,8 +290,8 @@ async function main() {
 
   const summary = {
     applied: options.apply,
-    localUrls: options.local,
-    mediaBaseUrl: options.local ? "" : options.mediaBaseUrl,
+    verifiedRemoteUrls: options.verifyRemote,
+    mediaBaseUrl: options.mediaBaseUrl,
     productsChecked: products.length,
     productsToUpdate: updates.length,
     unresolvedProducts: unresolved.length,
