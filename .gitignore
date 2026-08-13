@@ -9,5 +9,7 @@ dist/
 build/
 *.log
 public/recovered-product-images/
+public/recovered-product-images-2/
 public/recovered-site-assets/
+tmp/product-recovery/
 *.zip
