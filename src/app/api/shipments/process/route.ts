@@ -5,7 +5,7 @@ import { processPendingShipments } from "@/lib/shipping";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-async function process(req: Request) {
+async function handleProcess(req: Request) {
   try {
     const cronSecret = String(process.env.CRON_SECRET || "").trim();
     const authorization = String(req.headers.get("authorization") || "").trim();
@@ -21,9 +21,9 @@ async function process(req: Request) {
 }
 
 export async function GET(req: Request) {
-  return process(req);
+  return handleProcess(req);
 }
 
 export async function POST(req: Request) {
-  return process(req);
+  return handleProcess(req);
 }
