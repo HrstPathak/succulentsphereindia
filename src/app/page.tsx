@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import HeroSection from "../components/home/HeroSection";
 import CategoryGrid from "../components/home/CategoryGrid";
 import BestSellerGrid from "../components/home/BestSellerGrid";
-import BrandStory from "../components/home/BrandStory";
-import InstagramFeed from "../components/home/InstagramFeed";
 import ComboTeaserBanner from "../components/home/ComboTeaserBanner";
-import Testimonials from "../components/home/Testimonials";
 import { SITE_NAME, absoluteUrl } from "@/lib/seo";
 import { fetchProductsByQuery } from "@/lib/commerce";
 import { resolveProductImageAlt } from "@/lib/imageAlt";
@@ -15,6 +13,18 @@ import {
   LazyOnTheFeedSection,
   LazyRecentlyViewedSection,
 } from "../components/home/LazySections";
+
+const LazyBrandStory = dynamic(() => import("../components/home/BrandStory"), {
+  loading: () => <div className="h-[320px] rounded-3xl border border-[var(--auth-border)] bg-[var(--color-bg)]/80" aria-busy="true" />,
+});
+
+const LazyInstagramFeed = dynamic(() => import("../components/home/InstagramFeed"), {
+  loading: () => <div className="h-[220px] rounded-2xl border border-[var(--auth-border)] bg-[var(--color-bg)]/80" aria-busy="true" />,
+});
+
+const LazyTestimonials = dynamic(() => import("../components/home/Testimonials"), {
+  loading: () => <div className="h-[260px] rounded-2xl border border-[var(--auth-border)] bg-[var(--color-bg)]/80" aria-busy="true" />,
+});
 
 export const revalidate = 3600;
 export const metadata: Metadata = buildPageMetadata({
@@ -163,13 +173,13 @@ export default async function Home() {
 
       <section className={`${sectionSpacingClass} bg-gradient-to-r from-[var(--color-bg)] to-transparent`}>
         <div className="container mx-auto px-4">
-          <BrandStory />
+          <LazyBrandStory />
         </div>
       </section>
 
       <section className={sectionSpacingClass}>
         <div className="container mx-auto px-4">
-          <InstagramFeed />
+          <LazyInstagramFeed />
         </div>
       </section>
 
@@ -179,7 +189,7 @@ export default async function Home() {
 
       <section className={`${sectionSpacingClass} bg-gradient-to-b from-transparent to-[var(--color-bg)]`}>
         <div className="container mx-auto px-4">
-          <Testimonials />
+          <LazyTestimonials />
         </div>
       </section>
 

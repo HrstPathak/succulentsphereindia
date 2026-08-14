@@ -47,6 +47,22 @@ export interface FirebaseAuthenticatedCustomer {
 }
 export type Money = { amount: string; currencyCode: string };
 
+const PRODUCT_CACHE_TTL_MS = 5 * 60 * 1000;
+const productCache = new Map<string, { expiresAt: number; value: unknown }>();
+
+async function readThroughCache<T>(key: string, factory: () => Promise<T>, ttlMs = PRODUCT_CACHE_TTL_MS): Promise<T> {
+  const now = Date.now();
+  const cached = productCache.get(key);
+
+  if (cached && cached.expiresAt > now) {
+    return cached.value as T;
+  }
+
+  const value = await factory();
+  productCache.set(key, { expiresAt: Date.now() + ttlMs, value });
+  return value;
+}
+
 function string(value: unknown, fallback = "") { return typeof value === "string" ? value : value == null ? fallback : String(value); }
 function numeric(value: unknown, fallback = 0) { const n = Number(value); return Number.isFinite(n) ? n : fallback; }
 function list(value: unknown): string[] { return Array.isArray(value) ? value.map((item) => string(item).trim()).filter(Boolean) : []; }
@@ -91,11 +107,13 @@ async function getReviewsForProduct(productId: string): Promise<ProductReview[]>
 }
 
 async function allProducts() {
-  const snapshot = await getFirebaseDb().collection("products").limit(1000).get();
-  // Catalog and filter pages do not need every individual review document.
-  // Fetching reviews once per product made a 119-item catalog request issue
-  // hundreds of Firestore reads and delayed normal storefront pages.
-  return snapshot.docs.map((doc) => mapProduct(doc.id, doc.data()));
+  return readThroughCache("catalog:all-products", async () => {
+    const snapshot = await getFirebaseDb().collection("products").limit(1000).get();
+    // Catalog and filter pages do not need every individual review document.
+    // Fetching reviews once per product made a 119-item catalog request issue
+    // hundreds of Firestore reads and delayed normal storefront pages.
+    return snapshot.docs.map((doc) => mapProduct(doc.id, doc.data()));
+  }, PRODUCT_CACHE_TTL_MS);
 }
 
 function sortProducts(items: any[], options: ProductQueryOptions) {
@@ -132,10 +150,13 @@ export async function fetchProductsList(limit = 24, options: ProductQueryOptions
 export async function fetchAllProductsList(options: ProductQueryOptions = {}) { return sortProducts(await allProducts(), options); }
 export async function fetchProductByHandle(handleInput: unknown) {
   const handle = normaliseHandle(handleInput); if (!handle) return null;
-  const snapshot = await getFirebaseDb().collection("products").where("handle", "==", handle).limit(1).get();
-  if (snapshot.empty) return null;
-  const doc = snapshot.docs[0]!;
-  return mapProduct(doc.id, doc.data(), await getReviewsForProduct(doc.id));
+
+  return readThroughCache(`catalog:product:${handle}`, async () => {
+    const snapshot = await getFirebaseDb().collection("products").where("handle", "==", handle).limit(1).get();
+    if (snapshot.empty) return null;
+    const doc = snapshot.docs[0]!;
+    return mapProduct(doc.id, doc.data(), await getReviewsForProduct(doc.id));
+  }, PRODUCT_CACHE_TTL_MS);
 }
 export async function fetchProductsByIds(ids: string[]) {
   const uniqueIds = [...new Set(ids.map((id) => string(id).trim()).filter(Boolean))].slice(0, 30);

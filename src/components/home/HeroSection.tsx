@@ -19,9 +19,9 @@ export default function HeroSection() {
         fetchPriority="high"
         placeholder="blur"
         blurDataURL={SHIMMER_BLUR_DATA_URL}
-        quality={80}
+        quality={60}
         className="object-cover"
-        sizes="100vw"
+        sizes="(max-width: 768px) 100vw, 1400px"
       />
 
       <div className="absolute inset-0 bg-black/20" />
