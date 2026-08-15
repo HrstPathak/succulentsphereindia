@@ -43,6 +43,7 @@ export async function GET(request: Request) {
     "availability",
     "condition",
     "price",
+    "sale_price",
     "link",
     "image_link",
     "brand",
@@ -53,16 +54,21 @@ export async function GET(request: Request) {
     .filter((product: any) => product.status !== "draft" && product.status !== "archived" && product.status !== "unlisted")
     .filter((product: any) => product.handle && product.title && product.image)
     .map((product: any) => {
-      const price = Number(product.price);
+      const salePrice = Number(product.price);
+      const mainPrice = Number(product.compareAtPrice ?? product.price);
       const soldOut = String(product.status || "").toLowerCase() === "sold out" || String(product.status || "").toLowerCase() === "out of stock" || product.available === false || Number(product.inventoryQuantity ?? product.quantity ?? 0) <= 0;
       const inStock = !soldOut;
+      const displayPrice = Number.isFinite(mainPrice) && mainPrice > 0 ? mainPrice : salePrice;
+      const discountedPrice = Number.isFinite(salePrice) && salePrice > 0 ? salePrice : displayPrice;
+
       return [
         `succulent-sphere-${product.id}`,
         product.title,
         textFromHtml(product.descriptionHtml || product.description || product.title),
         inStock ? "in stock" : "out of stock",
         "new",
-        `${Number.isFinite(price) ? price.toFixed(2) : "0.00"} INR`,
+        `${Number.isFinite(displayPrice) ? displayPrice.toFixed(2) : "0.00"} INR`,
+        Number.isFinite(discountedPrice) && Number(product.compareAtPrice ?? 0) > 0 && discountedPrice < displayPrice ? `${discountedPrice.toFixed(2)} INR` : "",
         absoluteUrl(`/products/${encodeURIComponent(String(product.handle))}`, siteUrl),
         absoluteUrl(product.image, siteUrl),
         String(product.vendor || "Succulent Sphere"),

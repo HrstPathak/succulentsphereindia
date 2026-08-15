@@ -659,11 +659,11 @@ function CreateProductModal({
             <h3 className="font-semibold">Pricing & inventory</h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
               <label>
-                Price (₹)
+                Sale price (₹)
                 <input type="number" min="0" step="0.01" className={field} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
               </label>
               <label>
-                Compare-at (₹)
+                Main price (₹)
                 <input type="number" min="0" step="0.01" className={field} value={form.compareAtPrice} onChange={(e) => setForm({ ...form, compareAtPrice: e.target.value })} />
               </label>
               <label>
@@ -1519,7 +1519,7 @@ function ProductEditor({
             <h3 className="font-semibold">Pricing & inventory</h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
               <label>
-                Price
+                Sale price
                 <input
                   type="number"
                   min="0"
@@ -1529,7 +1529,7 @@ function ProductEditor({
                 />
               </label>
               <label>
-                Compare-at price
+                Main price
                 <input
                   type="number"
                   min="0"

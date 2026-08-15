@@ -12,6 +12,7 @@ type ProductLike = {
   descriptionHtml?: string;
   seoDescription?: string;
   price?: string | number;
+  compareAtPrice?: string | number | null;
   currency?: string;
   available?: boolean;
   availableForSale?: boolean;
@@ -204,15 +205,26 @@ function buildOfferShippingDetails(price: number) {
   };
 }
 
-export function buildListingOfferStructuredData(product: Pick<ProductLike, "price" | "currency" | "available" | "availableForSale" | "availability">) {
+export function buildListingOfferStructuredData(product: Pick<ProductLike, "price" | "compareAtPrice" | "currency" | "available" | "availableForSale" | "availability">) {
   const numericPrice = parsePriceNumber(product.price);
+  const formerPrice = parsePriceNumber(product.compareAtPrice);
+  const currentCurrency = cleanText(product.currency) || "INR";
 
   return {
     "@type": "Offer",
     price: normalizePrice(product.price),
-    priceCurrency: cleanText(product.currency) || "INR",
+    priceCurrency: currentCurrency,
     availability: isInStock(product) ? IN_STOCK_URL : OUT_OF_STOCK_URL,
     shippingDetails: buildOfferShippingDetails(numericPrice),
+    ...(formerPrice > numericPrice
+      ? {
+          priceSpecification: {
+            "@type": "PriceSpecification",
+            price: normalizePrice(product.compareAtPrice),
+            priceCurrency: currentCurrency,
+          },
+        }
+      : {}),
   };
 }
 
@@ -357,6 +369,8 @@ export function buildProductStructuredData(product: ProductLike, canonicalPathOr
   const description =
     cleanText(product.seoDescription) || cleanText(product.description) || cleanText(product.descriptionHtml) || `Buy ${name} online from ${SITE_NAME}.`;
   const numericPrice = parsePriceNumber(product.price);
+  const formerPrice = parsePriceNumber(product.compareAtPrice);
+  const priceCurrency = cleanText(product.currency) || "INR";
   const reviews = getValidReviews(product);
   const reviewStats = getReviewStats(reviews);
   const worstRating = getWorstRating(reviews);
@@ -380,7 +394,7 @@ export function buildProductStructuredData(product: ProductLike, canonicalPathOr
       "@id": `${canonicalUrl}#offer`,
       url: canonicalUrl,
       price: normalizePrice(product.price),
-      priceCurrency: cleanText(product.currency) || "INR",
+      priceCurrency,
       priceValidUntil: getPriceValidUntil(),
       availability: isInStock(product) ? IN_STOCK_URL : OUT_OF_STOCK_URL,
       itemCondition: NEW_CONDITION_URL,
@@ -389,6 +403,15 @@ export function buildProductStructuredData(product: ProductLike, canonicalPathOr
       },
       shippingDetails,
       hasMerchantReturnPolicy: buildMerchantReturnPolicy(),
+      ...(formerPrice > numericPrice
+        ? {
+            priceSpecification: {
+              "@type": "PriceSpecification",
+              price: normalizePrice(product.compareAtPrice),
+              priceCurrency,
+            },
+          }
+        : {}),
     },
     ...(structuredReviews.length > 0
       ? {
