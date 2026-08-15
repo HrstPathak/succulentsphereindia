@@ -71,7 +71,6 @@ function emailHtml(order: OrderConfirmationEmail) {
       : order.paymentMode === "cod_deposit"
         ? "Your COD security deposit was received. The remaining balance will be collected at delivery."
         : "Your payment was received successfully.";
-  // Build address from any commonly used fields to handle different order shapes
   const addressParts = [
     (order as any).address || order.address || (order as any).address1 || (order as any).address_line1,
     (order as any).address2 || (order as any).address_line2,
@@ -99,7 +98,6 @@ function emailHtml(order: OrderConfirmationEmail) {
         ? `Deposit received: ${formatInr(order.paymentReceived ?? 0)}. Remaining balance due at delivery.`
         : `Amount paid online: ${formatInr(order.paymentReceived ?? order.total)}.`;
 
-  // allow a configured logo URL to be used in place of the initials block
   const logoUrl = String(process.env.ORDER_EMAIL_LOGO_URL || process.env.NEXT_PUBLIC_MEDIA_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || "").trim();
   const logoHtml = logoUrl
     ? `<img src="${escapeHtml(logoUrl)}" alt="Succulent Sphere" width="64" height="64" style="display:block;border-radius:14px;object-fit:cover" />`
@@ -151,6 +149,122 @@ function emailHtml(order: OrderConfirmationEmail) {
   </html>`;
 }
 
+function adminOrderHtml(order: OrderConfirmationEmail) {
+  const shipping = Number(order.shipping || 0);
+  const discount = Number(order.discount || 0);
+  const codFee = Number(order.codFee || 0);
+  const subtotal = order.total + discount + shipping - codFee;
+  const fullAddress = [
+    (order as any).address || order.address || (order as any).address1 || (order as any).address_line1,
+    (order as any).address2 || (order as any).address_line2,
+    order.city || (order as any).city || (order as any).town,
+    order.state || (order as any).state || (order as any).province,
+    order.pincode || (order as any).pincode || (order as any).zip,
+  ].filter(Boolean).map((segment) => String(segment).trim()).filter(Boolean);
+
+  const itemRows = order.items.map((item) => {
+    const itemPrice = Number(item.price || 0);
+    const quantity = Math.max(1, Number(item.quantity || 1));
+    const lineTotal = itemPrice * quantity;
+    return `
+      <tr>
+        <td style="padding:10px 12px;border-bottom:1px solid #ebf1eb;vertical-align:top">${escapeHtml(item.title || "Plant")}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #ebf1eb;text-align:center">${quantity}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #ebf1eb;text-align:right">${formatInr(itemPrice)}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #ebf1eb;text-align:right">${formatInr(lineTotal)}</td>
+      </tr>`;
+  }).join("");
+
+  const adminLink = `${String(process.env.NEXT_PUBLIC_SITE_URL || "https://succulentsphere.com").replace(/\/+$/, "")}/admin?order=${encodeURIComponent(String(order.orderNumber))}`;
+
+  return `<!doctype html>
+  <html>
+    <body style="margin:0;background:#f4f5f2;font-family:Arial,sans-serif;color:#1c3328">
+      <div style="max-width:780px;margin:26px auto;padding:18px">
+        <div style="border-radius:22px;background:linear-gradient(135deg,#ffffff,#f8faf5);border:1px solid #e1e8df;box-shadow:0 18px 40px rgba(20,38,28,0.08);overflow:hidden">
+          <div style="padding:24px 28px;background:linear-gradient(135deg,#1d4c38,#3a6f52);color:#fff">
+            <p style="margin:0 0 8px;font-size:11px;letter-spacing:2px;font-weight:bold;opacity:0.9">NEW ORDER ALERT</p>
+            <h1 style="margin:0;font-size:30px;line-height:1.2">Order #${escapeHtml(order.orderNumber)}</h1>
+            <p style="margin:8px 0 0;font-size:14px;opacity:0.9">A fresh customer purchase has been received.</p>
+          </div>
+          <div style="padding:28px">
+            <table width="100%" style="border-collapse:collapse;margin-bottom:20px">
+              <tr>
+                <td style="padding:0 0 14px;vertical-align:top;width:50%">
+                  <div style="background:#f3f8f4;border:1px solid #def0de;border-radius:14px;padding:16px">
+                    <p style="margin:0 0 8px;font-size:12px;font-weight:bold;letter-spacing:1px;color:#587366;text-transform:uppercase">Customer</p>
+                    <p style="margin:0 0 6px;font-size:18px;font-weight:bold;color:#163a2d">${escapeHtml(order.customerName || "Unknown customer")}</p>
+                    <p style="margin:0 0 6px;color:#415b4b">${escapeHtml(order.customerEmail || "No email")}</p>
+                    <p style="margin:0;color:#415b4b">${escapeHtml(order.phone || "No phone")}</p>
+                  </div>
+                </td>
+                <td style="padding:0 0 14px;vertical-align:top;width:50%">
+                  <div style="background:#f7f5ef;border:1px solid #efe4d7;border-radius:14px;padding:16px;">
+                    <p style="margin:0 0 8px;font-size:12px;font-weight:bold;letter-spacing:1px;color:#7b6753;text-transform:uppercase">Payment</p>
+                    <p style="margin:0 0 6px;font-size:18px;font-weight:bold;color:#223d32">${escapeHtml(order.paymentMode === "cod_deposit" ? "COD Deposit" : order.paymentMode === "admin_test" ? "Admin Test" : "Prepaid")}</p>
+                    <p style="margin:0 0 6px;color:#52665b">Total collected: <strong>${formatInr(order.total)}</strong></p>
+                    <p style="margin:0;color:#52665b">COD fee: ${formatInr(codFee)} · Shipping: ${formatInr(shipping)} · Discount: ${formatInr(discount)}</p>
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <div style="background:#f9fcf9;border:1px solid #e3efe5;border-radius:16px;padding:16px;margin-bottom:20px">
+              <p style="margin:0 0 12px;font-size:12px;font-weight:bold;letter-spacing:1px;color:#587366;text-transform:uppercase">Plants ordered</p>
+              <table width="100%" style="border-collapse:collapse;font-size:14px;color:#1f382f">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #dfe9df;color:#587366;font-size:12px;text-transform:uppercase">Product</th>
+                    <th style="padding:10px 12px;border-bottom:1px solid #dfe9df;color:#587366;font-size:12px;text-transform:uppercase">Qty</th>
+                    <th style="padding:10px 12px;border-bottom:1px solid #dfe9df;color:#587366;font-size:12px;text-transform:uppercase;text-align:right">Unit Price</th>
+                    <th style="padding:10px 12px;border-bottom:1px solid #dfe9df;color:#587366;font-size:12px;text-transform:uppercase;text-align:right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>${itemRows}</tbody>
+              </table>
+            </div>
+
+            <div style="background:#f7faf7;border:1px solid #e4efe2;border-radius:16px;padding:16px;margin-bottom:20px">
+              <p style="margin:0 0 12px;font-size:12px;font-weight:bold;letter-spacing:1px;color:#587366;text-transform:uppercase">Delivery address</p>
+              <p style="margin:0;color:#274534;line-height:1.7">${escapeHtml(fullAddress.join(", ") || "Address not provided")}</p>
+            </div>
+
+            <div style="background:#eef7f1;border:1px solid #dfeee2;border-radius:16px;padding:16px;margin-bottom:20px">
+              <p style="margin:0 0 10px;font-size:12px;font-weight:bold;letter-spacing:1px;color:#587366;text-transform:uppercase">Financial summary</p>
+              <table width="100%" style="border-collapse:collapse;font-size:14px;color:#1f382f">
+                <tr>
+                  <td style="padding:6px 0">Subtotal</td>
+                  <td style="padding:6px 0;text-align:right">${formatInr(Math.max(0, subtotal))}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0">Shipping</td>
+                  <td style="padding:6px 0;text-align:right">${formatInr(shipping)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0">Discount</td>
+                  <td style="padding:6px 0;text-align:right">-${formatInr(discount)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0">COD fee</td>
+                  <td style="padding:6px 0;text-align:right">${formatInr(codFee)}</td>
+                </tr>
+                <tr style="border-top:1px solid #d7e8d8">
+                  <td style="padding:10px 0 0;font-weight:bold">Total</td>
+                  <td style="padding:10px 0 0;text-align:right;font-weight:bold">${formatInr(order.total)}</td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="padding-top:4px">
+              <a href="${escapeHtml(adminLink)}" style="display:inline-block;background:#1d4c38;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:bold">Open in Admin</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>`;
+}
+
 export async function sendOrderConfirmationEmail(
   order: OrderConfirmationEmail,
 ) {
@@ -189,20 +303,15 @@ export async function sendOrderConfirmationEmail(
         },
         { merge: true },
       );
-    // Also notify admins if ADMIN_EMAILS env is set (comma-separated)
     const rawAdmins = String(process.env.ADMIN_EMAILS || "").trim();
     if (rawAdmins) {
       const admins = rawAdmins.split(",").map((s) => String(s || "").trim()).filter(Boolean);
       for (const adminEmail of admins) {
         try {
-          const adminUrlBase = String(process.env.NEXT_PUBLIC_SITE_URL || "https://succulentsphere.com").replace(/\/+$/,'');
-          // Link to admin dashboard with orderNumber query so admin can search quickly
-          const adminLink = `${adminUrlBase}/admin?order=${encodeURIComponent(String(order.orderNumber))}`;
-          const adminHtml = `<p>New order <strong>#${escapeHtml(order.orderNumber)}</strong> by ${escapeHtml(order.customerName)} (${escapeHtml(order.customerEmail)}). Total: <strong>${formatInr(order.total)}</strong>.</p><p><a href="${escapeHtml(adminLink)}">Open in Admin</a></p>`;
           const adminDelivery = await sendEmail({
             to: adminEmail,
             subject: `New order #${order.orderNumber} — Succulent Sphere`,
-            html: adminHtml,
+            html: adminOrderHtml(order),
             idempotencyKey: `order-admin-notify-${order.orderId}-${adminEmail}`,
           });
           await getFirebaseDb().collection("orders").doc(order.orderId).set(

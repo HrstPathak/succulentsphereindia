@@ -169,6 +169,7 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
   });
   const [mail, setMail] = useState({ to: "", subject: "", message: "" });
   const [productId, setProductId] = useState<string | null>(null);
+  const [createProductOpen, setCreateProductOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [testOrderOpen, setTestOrderOpen] = useState(false);
   const [openOrderId, setOpenOrderId] = useState<string | null>(null);
@@ -448,6 +449,7 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
               save={saveBulk}
               busy={busy}
               open={setProductId}
+              onCreateNew={() => setCreateProductOpen(true)}
               priceSort={productPriceSort}
               setPriceSort={setProductPriceSort}
             />
@@ -512,6 +514,16 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
           onOpenOrder={(id) => setOpenOrderId(id)}
         />
       )} {" "}
+      {createProductOpen && (
+        <CreateProductModal
+          onClose={() => setCreateProductOpen(false)}
+          onCreated={() => {
+            setCreateProductOpen(false);
+            setNotice("Product created successfully.");
+            void load();
+          }}
+        />
+      )}
       {testOrderOpen && (
         <AdminTestOrderModal
           products={data.products}
@@ -527,6 +539,182 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
         <AdminOrderDetailModal id={openOrderId} onClose={() => setOpenOrderId(null)} />
       )}
     </main>
+  );
+}
+
+function CreateProductModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [form, setForm] = useState({
+    title: "",
+    handle: "",
+    description: "",
+    price: "",
+    compareAtPrice: "",
+    inventoryQuantity: "10",
+    status: "active",
+    available: true,
+    productType: "Succulent",
+    careLevel: "Easy",
+    indoorOutdoor: "Indoor",
+    tags: "",
+    collections: "",
+    image: "",
+    imageAlt: "",
+    vendor: "Succulent Sphere",
+  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  async function save() {
+    setBusy(true);
+    setNotice("");
+    try {
+      const data = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) data.append(key, String(value));
+      });
+      if (imageFile) data.append("imageFile", imageFile);
+
+      const response = await fetch("/api/admin/products", {
+        method: "POST",
+        body: data,
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Unable to create product.");
+      onCreated();
+    } catch (error) {
+      setNotice((error as Error).message || "Unable to create product.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const field = "mt-1 w-full rounded-xl border border-[#d7e0d9] bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#6f9878]";
+
+  return (
+    <Modal title="Add new product" onClose={onClose}>
+      <div className="grid gap-5 p-5 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-5">
+          <section className="rounded-2xl border bg-white p-4">
+            <h3 className="font-semibold">Product details</h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label>
+                Title
+                <input className={field} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value, handle: e.target.value ? e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") : "" })} />
+              </label>
+              <label>
+                Handle
+                <input className={field} value={form.handle} onChange={(e) => setForm({ ...form, handle: e.target.value })} />
+              </label>
+            </div>
+            <label className="mt-3 block">
+              Description
+              <textarea rows={6} className={field} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </label>
+          </section>
+
+          <section className="rounded-2xl border bg-white p-4">
+            <h3 className="font-semibold">Pricing & inventory</h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <label>
+                Price (₹)
+                <input type="number" min="0" step="0.01" className={field} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+              </label>
+              <label>
+                Compare-at (₹)
+                <input type="number" min="0" step="0.01" className={field} value={form.compareAtPrice} onChange={(e) => setForm({ ...form, compareAtPrice: e.target.value })} />
+              </label>
+              <label>
+                Inventory
+                <input type="number" min="0" className={field} value={form.inventoryQuantity} onChange={(e) => setForm({ ...form, inventoryQuantity: e.target.value })} />
+              </label>
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label>
+                Status
+                <select className={field} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                  <option value="active">Active</option>
+                  <option value="draft">Draft</option>
+                  <option value="archived">Archived</option>
+                  <option value="unlisted">Unlisted</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-2 pt-7 text-sm">
+                <input type="checkbox" checked={form.available} onChange={(e) => setForm({ ...form, available: e.target.checked })} />
+                Available for sale
+              </label>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border bg-white p-4">
+            <h3 className="font-semibold">Store classification</h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label>
+                Product type
+                <input className={field} value={form.productType} onChange={(e) => setForm({ ...form, productType: e.target.value })} />
+              </label>
+              <label>
+                Care level
+                <input className={field} value={form.careLevel} onChange={(e) => setForm({ ...form, careLevel: e.target.value })} />
+              </label>
+              <label>
+                Indoor / outdoor
+                <input className={field} value={form.indoorOutdoor} onChange={(e) => setForm({ ...form, indoorOutdoor: e.target.value })} />
+              </label>
+              <label>
+                Vendor
+                <input className={field} value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })} />
+              </label>
+              <label className="sm:col-span-2">
+                Tags
+                <input className={field} value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="best-selling, indoor, beginner-friendly" />
+              </label>
+              <label className="sm:col-span-2">
+                Collections
+                <input className={field} value={form.collections} onChange={(e) => setForm({ ...form, collections: e.target.value })} placeholder="succulents, office-plants" />
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <aside className="space-y-5">
+          <section className="rounded-2xl border bg-white p-4">
+            <h3 className="font-semibold">Media</h3>
+            <div className="mt-3 rounded-xl border border-dashed border-[#c9d5cb] bg-[#f7faf6] p-3">
+              <label className="block text-sm font-medium text-[#35543f]">Upload image file</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                className="mt-2 block w-full text-sm text-[#35543f] file:mr-3 file:rounded-xl file:border-0 file:bg-[#24563e] file:px-3 file:py-2 file:text-sm file:font-bold file:text-white"
+              />
+            </div>
+            <label className="mt-3 block">
+              Or use image URL
+              <input className={field} value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="https://..." />
+            </label>
+            <label className="mt-3 block">
+              Alt text
+              <input className={field} value={form.imageAlt} onChange={(e) => setForm({ ...form, imageAlt: e.target.value })} />
+            </label>
+          </section>
+        </aside>
+      </div>
+
+      {notice && <p className="px-5 pb-2 text-sm text-rose-700">{notice}</p>}
+      <footer className="sticky bottom-0 flex justify-end gap-3 border-t bg-white p-4">
+        <button type="button" onClick={onClose} className="rounded-xl border px-4 py-2 text-sm font-bold">Cancel</button>
+        <button type="button" disabled={busy} onClick={save} className="rounded-xl bg-[#24563e] px-4 py-2 text-sm font-bold text-white">
+          {busy ? "Creating…" : "Create product"}
+        </button>
+      </footer>
+    </Modal>
   );
 }
 
@@ -573,6 +761,7 @@ function Products({
   save,
   busy,
   open,
+  onCreateNew,
   priceSort,
   setPriceSort,
 }: any) {
@@ -608,6 +797,12 @@ function Products({
           className="rounded-xl border bg-white px-3 py-2 text-xs font-bold"
         >
           {all ? "Clear selection" : "Select all"}
+        </button>
+        <button
+          onClick={onCreateNew}
+          className="rounded-xl bg-[#24563e] px-3 py-2 text-xs font-bold text-white"
+        >
+          Add new product
         </button>
         <span className="text-sm font-semibold text-[#617366]">
           {selected.length} selected
