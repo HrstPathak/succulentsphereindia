@@ -91,6 +91,7 @@ type ProductDetail = Product & {
   careLevel: string;
   indoorOutdoor: string;
   imageAlt: string;
+  images: string[];
   seoTitle: string;
   seoDescription: string;
   vendor: string;
@@ -129,6 +130,15 @@ const toList = (value: string) =>
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean);
+
+const normalizeImageList = (value: unknown) =>
+  Array.from(
+    new Set(
+      (Array.isArray(value) ? value : typeof value === "string" ? value.split(",") : [])
+        .map((entry) => String(entry).trim())
+        .filter(Boolean),
+    ),
+  );
 
 const tagSuggestions = [
   "best seller",
@@ -585,10 +595,11 @@ function CreateProductModal({
     tags: "",
     collections: "",
     image: "",
+    images: [] as string[],
     imageAlt: "",
     vendor: "Succulent Sphere",
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -598,9 +609,13 @@ function CreateProductModal({
     try {
       const data = new FormData();
       Object.entries(form).forEach(([key, value]) => {
+        if (key === "images") return;
         if (value !== null && value !== undefined) data.append(key, String(value));
       });
-      if (imageFile) data.append("imageFile", imageFile);
+      const images = normalizeImageList(form.images);
+      if (images.length) data.append("images", images.join(","));
+      imageFiles.forEach((file) => data.append("imageFiles", file));
+      if (form.image) data.append("image", form.image);
 
       const response = await fetch("/api/admin/products", {
         method: "POST",
@@ -664,6 +679,7 @@ function CreateProductModal({
                   <option value="draft">Draft</option>
                   <option value="archived">Archived</option>
                   <option value="unlisted">Unlisted</option>
+                  <option value="sold out">Sold out</option>
                 </select>
               </label>
               <label className="flex items-center gap-2 pt-7 text-sm">
@@ -719,17 +735,37 @@ function CreateProductModal({
           <section className="rounded-2xl border bg-white p-4">
             <h3 className="font-semibold">Media</h3>
             <div className="mt-3 rounded-xl border border-dashed border-[#c9d5cb] bg-[#f7faf6] p-3">
-              <label className="block text-sm font-medium text-[#35543f]">Upload image file</label>
+              <label className="block text-sm font-medium text-[#35543f]">Upload image files</label>
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                multiple
+                onChange={(e) => setImageFiles(Array.from(e.target.files || []))}
                 className="mt-2 block w-full text-sm text-[#35543f] file:mr-3 file:rounded-xl file:border-0 file:bg-[#24563e] file:px-3 file:py-2 file:text-sm file:font-bold file:text-white"
               />
             </div>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {normalizeImageList(form.images).map((url: string, index: number) => (
+                <button
+                  key={`${url}-${index}`}
+                  type="button"
+                  onClick={() => setForm({ ...form, image: url })}
+                  className={`overflow-hidden rounded-lg border ${form.image === url ? "border-[#24563e] ring-2 ring-[#dfece2]" : "border-[#d7e0d9]"}`}
+                >
+                  <img src={url} alt="Product preview" className="h-16 w-full object-cover" />
+                </button>
+              ))}
+            </div>
             <label className="mt-3 block">
               Or use image URL
-              <input className={field} value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="https://..." />
+              <input className={field} value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value, images: normalizeImageList([e.target.value, ...(form.images || [])]) })} placeholder="https://..." />
+            </label>
+            <label className="mt-3 block">
+              Gallery URLs
+              <input className={field} value={normalizeImageList(form.images).join(", ")} onChange={(e) => {
+                const nextImages = normalizeImageList(e.target.value);
+                setForm({ ...form, images: nextImages, image: nextImages[0] || form.image || "" });
+              }} placeholder="https://..., https://..." />
             </label>
             <label className="mt-3 block">
               Alt text
@@ -1328,6 +1364,7 @@ function ProductEditor({
   const [form, setForm] = useState<any>(null);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [reviewDraft, setReviewDraft] = useState({ authorName: "", authorEmail: "", title: "", content: "", rating: 5, verifiedPurchase: false });
   useEffect(() => {
     fetch(`/api/admin/products/${encodeURIComponent(id)}`)
@@ -1335,8 +1372,17 @@ function ProductEditor({
         const p = await r.json();
         if (!r.ok) throw new Error(p.error);
         setData(p);
+        const productImages = normalizeImageList(
+          p.product.images && p.product.images.length
+            ? p.product.images
+            : p.product.image
+              ? [p.product.image]
+              : [],
+        );
         setForm({
           ...p.product,
+          image: p.product.image || productImages[0] || "",
+          images: productImages,
           tags: p.product.tags.join(", "),
           collections: p.product.collections.join(", "),
         });
@@ -1346,20 +1392,40 @@ function ProductEditor({
   const save = async () => {
     setBusy(true);
     try {
+      const imageFiles = newImageFiles.length ? newImageFiles : [];
+      let requestBody: BodyInit;
+      let requestHeaders: HeadersInit | undefined;
+
+      if (imageFiles.length) {
+        const formData = new FormData();
+        Object.entries(form).forEach(([key, value]) => {
+          if (key === "images") return;
+          if (value !== null && value !== undefined && value !== "") formData.append(key, String(value));
+        });
+        formData.append("images", normalizeImageList(form.images).join(","));
+        imageFiles.forEach((file) => formData.append("imageFiles", file));
+        requestBody = formData;
+      } else {
+        requestBody = JSON.stringify({
+          ...form,
+          image: form.image || normalizeImageList(form.images)[0] || "",
+          images: normalizeImageList(form.images),
+          tags: toList(form.tags),
+          collections: toList(form.collections),
+        });
+        requestHeaders = { "Content-Type": "application/json" };
+      }
+
       const response = await fetch(
         `/api/admin/products/${encodeURIComponent(id)}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...form,
-            tags: toList(form.tags),
-            collections: toList(form.collections),
-          }),
+          headers: requestHeaders,
+          body: requestBody,
         },
       );
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error);
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to save product.");
       onSaved();
       onClose();
     } catch (error) {
@@ -1410,6 +1476,9 @@ function ProductEditor({
     );
   const input =
     "mt-1 w-full rounded-xl border border-[#d7e0d9] bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#6f9878]";
+  const galleryImages = normalizeImageList(form.images);
+  const primaryImage = form.image || galleryImages[0] || "";
+
   return (
     <Modal title={`Edit ${form.title}`} onClose={onClose}>
       <div className="grid gap-5 p-5 lg:grid-cols-[1.25fr_.75fr]">
@@ -1496,6 +1565,7 @@ function ProductEditor({
                   <option value="draft">Draft</option>
                   <option value="archived">Archived</option>
                   <option value="unlisted">Unlisted</option>
+                  <option value="sold out">Sold out</option>
                 </select>
               </label>
               <label className="flex items-end gap-2 pb-2 text-sm">
@@ -1603,19 +1673,63 @@ function ProductEditor({
         <aside className="space-y-5">
           <section className="rounded-2xl border bg-white p-4">
             <h3 className="font-semibold">Media</h3>
-            {form.image ? (
+            {primaryImage ? (
               <img
-                src={form.image}
+                src={primaryImage}
                 alt=""
                 className="mt-3 aspect-square w-full rounded-xl object-cover"
               />
             ) : null}
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {galleryImages.length ? (
+                galleryImages.map((url: string, index: number) => (
+                  <button
+                    key={`${url}-${index}`}
+                    type="button"
+                    onClick={() => setForm({ ...form, image: url, images: galleryImages })}
+                    className={`overflow-hidden rounded-lg border ${primaryImage === url ? "border-[#24563e] ring-2 ring-[#dfece2]" : "border-[#d7e0d9]"}`}
+                  >
+                    <img src={url} alt="Product thumbnail" className="h-20 w-full object-cover" />
+                  </button>
+                ))
+              ) : (
+                <p className="col-span-3 text-xs text-[#617366]">No gallery images yet.</p>
+              )}
+            </div>
             <label className="mt-3 block">
-              Image URL
+              Main image URL
               <input
                 className={input}
                 value={form.image}
-                onChange={(e) => setForm({ ...form, image: e.target.value })}
+                onChange={(e) => {
+                  const updated = e.target.value.trim();
+                  const nextImages = normalizeImageList([
+                    updated,
+                    ...galleryImages.filter((url: string) => url !== updated),
+                  ]);
+                  setForm({ ...form, image: updated, images: nextImages });
+                }}
+              />
+            </label>
+            <label className="mt-3 block">
+              Extra image URLs
+              <input
+                className={input}
+                value={galleryImages.join(", ")}
+                onChange={(e) => {
+                  const nextImages = normalizeImageList(e.target.value);
+                  setForm({ ...form, image: nextImages[0] || form.image || "", images: nextImages });
+                }}
+              />
+            </label>
+            <label className="mt-3 block">
+              Add product image files
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setNewImageFiles(Array.from(e.target.files || []))}
+                className="mt-1 block w-full text-sm text-[#35543f] file:mr-3 file:rounded-xl file:border-0 file:bg-[#24563e] file:px-3 file:py-2 file:text-sm file:font-bold file:text-white"
               />
             </label>
             <label className="mt-3 block">

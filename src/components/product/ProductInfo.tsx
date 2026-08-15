@@ -78,10 +78,18 @@ export default function ProductInfo({ product, tabsSlot }: { product: any; tabsS
   const reviewCount = Number(product?.reviewCount || 0);
   const ratingValue = Number(product?.rating || 0);
   const hasReviews = reviewCount > 0 && Number.isFinite(ratingValue) && ratingValue > 0;
-  const quantityValue = Number(product?.quantity);
+  const quantityValue = Number(product?.quantity ?? product?.inventoryQuantity ?? 0);
   const hasQuantity = Number.isFinite(quantityValue);
   const availableFlag = product?.available;
-  const isOutOfStock = hasQuantity ? quantityValue <= 0 && availableFlag === false : availableFlag === false;
+  const statusValue = String(product?.status || "").trim().toLowerCase();
+  const availabilityValue = String(product?.availability || "").trim().toLowerCase();
+  const isOutOfStock =
+    availableFlag === false ||
+    statusValue === "sold out" ||
+    statusValue === "out of stock" ||
+    availabilityValue === "outofstock" ||
+    availabilityValue === "soldout" ||
+    (hasQuantity && quantityValue <= 0);
   const productTags = Array.isArray(product?.tags) ? product.tags : [];
   const compareAtPrice = product?.compareAtPrice ?? null;
   const currency = String(product?.currency || "INR");

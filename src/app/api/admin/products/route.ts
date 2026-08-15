@@ -46,6 +46,14 @@ async function uploadProductImage(file: File) {
   }
 }
 
+async function uploadProductImages(files: File[]) {
+  const uploads = await Promise.all(files.map(async (file) => {
+    if (!(file instanceof File)) return "";
+    return uploadProductImage(file);
+  }));
+  return uploads.filter(Boolean);
+}
+
 export async function POST(request: Request) {
   try {
     await requireAdmin();
@@ -55,10 +63,19 @@ export async function POST(request: Request) {
 
     if (contentType.includes("multipart/form-data")) {
       const form = await request.formData();
-      input = Object.fromEntries(form.entries());
-      const file = form.get("imageFile");
-      if (file && typeof file !== "string" && file instanceof File && file.size > 0) {
-        uploadedImage = await uploadProductImage(file);
+      const flatEntries = Array.from(form.entries()).map(([key, value]) => [key, typeof value === "string" ? value : value.name]);
+      input = Object.fromEntries(flatEntries);
+      const files = form.getAll("imageFiles").filter((value): value is File => value instanceof File && value.size > 0);
+      if (files.length) {
+        const uploaded = await uploadProductImages(files);
+        const existingImages = list(input.images || input.image || "");
+        const merged = [...existingImages, ...uploaded].filter(Boolean);
+        input.images = merged;
+        uploadedImage = merged[0] || "";
+      }
+      const singleFile = form.get("imageFile");
+      if (singleFile && typeof singleFile !== "string" && singleFile instanceof File && singleFile.size > 0) {
+        uploadedImage = await uploadProductImage(singleFile);
       }
     } else {
       input = await request.json();
@@ -76,11 +93,13 @@ export async function POST(request: Request) {
     if (!title) return NextResponse.json({ error: "Product title is required." }, { status: 400 });
     if (!Number.isFinite(price) || price < 0) return NextResponse.json({ error: "Price must be a valid positive number." }, { status: 400 });
     if (compareAtPrice !== null && (Number.isNaN(compareAtPrice) || compareAtPrice < 0)) return NextResponse.json({ error: "Compare-at price is invalid." }, { status: 400 });
-    if (!"active,draft,archived,unlisted".split(",").includes(status)) return NextResponse.json({ error: "Status must be active, draft, archived, or unlisted." }, { status: 400 });
+    if (!"active,draft,archived,unlisted,sold out".split(",").includes(status)) return NextResponse.json({ error: "Status must be active, draft, archived, unlisted, or sold out." }, { status: 400 });
 
     const db = getFirebaseDb();
     const productRef = db.collection("products").doc();
-    const normalizedImage = uploadedImage || clean(input.image);
+    const gallery = [...new Set([...(list(input.images || input.image), uploadedImage ? [uploadedImage] : []), clean(input.image)].filter(Boolean))];
+    const normalizedImage = gallery[0] || uploadedImage || clean(input.image);
+    const productTags = list(input.tags).slice(0, 100);
     const productData = {
       id: productRef.id,
       title,
@@ -90,15 +109,16 @@ export async function POST(request: Request) {
       compareAtPrice: compareAtPrice === null ? null : Number(compareAtPrice),
       currency: clean(input.currency || "INR"),
       inventoryQuantity,
-      available,
+      available: status === "sold out" ? false : available,
       status,
-      tags: list(input.tags).slice(0, 100),
+      tags: productTags,
       collections: list(input.collections).slice(0, 100),
       productType: clean(input.productType || input.type || "General"),
       type: clean(input.productType || input.type || "General"),
       careLevel: clean(input.careLevel),
       indoorOutdoor: clean(input.indoorOutdoor),
       image: normalizedImage,
+      images: gallery,
       imageAlt: clean(input.imageAlt || title),
       seoTitle: clean(input.seoTitle || title),
       seoDescription: clean(input.seoDescription || description),

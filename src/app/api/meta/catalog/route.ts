@@ -54,7 +54,8 @@ export async function GET(request: Request) {
     .filter((product: any) => product.handle && product.title && product.image)
     .map((product: any) => {
       const price = Number(product.price);
-      const inStock = product.available !== false && Number(product.inventoryQuantity ?? product.quantity ?? 0) > 0;
+      const soldOut = String(product.status || "").toLowerCase() === "sold out" || String(product.status || "").toLowerCase() === "out of stock" || product.available === false || Number(product.inventoryQuantity ?? product.quantity ?? 0) <= 0;
+      const inStock = !soldOut;
       return [
         `succulent-sphere-${product.id}`,
         product.title,

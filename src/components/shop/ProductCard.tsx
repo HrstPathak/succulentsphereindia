@@ -45,14 +45,17 @@ export default function ProductCard({
   const normalizedAvailability = availabilityValue.replace(/\s+/g, "").toLowerCase();
   const badgeValue = String((product as { badge?: string }).badge || "");
   const normalizedBadge = badgeValue.toLowerCase();
+  const statusValue = String((product as { status?: string }).status || "").trim().toLowerCase();
   const availableFlag = (product as { available?: boolean }).available;
-  const isOutOfStock = hasQuantity
-    ? quantityValue <= 0 && availableFlag === false
-    : availableFlag === false ||
-      normalizedAvailability === "outofstock" ||
-      normalizedAvailability === "soldout" ||
-      normalizedBadge === "out of stock" ||
-      normalizedBadge === "sold out";
+  const isOutOfStock =
+    availableFlag === false ||
+    statusValue === "sold out" ||
+    statusValue === "out of stock" ||
+    normalizedAvailability === "outofstock" ||
+    normalizedAvailability === "soldout" ||
+    normalizedBadge === "out of stock" ||
+    normalizedBadge === "sold out" ||
+    (hasQuantity && quantityValue <= 0);
   const stockLabel = isOutOfStock ? "Sold Out" : "In Stock";
   const productTags = Array.isArray((product as { tags?: string[] }).tags)
     ? (product as { tags?: string[] }).tags

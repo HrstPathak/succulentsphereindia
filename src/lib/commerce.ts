@@ -68,6 +68,8 @@ function mapProduct(id: string, raw: Record<string, unknown>, reviews: ProductRe
   const stats = getReviewStats(reviews);
   const price = numeric(raw.price);
   const inventory = numeric(raw.inventoryQuantity ?? raw.quantity ?? raw.totalInventory, 0);
+  const status = string(raw.status, "active").toLowerCase();
+  const soldOut = status === "sold out" || status === "out of stock" || raw.available === false || inventory <= 0;
   return {
     ...raw,
     id,
@@ -77,8 +79,8 @@ function mapProduct(id: string, raw: Record<string, unknown>, reviews: ProductRe
     imageAlts: images.length ? images.map((item) => typeof item === "object" && item ? string((item as Record<string, unknown>).altText) : "") : [firstImageAlt],
     price: price.toFixed(2), compareAtPrice: raw.compareAtPrice == null ? null : numeric(raw.compareAtPrice).toFixed(2),
     currency: string(raw.currency, "INR"), quantity: inventory, inventoryQuantity: inventory, totalInventory: inventory,
-    available: raw.available !== false && inventory > 0, availability: raw.available === false || inventory <= 0 ? "OutOfStock" : "InStock",
-    tags: list(raw.tags), collections: list(raw.collections), type: string(raw.type || raw.productType || "General"),
+    available: !soldOut, availability: soldOut ? "OutOfStock" : "InStock",
+    status, tags: list(raw.tags), collections: list(raw.collections), type: string(raw.type || raw.productType || "General"),
     productType: string(raw.productType || raw.type || "General"), careLevel: string(raw.careLevel), indoorOutdoor: string(raw.indoorOutdoor), createdAt: string(raw.createdAt),
     rating: stats.reviewCount ? stats.averageRating : numeric(raw.rating, 0) || undefined, reviewCount: stats.reviewCount || numeric(raw.reviewCount, 0),
     reviews, faqs: Array.isArray(raw.faqs) ? raw.faqs : [], seoTitle: string(raw.seoTitle), seoDescription: string(raw.seoDescription),
