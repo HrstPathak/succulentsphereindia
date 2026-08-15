@@ -35,8 +35,12 @@ export default function LazyClientSection({
   }, [rootMargin, visible]);
 
   return (
-    <div ref={ref} style={{ minHeight }}>
-      {visible ? children : null}
+    <div ref={ref} style={{ minHeight }} aria-busy={!visible} className="relative">
+      {visible ? (
+        children
+      ) : (
+        <div className="w-full animate-pulse rounded-2xl border border-gray-200 bg-gradient-to-r from-gray-100 via-white to-gray-100 dark:border-gray-700 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800" style={{ minHeight }} />
+      )}
     </div>
   );
 }

@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import HeroSection from "../components/home/HeroSection";
 import CategoryGrid from "../components/home/CategoryGrid";
 import BestSellerGrid from "../components/home/BestSellerGrid";
-import BrandStory from "../components/home/BrandStory";
-import InstagramFeed from "../components/home/InstagramFeed";
 import ComboTeaserBanner from "../components/home/ComboTeaserBanner";
-import Testimonials from "../components/home/Testimonials";
 import { SITE_NAME, absoluteUrl } from "@/lib/seo";
 import { fetchProductsByQuery } from "@/lib/commerce";
 import { resolveProductImageAlt } from "@/lib/imageAlt";
@@ -15,6 +13,18 @@ import {
   LazyOnTheFeedSection,
   LazyRecentlyViewedSection,
 } from "../components/home/LazySections";
+
+const BrandStory = dynamic(() => import("../components/home/BrandStory"), {
+  loading: () => <div className="h-[320px] w-full animate-pulse rounded-3xl bg-gradient-to-r from-gray-100 via-white to-gray-100 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800" />,
+});
+
+const InstagramFeed = dynamic(() => import("../components/home/InstagramFeed"), {
+  loading: () => <div className="h-[180px] w-full animate-pulse rounded-2xl bg-gradient-to-r from-gray-100 via-white to-gray-100 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800" />,
+});
+
+const Testimonials = dynamic(() => import("../components/home/Testimonials"), {
+  loading: () => <div className="h-[260px] w-full animate-pulse rounded-3xl bg-gradient-to-r from-gray-100 via-white to-gray-100 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800" />,
+});
 
 export const revalidate = 3600;
 export const metadata: Metadata = buildPageMetadata({
@@ -66,7 +76,7 @@ type HomeBestSellerCandidate = {
 async function getHomeBestSellerProducts() {
   try {
     const res = await fetchProductsByQuery(`tag:"Best Selling"`, {
-      first: 60,
+      first: 18,
       sortKey: "BEST_SELLING",
       reverse: false,
       cache: "force-cache",
