@@ -26,6 +26,16 @@ function absoluteUrl(value: unknown, siteUrl: string) {
   }
 }
 
+function normalizeRetailerId(value: unknown) {
+  const raw = String(value ?? "").trim();
+  const slug = raw
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+  return slug || "product";
+}
+
 function siteOrigin(request: Request) {
   const configured = String(process.env.NEXT_PUBLIC_SITE_URL || "").trim();
   if (configured) return configured.replace(/\/$/, "");
@@ -60,9 +70,10 @@ export async function GET(request: Request) {
       const inStock = !soldOut;
       const displayPrice = Number.isFinite(mainPrice) && mainPrice > 0 ? mainPrice : salePrice;
       const discountedPrice = Number.isFinite(salePrice) && salePrice > 0 ? salePrice : displayPrice;
+      const retailerId = normalizeRetailerId(product.handle || product.id || product.title);
 
       return [
-        `succulent-sphere-${product.id}`,
+        retailerId,
         product.title,
         textFromHtml(product.descriptionHtml || product.description || product.title),
         inStock ? "in stock" : "out of stock",
