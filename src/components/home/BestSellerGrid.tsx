@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/currency";
 import { getDiscountPercent } from "@/lib/discount";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
@@ -18,9 +21,31 @@ export type BestSellerProduct = {
 };
 
 export default function BestSellerGrid({ products }: { products: BestSellerProduct[] }) {
+  const [startIndex, setStartIndex] = useState(0);
+  const pool = useMemo(() => products.filter(Boolean).slice(0, 16), [products]);
+
+  useEffect(() => {
+    if (pool.length <= 4) return;
+    const interval = window.setInterval(() => {
+      setStartIndex((current) => (current + 4) % pool.length);
+    }, 4000);
+    return () => window.clearInterval(interval);
+  }, [pool.length]);
+
+  const visibleProducts = useMemo(() => {
+    if (!pool.length) return [];
+    if (pool.length <= 4) return pool;
+    const next = [] as BestSellerProduct[];
+    for (let offset = 0; offset < 4; offset += 1) {
+      const index = (startIndex + offset) % pool.length;
+      next.push(pool[index]);
+    }
+    return next;
+  }, [pool, startIndex]);
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-      {products.map((p) => {
+      {visibleProducts.map((p) => {
         const currency = p.currency || "INR";
         const discountPercent = getDiscountPercent(p.price, p.compareAtPrice ?? null);
 

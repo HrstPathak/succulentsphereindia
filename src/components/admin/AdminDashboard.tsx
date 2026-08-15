@@ -130,6 +130,19 @@ const toList = (value: string) =>
     .map((entry) => entry.trim())
     .filter(Boolean);
 
+const tagSuggestions = [
+  "best seller",
+  "featured",
+  "new arrival",
+  "limited edition",
+  "indoor",
+  "outdoor",
+  "giftable",
+  "easy care",
+  "pet friendly",
+  "combo",
+];
+
 function Status({
   children,
   tone = "stone",
@@ -170,6 +183,10 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
   const [mail, setMail] = useState({ to: "", subject: "", message: "" });
   const [productId, setProductId] = useState<string | null>(null);
   const [createProductOpen, setCreateProductOpen] = useState(false);
+  const productTagOptions = useMemo(() => {
+    const createdTags = (data?.products || []).flatMap((product) => product.tags || []);
+    return [...new Set([...tagSuggestions, ...createdTags.map((tag) => tag.trim()).filter(Boolean)])].sort((left, right) => left.localeCompare(right));
+  }, [data]);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [testOrderOpen, setTestOrderOpen] = useState(false);
   const [openOrderId, setOpenOrderId] = useState<string | null>(null);
@@ -494,6 +511,7 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
       {productId && (
         <ProductEditor
           id={productId}
+          availableTags={productTagOptions}
           onClose={() => setProductId(null)}
           onSaved={() => {
             void load();
@@ -516,6 +534,7 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
       )} {" "}
       {createProductOpen && (
         <CreateProductModal
+          availableTags={productTagOptions}
           onClose={() => setCreateProductOpen(false)}
           onCreated={() => {
             setCreateProductOpen(false);
@@ -543,9 +562,11 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
 }
 
 function CreateProductModal({
+  availableTags,
   onClose,
   onCreated,
 }: {
+  availableTags: string[];
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -673,7 +694,18 @@ function CreateProductModal({
               </label>
               <label className="sm:col-span-2">
                 Tags
-                <input className={field} value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="best-selling, indoor, beginner-friendly" />
+                <input
+                  list="product-tag-options"
+                  className={field}
+                  value={form.tags}
+                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                  placeholder="best seller, indoor, beginner-friendly"
+                />
+                <datalist id="product-tag-options">
+                  {availableTags.map((tag) => (
+                    <option key={tag} value={tag} />
+                  ))}
+                </datalist>
               </label>
               <label className="sm:col-span-2">
                 Collections
@@ -1283,10 +1315,12 @@ function Modal({
 }
 function ProductEditor({
   id,
+  availableTags,
   onClose,
   onSaved,
 }: {
   id: string;
+  availableTags: string[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -1482,10 +1516,16 @@ function ProductEditor({
               <label>
                 Tags
                 <input
+                  list="product-tag-options-editor"
                   className={input}
                   value={form.tags}
                   onChange={(e) => setForm({ ...form, tags: e.target.value })}
                 />
+                <datalist id="product-tag-options-editor">
+                  {availableTags.map((tag) => (
+                    <option key={tag} value={tag} />
+                  ))}
+                </datalist>
               </label>
               <label>
                 Collections

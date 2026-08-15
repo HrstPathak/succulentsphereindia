@@ -5,7 +5,7 @@ import CategoryGrid from "../components/home/CategoryGrid";
 import BestSellerGrid from "../components/home/BestSellerGrid";
 import ComboTeaserBanner from "../components/home/ComboTeaserBanner";
 import { SITE_NAME, absoluteUrl } from "@/lib/seo";
-import { fetchProductsByQuery } from "@/lib/commerce";
+import { fetchAllProductsList } from "@/lib/commerce";
 import { resolveProductImageAlt } from "@/lib/imageAlt";
 import { buildPageMetadata } from "@/lib/page-metadata";
 import { toJsonLd } from "@/lib/structured-data";
@@ -60,6 +60,15 @@ function productCardImage(url: string) {
   return url;
 }
 
+function shuffleBestSellers<T>(items: T[], desiredCount = 16): T[] {
+  if (!items.length) return [];
+  const pool = [...items];
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor((Date.now() / 1000 + i) % (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, Math.min(desiredCount, pool.length));
+}
 
 type HomeBestSellerCandidate = {
   id: string;
@@ -75,42 +84,37 @@ type HomeBestSellerCandidate = {
 
 async function getHomeBestSellerProducts() {
   try {
-    const res = await fetchProductsByQuery(`tag:"Best Selling"`, {
-      first: 18,
-      sortKey: "BEST_SELLING",
-      reverse: false,
-      cache: "force-cache",
-      next: { revalidate: 3600, tags: ["home-best-sellers"] },
+    const products = await fetchAllProductsList({
+      sortKey: "CREATED_AT",
+      reverse: true,
     });
-    const mapped: HomeBestSellerCandidate[] = (res.edges || []).map((edge: any, idx: number) => {
-      const node = edge?.node || {};
-      const image = node?.images?.edges?.[0]?.node?.url || "/assets/product-1.jpg";
-      const imageAlt = resolveProductImageAlt(node?.images?.edges?.[0]?.node?.altText);
-      const variant = node?.variants?.edges?.[0]?.node;
-      return {
-        id: String(node.id || `catalog-best-seller-${idx}`),
-        title: String(node.title || "Untitled"),
-        handle: String(node.handle || ""),
-        image: productCardImage(String(image)),
-        imageAlt,
-        price: String(variant?.price?.amount ?? variant?.priceV2?.amount ?? "0.00"),
-        compareAtPrice: variant?.compareAtPrice?.amount ? String(variant.compareAtPrice.amount) : null,
-        currency: String(variant?.price?.currencyCode ?? variant?.priceV2?.currencyCode ?? "INR"),
-        tags: Array.isArray(node.tags) ? node.tags.map((tag: unknown) => String(tag)) : [],
-      };
-    });
-    const tagged = mapped.filter((product) => product.handle && hasTag(product.tags, "Best Selling"));
 
-    const ordered = tagged.slice().sort((a, b) => a.title.localeCompare(b.title));
-    return ordered.slice(0, 4).map((product) => ({
+    const normalized = products.map((product) => ({
+      ...product,
+      tags: Array.isArray(product.tags) ? product.tags.map((tag: unknown) => String(tag).trim()) : [],
+    }));
+
+    const bestSelling = normalized.filter(
+      (product) =>
+        product.handle &&
+        (hasTag(product.tags, "best seller") || hasTag(product.tags, "best selling") || hasTag(product.tags, "best-selling")),
+    );
+
+    const fallbackPool = normalized.filter((product) => product.handle && !bestSelling.some((item) => item.id === product.id));
+    const curatedPool = shuffleBestSellers(
+      [...bestSelling, ...fallbackPool].slice(0, 24),
+      16,
+    );
+
+    return curatedPool.map((product) => ({
       id: product.id,
       title: product.title,
       handle: product.handle,
       image: product.image,
-      imageAlt: product.imageAlt,
-      price: product.price,
-      compareAtPrice: product.compareAtPrice ?? null,
-      currency: product.currency ?? "INR",
+      imageAlt: resolveProductImageAlt(product.imageAlt || product.title || "Best seller product"),
+      price: String(product.price ?? "0.00"),
+      compareAtPrice: product.compareAtPrice ? String(product.compareAtPrice) : null,
+      currency: String(product.currency ?? "INR"),
       badge: "Best Seller",
       rating: 5,
     }));

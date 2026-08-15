@@ -24,15 +24,15 @@ async function getComboProducts() {
     });
     return (res.edges || []).map((edge: any, idx: number) => {
       const node = edge?.node || {};
-      const image = node?.images?.edges?.[0]?.node?.url || "/assets/product-1.jpg";
-      const imageAlt = resolveProductImageAlt(node?.images?.edges?.[0]?.node?.altText);
-      const variant = node?.variants?.edges?.[0]?.node;
+      const image = String(node?.image || "/assets/product-1.jpg");
+      const imageAlt = resolveProductImageAlt(node?.imageAlt || node?.title || "Combo product");
+      const price = String(node?.price ?? "0.00");
       return {
         id: String(node.id || `combo-${idx}`),
         title: String(node.title || "Untitled"),
         handle: String(node.handle || ""),
-        price: String(variant?.price?.amount ?? variant?.priceV2?.amount ?? "0.00"),
-        image: productCardImage(String(image)),
+        price,
+        image: productCardImage(image),
         imageAlt,
       };
     });
