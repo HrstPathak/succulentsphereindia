@@ -1,0 +1,29 @@
+name: Warm Meta Feed
+
+on:
+  schedule:
+    # run at minute 0 every hour
+    - cron: '0 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  warm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Warm meta feed (call generator)
+        env:
+          GENERATE_ENDPOINT: ${{ secrets.GENERATE_ENDPOINT }}
+          META_GENERATE_SECRET: ${{ secrets.META_GENERATE_SECRET }}
+        run: |
+          if [ -z "$GENERATE_ENDPOINT" ] || [ -z "$META_GENERATE_SECRET" ]; then
+            echo "Missing required secrets: GENERATE_ENDPOINT or META_GENERATE_SECRET" >&2
+            exit 1
+          fi
+          echo "Calling generator endpoint: $GENERATE_ENDPOINT"
+          http_code=$(curl -s -o /tmp/response.txt -w '%{http_code}' -X POST "$GENERATE_ENDPOINT" -H "Authorization: Bearer $META_GENERATE_SECRET" -H "Content-Type: application/json" -d '{}')
+          echo "Generator returned HTTP $http_code"
+          cat /tmp/response.txt
+          if [ "$http_code" -ge 400 ]; then
+            echo "Generator failed" >&2
+            exit 1
+          fi
