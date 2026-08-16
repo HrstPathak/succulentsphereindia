@@ -15,7 +15,42 @@ try {
   redisClient = null;
 }
 
+// Support standard REDIS_URL (redis://) connection strings in addition to Upstash REST.
+let nativeRedisClient: any = null;
+let nativeRedisConnecting = false;
+
+async function ensureNativeRedis() {
+  const nativeUrl = String(process.env.REDIS_URL || "").trim();
+  if (!nativeUrl) return false;
+  try {
+    if (!nativeRedisClient && !nativeRedisConnecting) {
+      nativeRedisConnecting = true;
+      // Dynamically import to avoid requiring the dependency in environments that don't use it.
+      const { createClient } = await import("redis");
+      nativeRedisClient = createClient({ url: nativeUrl });
+      nativeRedisClient.on("error", () => {});
+      await nativeRedisClient.connect();
+      nativeRedisConnecting = false;
+    }
+    return !!nativeRedisClient;
+  } catch (_e) {
+    nativeRedisClient = null;
+    nativeRedisConnecting = false;
+    return false;
+  }
+}
+
 async function readRedisCsv() {
+  // Prefer native REDIS_URL if present
+  try {
+    if (await ensureNativeRedis()) {
+      const v = await nativeRedisClient.get(REDIS_KEY);
+      return typeof v === "string" ? v : null;
+    }
+  } catch (_e) {
+    // fallthrough to Upstash
+  }
+
   if (!redisClient) return null;
   try {
     const v = await redisClient.get(REDIS_KEY);
@@ -26,6 +61,22 @@ async function readRedisCsv() {
 }
 
 async function writeRedisCsv(value: string) {
+  // Try native REDIS_URL first
+  try {
+    if (await ensureNativeRedis()) {
+      try {
+        await nativeRedisClient.set(REDIS_KEY, value);
+        // Set TTL if supported via expire
+        await nativeRedisClient.expire(REDIS_KEY, CACHE_TTL_SECONDS);
+        return;
+      } catch (_e) {
+        // fallthrough to Upstash
+      }
+    }
+  } catch (_e) {
+    // ignore
+  }
+
   if (!redisClient) return;
   try {
     await redisClient.set(REDIS_KEY, value, { ex: CACHE_TTL_SECONDS });
