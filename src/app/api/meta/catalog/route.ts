@@ -1,14 +1,45 @@
 import { getFirebaseDb } from "@/lib/firebase-admin";
+import { mockProducts } from "@/data/mockProducts";
+import { Redis } from "@upstash/redis";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 // In-process cache to reduce Firestore reads and avoid timeouts for crawlers like Meta.
 // This is a best-effort cache for server instances. For reliable cross-instance caching,
-// replace with a shared cache (Redis, Upstash, etc.).
+// we use Upstash Redis when configured. The code prefers Redis (shared) then in-process cache.
 let _cachedCsv: string | null = null;
 let _cachedAt = 0;
 const CACHE_TTL_SECONDS = 60 * 60; // 1 hour
+const REDIS_KEY = "meta:catalog:csv";
+
+let redisClient: Redis | null = null;
+try {
+  const url = String(process.env.KV_REST_API_URL || "").trim();
+  const token = String(process.env.KV_REST_API_TOKEN || "").trim();
+  if (url && token) redisClient = new Redis({ url, token });
+} catch {
+  redisClient = null;
+}
+
+async function readRedisCsv() {
+  if (!redisClient) return null;
+  try {
+    const v = await redisClient.get(REDIS_KEY);
+    return typeof v === "string" ? v : null;
+  } catch (_e) {
+    return null;
+  }
+}
+
+async function writeRedisCsv(value: string) {
+  if (!redisClient) return;
+  try {
+    await redisClient.set(REDIS_KEY, value, { ex: CACHE_TTL_SECONDS });
+  } catch (_e) {
+    // ignore write failures
+  }
+}
 
 function csv(value: unknown) {
   const text = String(value ?? "").replace(/\r?\n/g, " ").trim();
@@ -48,8 +79,6 @@ function siteOrigin(request: Request) {
   if (configured) return configured.replace(/\/$/, "");
   return new URL(request.url).origin;
 }
-
-import { mockProducts } from "@/data/mockProducts";
 
 async function fetchProductsForFeed() {
   const db = getFirebaseDb();
