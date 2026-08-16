@@ -173,9 +173,46 @@ export async function fetchCustomerOrdersByUid(uid: string) {
     .sort((a, b) => b.processedAt.localeCompare(a.processedAt));
 }
 export async function fetchCustomerByUid(uid: string): Promise<FirebaseAuthenticatedCustomer | null> {
-  const db = getFirebaseDb(); const userDoc = await db.collection("users").doc(uid).get(); if (!userDoc.exists) return null;
-  const data = userDoc.data() || {}; const addressesSnapshot = await userDoc.ref.collection("addresses").get(); const orders = await fetchCustomerOrdersByUid(uid);
-  return { id: uid, firstName: string(data.firstName), lastName: string(data.lastName), displayName: string(data.displayName), email: string(data.email), phone: data.phone ? string(data.phone) : null, defaultAddressId: data.defaultAddressId ? string(data.defaultAddressId) : null, addresses: addressesSnapshot.docs.map((doc) => ({ id: doc.id, firstName: string(doc.get("firstName")), lastName: string(doc.get("lastName")), company: string(doc.get("company")), address1: string(doc.get("address1")), address2: string(doc.get("address2")), city: string(doc.get("city")), province: string(doc.get("province")), country: string(doc.get("country")), zip: string(doc.get("zip")), phone: string(doc.get("phone")) })), orders };
+  try {
+    const db = getFirebaseDb();
+    const userDoc = await db.collection("users").doc(uid).get();
+    if (!userDoc.exists) return null;
+
+    const data = userDoc.data() || {};
+    const addressesSnapshot = await userDoc.ref.collection("addresses").get();
+    const orders = await fetchCustomerOrdersByUid(uid);
+
+    return {
+      id: uid,
+      firstName: string(data.firstName),
+      lastName: string(data.lastName),
+      displayName: string(data.displayName),
+      email: string(data.email),
+      phone: data.phone ? string(data.phone) : null,
+      defaultAddressId: data.defaultAddressId ? string(data.defaultAddressId) : null,
+      addresses: addressesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        firstName: string(doc.get("firstName")),
+        lastName: string(doc.get("lastName")),
+        company: string(doc.get("company")),
+        address1: string(doc.get("address1")),
+        address2: string(doc.get("address2")),
+        city: string(doc.get("city")),
+        province: string(doc.get("province")),
+        country: string(doc.get("country")),
+        zip: string(doc.get("zip")),
+        phone: string(doc.get("phone")),
+      })),
+      orders,
+    };
+  } catch (error) {
+    // Firestore errors (quota, network, credential issues) may surface here.
+    // Log a clear diagnostic message and return null so callers fall back to token claims.
+    // This prevents 500 responses in the storefront when Firestore is temporarily unavailable.
+    // eslint-disable-next-line no-console
+    console.info(`[fetchCustomerByUid] Firestore lookup failed; returning null: ${String((error as Error)?.message || error)}`);
+    return null;
+  }
 }
 export async function updateUserProfile(uid: string, input: { firstName: string; lastName: string; phone?: string }) { await getFirebaseDb().collection("users").doc(uid).set({ ...input, displayName: `${input.firstName} ${input.lastName}`.trim(), updatedAt: new Date().toISOString() }, { merge: true }); }
 export async function createAddress(uid: string, address: Omit<FirebaseCustomerAddress, "id">) { const ref = await getFirebaseDb().collection("users").doc(uid).collection("addresses").add({ ...address, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); const userRef = getFirebaseDb().collection("users").doc(uid); const user = await userRef.get(); if (!user.get("defaultAddressId")) await userRef.set({ defaultAddressId: ref.id }, { merge: true }); return ref.id; }

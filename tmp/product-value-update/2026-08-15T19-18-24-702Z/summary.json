@@ -1,0 +1,51 @@
+{
+  "xlsxPath": "C:\\Users\\hpath\\Downloads\\Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+  "sheets": [
+    {
+      "name": "Master Catalog",
+      "rows": 147
+    },
+    {
+      "name": "Summary Metrics",
+      "rows": 9
+    }
+  ],
+  "tables": [
+    {
+      "sheetName": "Master Catalog",
+      "headerRow": 1,
+      "rowCount": 146,
+      "columns": {
+        "title": 2,
+        "handle": -1,
+        "price": 4,
+        "compareAtPrice": 4,
+        "salePrice": 5,
+        "availability": 3,
+        "inventoryQuantity": -1
+      }
+    },
+    {
+      "sheetName": "Summary Metrics",
+      "headerRow": 2,
+      "rowCount": 7,
+      "columns": {
+        "title": 1,
+        "handle": 1,
+        "price": 1,
+        "compareAtPrice": 1,
+        "salePrice": 1,
+        "availability": 1,
+        "inventoryQuantity": 1
+      }
+    }
+  ],
+  "parsedProducts": 145,
+  "firebaseProductsBefore": 147,
+  "matchedProducts": 12,
+  "missingProducts": 133,
+  "applied": false,
+  "createMissing": false,
+  "firebaseWrites": 0,
+  "runDir": "D:\\Succulent Sphere - Copy\\SucculentSphere_google\\tmp\\product-value-update\\2026-08-15T19-18-24-702Z"
+}

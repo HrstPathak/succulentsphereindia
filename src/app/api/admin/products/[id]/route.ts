@@ -91,19 +91,26 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const compareAtPrice = input.compareAtPrice === "" || input.compareAtPrice == null ? null : number(input.compareAtPrice, -1);
     if (compareAtPrice !== null && compareAtPrice < 0) return NextResponse.json({ error: "Compare-at price must be a valid amount." }, { status: 400 });
 
+    // Only update images if they were explicitly provided in the request
     const images = [...new Set([...(Array.isArray(input.images) ? input.images : []), ...text(input.images || "").split(",").map((entry) => entry.trim()).filter(Boolean), text(input.image)].filter(Boolean))];
     const primaryImage = images[0] || text(input.image);
 
-    const update = {
+    const update: any = {
       title, handle, price, compareAtPrice, inventoryQuantity: Math.floor(inventoryQuantity), status,
       available: Boolean(input.available), description: text(input.description).slice(0, 30000),
       tags: list(input.tags).slice(0, 100), collections: list(input.collections).slice(0, 100),
       productType: text(input.productType).slice(0, 160), type: text(input.productType).slice(0, 160),
       careLevel: text(input.careLevel).slice(0, 120), indoorOutdoor: text(input.indoorOutdoor).slice(0, 120),
-      image: primaryImage.slice(0, 2000), images: images.slice(0, 20), imageAlt: text(input.imageAlt).slice(0, 500),
       seoTitle: text(input.seoTitle).slice(0, 250), seoDescription: text(input.seoDescription).slice(0, 500),
       vendor: text(input.vendor).slice(0, 160), updatedAt: new Date().toISOString(),
     };
+    
+    // Only include image fields if new images were provided (don't overwrite with empty values)
+    if (images.length > 0 || uploadedImages.length > 0 || text(input.image) || text(input.imageAlt)) {
+      update.image = primaryImage.slice(0, 2000);
+      update.images = images.slice(0, 20);
+      update.imageAlt = text(input.imageAlt).slice(0, 500);
+    }
     const ref = getFirebaseDb().collection("products").doc(text(id));
     if (!(await ref.get()).exists) return NextResponse.json({ error: "Product not found." }, { status: 404 });
     await ref.set(update, { merge: true });

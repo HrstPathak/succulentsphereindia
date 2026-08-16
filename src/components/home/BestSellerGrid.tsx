@@ -22,7 +22,7 @@ export type BestSellerProduct = {
 
 export default function BestSellerGrid({ products }: { products: BestSellerProduct[] }) {
   const [startIndex, setStartIndex] = useState(0);
-  const pool = useMemo(() => products.filter(Boolean).slice(0, 16), [products]);
+  const pool = useMemo(() => products.filter(Boolean).slice(0, 20), [products]);
 
   useEffect(() => {
     if (pool.length <= 4) return;

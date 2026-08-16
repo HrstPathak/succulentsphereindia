@@ -1,0 +1,86 @@
+[
+  {
+    "name": "Master Catalog",
+    "path": "xl/worksheets/sheet1.xml",
+    "rowCount": 147,
+    "sampleRows": [
+      [
+        "S.No",
+        "Content ID",
+        "Product Name",
+        "Availability",
+        "Regular Price (&#8377;)",
+        "Sale Price (&#8377;)",
+        "Discount (%)",
+        "Savings (&#8377;)"
+      ],
+      [
+        "1",
+        "44324475895831",
+        "Ruby Necklace (Othonna capensis) &#8212; Purple Red Trailing Succulent",
+        "In stock",
+        "99",
+        "59",
+        "",
+        ""
+      ],
+      [
+        "2",
+        "44367120007191",
+        "Echeveria Menina &#8212; Soft Pastel Pink Ruffled Rosette Succulent",
+        "In stock",
+        "119",
+        "79",
+        "",
+        ""
+      ],
+      [
+        "3",
+        "44597158838295",
+        "Sedum Nussaumerianum &#8212; Warm Yellow Orange Trailing Stonecrop",
+        "In stock",
+        "109",
+        "69",
+        "",
+        ""
+      ],
+      [
+        "4",
+        "44679748648983",
+        "Echeveria Pallida &#8212; Elegant Large Pale Green Ruffled Rosette",
+        "In stock",
+        "139",
+        "89",
+        "",
+        ""
+      ]
+    ]
+  },
+  {
+    "name": "Summary Metrics",
+    "path": "xl/worksheets/sheet2.xml",
+    "rowCount": 9,
+    "sampleRows": [
+      [
+        "Metric",
+        "Value"
+      ],
+      [
+        "Total Products Cataloged",
+        ""
+      ],
+      [
+        "In Stock Count",
+        ""
+      ],
+      [
+        "Out of Stock Count",
+        ""
+      ],
+      [
+        "Average Regular Price",
+        ""
+      ]
+    ]
+  }
+]

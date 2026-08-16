@@ -54,6 +54,24 @@ async function uploadProductImages(files: File[]) {
   return uploads.filter(Boolean);
 }
 
+export async function GET() {
+  try {
+    await requireAdmin();
+    const db = getFirebaseDb();
+    const snapshot = await db.collection("products").get();
+    const products = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    return NextResponse.json(products);
+  } catch (error) {
+    return NextResponse.json(
+      { error: String((error as Error).message) === "ADMIN_REQUIRED" ? "Not found." : (error as Error).message },
+      { status: String((error as Error).message) === "ADMIN_REQUIRED" ? 404 : 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     await requireAdmin();

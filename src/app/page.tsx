@@ -9,6 +9,7 @@ import { fetchAllProductsList } from "@/lib/commerce";
 import { resolveProductImageAlt } from "@/lib/imageAlt";
 import { buildPageMetadata } from "@/lib/page-metadata";
 import { toJsonLd } from "@/lib/structured-data";
+import { mockProducts, type Product } from "@/data/mockProducts";
 import {
   LazyOnTheFeedSection,
   LazyRecentlyViewedSection,
@@ -56,11 +57,7 @@ function hasTag(tags: string[] | undefined, wantedTag: string): boolean {
   return tags.some((tag) => normalizeTag(String(tag)) === target);
 }
 
-function productCardImage(url: string) {
-  return url;
-}
-
-function shuffleBestSellers<T>(items: T[], desiredCount = 16): T[] {
+function shuffleBestSellers<T>(items: T[], desiredCount = 20): T[] {
   if (!items.length) return [];
   const pool = [...items];
   for (let i = pool.length - 1; i > 0; i -= 1) {
@@ -70,17 +67,47 @@ function shuffleBestSellers<T>(items: T[], desiredCount = 16): T[] {
   return pool.slice(0, Math.min(desiredCount, pool.length));
 }
 
-type HomeBestSellerCandidate = {
+type HomeBestSellerCandidate = Product & {
   id: string;
   title: string;
   handle: string;
   image: string;
-  imageAlt: string;
+  imageAlt?: string;
   price: string;
   compareAtPrice?: string | null;
   currency?: string;
   tags: string[];
 };
+
+function mapBestSellerProduct(product: HomeBestSellerCandidate) {
+  return {
+    id: product.id,
+    title: product.title,
+    handle: product.handle,
+    image: product.image,
+    imageAlt: resolveProductImageAlt(product.imageAlt || product.title || "Best seller product"),
+    price: String(product.price ?? "0.00"),
+    compareAtPrice: product.compareAtPrice ? String(product.compareAtPrice) : null,
+    currency: String(product.currency ?? "INR"),
+    badge: "Best Seller",
+    rating: Number(product.rating || 5),
+  };
+}
+
+function buildBestSellerPool(primary: HomeBestSellerCandidate[], desiredCount = 20) {
+  const seen = new Set<string>();
+  const curated: HomeBestSellerCandidate[] = [];
+  const fallback = mockProducts.filter((product) => hasTag(product.tags, "best seller")) as HomeBestSellerCandidate[];
+
+  for (const product of [...primary, ...fallback]) {
+    const key = String(product.handle || product.id || "").trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    curated.push(product);
+  }
+
+  return shuffleBestSellers(curated, desiredCount).map(mapBestSellerProduct);
+}
 
 async function getHomeBestSellerProducts() {
   try {
@@ -101,25 +128,13 @@ async function getHomeBestSellerProducts() {
     );
 
     const fallbackPool = normalized.filter((product) => product.handle && !bestSelling.some((item) => item.id === product.id));
-    const curatedPool = shuffleBestSellers(
+    const curatedPool = [
       [...bestSelling, ...fallbackPool].slice(0, 24),
-      16,
-    );
+    ].flat() as HomeBestSellerCandidate[];
 
-    return curatedPool.map((product) => ({
-      id: product.id,
-      title: product.title,
-      handle: product.handle,
-      image: product.image,
-      imageAlt: resolveProductImageAlt(product.imageAlt || product.title || "Best seller product"),
-      price: String(product.price ?? "0.00"),
-      compareAtPrice: product.compareAtPrice ? String(product.compareAtPrice) : null,
-      currency: String(product.currency ?? "INR"),
-      badge: "Best Seller",
-      rating: 5,
-    }));
+    return buildBestSellerPool(curatedPool);
   } catch {
-    return [];
+    return buildBestSellerPool([]);
   }
 }
 

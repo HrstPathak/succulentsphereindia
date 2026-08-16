@@ -23,6 +23,7 @@ export async function getAdminSession() {
 
 export async function requireAdmin() {
   const session = await getAdminSession();
+  if (!session.uid) throw new Error("UNAUTHENTICATED");
   if (!session.isAdmin) throw new Error("ADMIN_REQUIRED");
   return session;
 }

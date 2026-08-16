@@ -83,10 +83,24 @@ export default function LoginForm() {
     setLoading(true);
     try {
       const credential = await signInWithPopup(getFirebaseClientAuth(), getGoogleProvider());
-      const response = await fetch("/api/auth/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: await credential.user.getIdToken() }) });
-      if (!response.ok) throw new Error("Unable to start your Google session.");
-      window.dispatchEvent(new Event("auth:changed")); router.replace("/account"); router.refresh();
-    } catch (error) { showErrorToast(firebaseErrorMessage(error)); } finally { setLoading(false); }
+      const idToken = await credential.user.getIdToken(true);
+      const response = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      const json = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(typeof json?.error === "string" ? json.error : "Unable to start your Google session.");
+      }
+      window.dispatchEvent(new Event("auth:changed"));
+      router.replace("/account");
+      router.refresh();
+    } catch (error) {
+      showErrorToast(firebaseErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import type { DecodedIdToken } from "firebase-admin/auth";
 import { getFirebaseAdminAuth, getFirebaseDb } from "@/lib/firebase-admin";
 import type { FirebaseAuthenticatedCustomer } from "@/lib/commerce";
 import { fetchCustomerByUid } from "@/lib/commerce";
@@ -27,17 +28,41 @@ export async function createSessionCookie(idToken: string) {
   return getFirebaseAdminAuth().createSessionCookie(idToken, { expiresIn: SESSION_DURATION_MS });
 }
 
+function fallbackCustomerFromToken(decoded: DecodedIdToken): FirebaseAuthenticatedCustomer {
+  const displayName = String(decoded.name || "").trim();
+  const nameParts = displayName.split(/\s+/).filter(Boolean);
+  const firstName = nameParts[0] || "";
+  const lastName = nameParts.slice(1).join(" ");
+  return {
+    id: decoded.uid,
+    firstName,
+    lastName,
+    displayName: displayName || firstName || "Customer",
+    email: String(decoded.email || "").trim().toLowerCase(),
+    phone: decoded.phone_number ? String(decoded.phone_number) : null,
+    defaultAddressId: null,
+    addresses: [],
+    orders: [],
+  };
+}
+
 export async function getAuthenticatedCustomer(): Promise<{ customer: FirebaseAuthenticatedCustomer | null; uid: string | null; error?: string }> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(AUTH_COOKIE_NAME)?.value;
   if (!sessionCookie) return { customer: null, uid: null };
 
+  let decoded: DecodedIdToken;
   try {
-    const decoded = await getFirebaseAdminAuth().verifySessionCookie(sessionCookie, true);
-    const customer = await fetchCustomerByUid(decoded.uid);
-    return { customer, uid: decoded.uid };
+    decoded = await getFirebaseAdminAuth().verifySessionCookie(sessionCookie, true);
   } catch {
     return { customer: null, uid: null, error: "Your session has expired. Please sign in again." };
+  }
+
+  try {
+    return { customer: (await fetchCustomerByUid(decoded.uid)) || fallbackCustomerFromToken(decoded), uid: decoded.uid };
+  } catch (error) {
+    console.info(`[firebase auth] profile lookup failed; using token claims: ${String((error as Error)?.message || error)}`);
+    return { customer: fallbackCustomerFromToken(decoded), uid: decoded.uid };
   }
 }
 
@@ -54,20 +79,19 @@ export async function revokeCurrentSession(uid: string) {
 export async function ensureUserProfile(input: { uid: string; email: string; firstName?: string; lastName?: string; displayName?: string; phone?: string | null }) {
   const db = getFirebaseDb();
   const ref = db.collection("users").doc(input.uid);
-  const snapshot = await ref.get();
   const nameParts = String(input.displayName || "").trim().split(/\s+/).filter(Boolean);
   const firstName = String(input.firstName || nameParts[0] || "").trim();
   const lastName = String(input.lastName || nameParts.slice(1).join(" ") || "").trim();
+  const displayName = String(input.displayName || `${firstName} ${lastName}`).trim();
   const now = new Date().toISOString();
   await ref.set(
     {
       email: input.email.toLowerCase(),
-      firstName,
-      lastName,
-      displayName: String(input.displayName || `${firstName} ${lastName}`).trim(),
-      phone: input.phone || null,
       updatedAt: now,
-      ...(snapshot.exists ? {} : { createdAt: now, defaultAddressId: null, wishlistProductIds: [] }),
+      ...(firstName ? { firstName } : {}),
+      ...(lastName ? { lastName } : {}),
+      ...(displayName ? { displayName } : {}),
+      ...(input.phone !== undefined ? { phone: input.phone || null } : {}),
     },
     { merge: true }
   );

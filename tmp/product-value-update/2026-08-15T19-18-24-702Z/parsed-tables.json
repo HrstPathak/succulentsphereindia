@@ -1,0 +1,44 @@
+[
+  {
+    "sheetName": "Master Catalog",
+    "headerRow": 1,
+    "headers": [
+      "S.No",
+      "Content ID",
+      "Product Name",
+      "Availability",
+      "Regular Price (&#8377;)",
+      "Sale Price (&#8377;)",
+      "Discount (%)",
+      "Savings (&#8377;)"
+    ],
+    "columns": {
+      "title": 2,
+      "handle": -1,
+      "price": 4,
+      "compareAtPrice": 4,
+      "salePrice": 5,
+      "availability": 3,
+      "inventoryQuantity": -1
+    },
+    "rowCount": 146
+  },
+  {
+    "sheetName": "Summary Metrics",
+    "headerRow": 2,
+    "headers": [
+      "Total Products Cataloged",
+      ""
+    ],
+    "columns": {
+      "title": 1,
+      "handle": 1,
+      "price": 1,
+      "compareAtPrice": 1,
+      "salePrice": 1,
+      "availability": 1,
+      "inventoryQuantity": 1
+    },
+    "rowCount": 7
+  }
+]

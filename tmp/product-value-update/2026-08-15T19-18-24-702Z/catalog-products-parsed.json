@@ -1,0 +1,2612 @@
+[
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 2,
+    "title": "Ruby Necklace (Othonna capensis) &#8212; Purple Red Trailing Succulent",
+    "handle": "",
+    "regularPrice": 99,
+    "salePrice": 59,
+    "compareAtPrice": 99,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "99",
+      "compareAtPrice": "99",
+      "salePrice": "59",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 3,
+    "title": "Echeveria Menina &#8212; Soft Pastel Pink Ruffled Rosette Succulent",
+    "handle": "",
+    "regularPrice": 119,
+    "salePrice": 79,
+    "compareAtPrice": 119,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "119",
+      "compareAtPrice": "119",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 4,
+    "title": "Sedum Nussaumerianum &#8212; Warm Yellow Orange Trailing Stonecrop",
+    "handle": "",
+    "regularPrice": 109,
+    "salePrice": 69,
+    "compareAtPrice": 109,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "109",
+      "compareAtPrice": "109",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 5,
+    "title": "Echeveria Pallida &#8212; Elegant Large Pale Green Ruffled Rosette",
+    "handle": "",
+    "regularPrice": 139,
+    "salePrice": 89,
+    "compareAtPrice": 139,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "139",
+      "compareAtPrice": "139",
+      "salePrice": "89",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 6,
+    "title": "Haworthiopsis Reinwardtii &#8212; Zebra Wart Striped Indoor Succulent",
+    "handle": "",
+    "regularPrice": 240,
+    "salePrice": 159,
+    "compareAtPrice": 240,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "240",
+      "compareAtPrice": "240",
+      "salePrice": "159",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 7,
+    "title": "String of Bananas (Senecio radicans) &#8212; Blue Green Fishhook Trailer",
+    "handle": "",
+    "regularPrice": 89,
+    "salePrice": 59,
+    "compareAtPrice": 89,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "89",
+      "compareAtPrice": "89",
+      "salePrice": "59",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 8,
+    "title": "Echeveria Prolifica &#8212; Fast Clustering Offset Rich Rosette",
+    "handle": "",
+    "regularPrice": 139,
+    "salePrice": 79,
+    "compareAtPrice": 139,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "139",
+      "compareAtPrice": "139",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 9,
+    "title": "White Cylindrical Pot with Geometric Design Plant Container Set",
+    "handle": "",
+    "regularPrice": 430,
+    "salePrice": 300,
+    "compareAtPrice": 430,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "430",
+      "compareAtPrice": "430",
+      "salePrice": "300",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 10,
+    "title": "Mammillaria Spinosissima &#8212; Red Spine Pincushion Cactus",
+    "handle": "",
+    "regularPrice": 279,
+    "salePrice": 179,
+    "compareAtPrice": 279,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "279",
+      "compareAtPrice": "279",
+      "salePrice": "179",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 11,
+    "title": "Mammillaria Elongata &#8212; Gold Lace Clustering Cactus",
+    "handle": "",
+    "regularPrice": 210,
+    "salePrice": 139,
+    "compareAtPrice": 210,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "210",
+      "compareAtPrice": "210",
+      "salePrice": "139",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 12,
+    "title": "Echinopsis Calochlora &#8212; Flowering Globe Cactus",
+    "handle": "",
+    "regularPrice": 220,
+    "salePrice": 139,
+    "compareAtPrice": 220,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "220",
+      "compareAtPrice": "220",
+      "salePrice": "139",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 13,
+    "title": "Echeveria Agavoides &#8212; Geometric Waxy Red Tipped Rosette Succulent",
+    "handle": "",
+    "regularPrice": 200,
+    "salePrice": 119,
+    "compareAtPrice": 200,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "200",
+      "compareAtPrice": "200",
+      "salePrice": "119",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 14,
+    "title": "Echeveria Agavoides Santa &#8212; Deep Red Waxy Pointed Rosette Succulent",
+    "handle": "",
+    "regularPrice": 199,
+    "salePrice": 119,
+    "compareAtPrice": 199,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "199",
+      "compareAtPrice": "199",
+      "salePrice": "119",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 15,
+    "title": "Combo 4 - The Radiant Rosette Collection",
+    "handle": "",
+    "regularPrice": 349,
+    "salePrice": 349,
+    "compareAtPrice": 349,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "349",
+      "compareAtPrice": "349",
+      "salePrice": "349",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 16,
+    "title": "Sedum Sexangulare &#8212; Tasteless Stonecrop Hardy Ground Cover Succulent",
+    "handle": "",
+    "regularPrice": 60,
+    "salePrice": 39,
+    "compareAtPrice": 60,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "60",
+      "compareAtPrice": "60",
+      "salePrice": "39",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 17,
+    "title": "Pachyveria 'Clavifolia' &#8212; Thick Club Leaf Pastel Hybrid Rosette",
+    "handle": "",
+    "regularPrice": 130,
+    "salePrice": 89,
+    "compareAtPrice": 130,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "130",
+      "compareAtPrice": "130",
+      "salePrice": "89",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 18,
+    "title": "Cobweb Houseleek (Sempervivum arachnoideum) &#8212; Frost Hardy Succulent",
+    "handle": "",
+    "regularPrice": 139,
+    "salePrice": 89,
+    "compareAtPrice": 139,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "139",
+      "compareAtPrice": "139",
+      "salePrice": "89",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 19,
+    "title": "Graptopetalum Superbum &#8212; Lavender Pink Ghost Plant Rosette",
+    "handle": "",
+    "regularPrice": 159,
+    "salePrice": 99,
+    "compareAtPrice": 159,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "159",
+      "compareAtPrice": "159",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 20,
+    "title": "Christmas Cactus (Schlumbergera truncata) &#8212; Flowering Holiday Cactus",
+    "handle": "",
+    "regularPrice": 119,
+    "salePrice": 79,
+    "compareAtPrice": 119,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "119",
+      "compareAtPrice": "119",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 21,
+    "title": "Houseleek (Sempervivum) &#8212; Hardy Outdoor Clustering Rosette",
+    "handle": "",
+    "regularPrice": 190,
+    "salePrice": 129,
+    "compareAtPrice": 190,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "190",
+      "compareAtPrice": "190",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 22,
+    "title": "Gasteria &#8212; Best Low Light Indoor Succulent",
+    "handle": "",
+    "regularPrice": 150,
+    "salePrice": 99,
+    "compareAtPrice": 150,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "150",
+      "compareAtPrice": "150",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 23,
+    "title": "Sedum Treleasei &#8212; Silver Blue Plump Leaf Stonecrop",
+    "handle": "",
+    "regularPrice": 120,
+    "salePrice": 79,
+    "compareAtPrice": 120,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "120",
+      "compareAtPrice": "120",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 24,
+    "title": "Wandering Jew (Tradescantia zebrina) &#8212; Silver Green Striped Trailer",
+    "handle": "",
+    "regularPrice": 60,
+    "salePrice": 39,
+    "compareAtPrice": 60,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "60",
+      "compareAtPrice": "60",
+      "salePrice": "39",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 25,
+    "title": "Elephant Bush (Portulacaria afra) &#8212; Bonsai Jade Succulent",
+    "handle": "",
+    "regularPrice": 79,
+    "salePrice": 39,
+    "compareAtPrice": 79,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "79",
+      "compareAtPrice": "79",
+      "salePrice": "39",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 26,
+    "title": "Crassula Campfire &#8212; Red Green Colour Changing Succulent",
+    "handle": "",
+    "regularPrice": 80,
+    "salePrice": 49,
+    "compareAtPrice": 80,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "80",
+      "compareAtPrice": "80",
+      "salePrice": "49",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 27,
+    "title": "Crassula Campfire Variegated &#8212; Green Yellow Colour Changing Succulent",
+    "handle": "",
+    "regularPrice": 150,
+    "salePrice": 89,
+    "compareAtPrice": 150,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "150",
+      "compareAtPrice": "150",
+      "salePrice": "89",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 28,
+    "title": "Faucaria Tigrina &#8212; Tiger Jaw Flowering Mesemb Succulent",
+    "handle": "",
+    "regularPrice": 149,
+    "salePrice": 99,
+    "compareAtPrice": 149,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "149",
+      "compareAtPrice": "149",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 29,
+    "title": "Moonstone (Pachyphytum oviferum) &#8212; Pearl White Egg Leaf Succulent",
+    "handle": "",
+    "regularPrice": 120,
+    "salePrice": 79,
+    "compareAtPrice": 120,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "120",
+      "compareAtPrice": "120",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 30,
+    "title": "Echeveria Agavoides 'Romeo' &#8212; Deep Burgundy Red Premium Rosette",
+    "handle": "",
+    "regularPrice": 250,
+    "salePrice": 149,
+    "compareAtPrice": 250,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "250",
+      "compareAtPrice": "250",
+      "salePrice": "149",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 31,
+    "title": "Watch Chain Crassula (Crassula muscosa) &#8212; Zipper Textured Succulent",
+    "handle": "",
+    "regularPrice": 100,
+    "salePrice": 49,
+    "compareAtPrice": 100,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "100",
+      "compareAtPrice": "100",
+      "salePrice": "49",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 32,
+    "title": "Kalanchoe Marnieriana &#8212; Marnier's Stacked Disc Blue Pink Succulent",
+    "handle": "",
+    "regularPrice": 109,
+    "salePrice": 69,
+    "compareAtPrice": 109,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "109",
+      "compareAtPrice": "109",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 33,
+    "title": "Echeveria Melaco &#8212; Vivid Multi-Colour Gradient Rosette Succulent",
+    "handle": "",
+    "regularPrice": 150,
+    "salePrice": 99,
+    "compareAtPrice": 150,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "150",
+      "compareAtPrice": "150",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 34,
+    "title": "Echeveria Perle von Nurnberg &#8212; Purple Iridescent Premium Rosette",
+    "handle": "",
+    "regularPrice": 170,
+    "salePrice": 99,
+    "compareAtPrice": 170,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "170",
+      "compareAtPrice": "170",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 35,
+    "title": "Molded Wax (Echeveria agavoides) &#8212; Geometric Waxy Red Tipped Rosette",
+    "handle": "",
+    "regularPrice": 169,
+    "salePrice": 99,
+    "compareAtPrice": 169,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "169",
+      "compareAtPrice": "169",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 36,
+    "title": "Echeveria Harmsii &#8212; Red Velvet Fuzzy Textured Rosette",
+    "handle": "",
+    "regularPrice": 110,
+    "salePrice": 69,
+    "compareAtPrice": 110,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "110",
+      "compareAtPrice": "110",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 37,
+    "title": "Sedum Green Mini &#8212; Compact Bright Green Clustering Stonecrop",
+    "handle": "",
+    "regularPrice": 90,
+    "salePrice": 59,
+    "compareAtPrice": 90,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "90",
+      "compareAtPrice": "90",
+      "salePrice": "59",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 38,
+    "title": "Mother of Thousands (Kalanchoe daigremontiana)",
+    "handle": "",
+    "regularPrice": 79,
+    "salePrice": 49,
+    "compareAtPrice": 79,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "79",
+      "compareAtPrice": "79",
+      "salePrice": "49",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 39,
+    "title": "Adromischus Cooperi &#8212; Plover Egg Spotted Leaf Succulent",
+    "handle": "",
+    "regularPrice": 139,
+    "salePrice": 89,
+    "compareAtPrice": 139,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "139",
+      "compareAtPrice": "139",
+      "salePrice": "89",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 40,
+    "title": "Combo 3 - Hanging",
+    "handle": "",
+    "regularPrice": 289,
+    "salePrice": 289,
+    "compareAtPrice": 289,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "289",
+      "compareAtPrice": "289",
+      "salePrice": "289",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 41,
+    "title": "Echeveria Ghost (E. lilacina &#215; E. colorata) &#8212; Silver Lilac Hybrid Rosette",
+    "handle": "",
+    "regularPrice": 129,
+    "salePrice": 79,
+    "compareAtPrice": 129,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "129",
+      "compareAtPrice": "129",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 42,
+    "title": "Pencil Cactus (Euphorbia tirucalli) &#8212; Architectural Branching Succulent",
+    "handle": "",
+    "regularPrice": 199,
+    "salePrice": 129,
+    "compareAtPrice": 199,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "199",
+      "compareAtPrice": "199",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 43,
+    "title": "Echeveria Frill Curls &#8212; Ruffled Frilled Edge Decorative Rosette Succulent",
+    "handle": "",
+    "regularPrice": 199,
+    "salePrice": 139,
+    "compareAtPrice": 199,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "199",
+      "compareAtPrice": "199",
+      "salePrice": "139",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 44,
+    "title": "Echeveria Desmetiana &#8212; Blue Pink Powdery Large Rosette Succulent",
+    "handle": "",
+    "regularPrice": 189,
+    "salePrice": 129,
+    "compareAtPrice": 189,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "189",
+      "compareAtPrice": "189",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 45,
+    "title": "Echeveria Pink Border &#8212; Soft Pink Edged Pale Green Rosette Succulent",
+    "handle": "",
+    "regularPrice": 200,
+    "salePrice": 139,
+    "compareAtPrice": 200,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "200",
+      "compareAtPrice": "200",
+      "salePrice": "139",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 46,
+    "title": "Jade Plant (Crassula ovata) &#8212; Lucky Vastu Money Plant",
+    "handle": "",
+    "regularPrice": 60,
+    "salePrice": 39,
+    "compareAtPrice": 60,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "60",
+      "compareAtPrice": "60",
+      "salePrice": "39",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 47,
+    "title": "Panda Plant (Kalanchoe tomentosa) &#8212; Fuzzy Silver Velvet Leaf Succulent",
+    "handle": "",
+    "regularPrice": 159,
+    "salePrice": 99,
+    "compareAtPrice": 159,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "159",
+      "compareAtPrice": "159",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 48,
+    "title": "Echeveria Hookeri &#8212; Graceful Large Green Rare Species Rosette",
+    "handle": "",
+    "regularPrice": 230,
+    "salePrice": 140,
+    "compareAtPrice": 230,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "230",
+      "compareAtPrice": "230",
+      "salePrice": "140",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 49,
+    "title": "Echeveria Elegans &#8212; Mexican Snowball Classic Pastel Beginner Rosette",
+    "handle": "",
+    "regularPrice": 199,
+    "salePrice": 129,
+    "compareAtPrice": 199,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "199",
+      "compareAtPrice": "199",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 50,
+    "title": "Flapjack Paddle Plant (Kalanchoe thyrsiflora) &#8212; Red Edge Succulent",
+    "handle": "",
+    "regularPrice": 159,
+    "salePrice": 99,
+    "compareAtPrice": 159,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "159",
+      "compareAtPrice": "159",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 51,
+    "title": "Burro's Tail (Sedum morganianum) &#8212; Long Cascading Trailing Succulent",
+    "handle": "",
+    "regularPrice": 159,
+    "salePrice": 99,
+    "compareAtPrice": 159,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "159",
+      "compareAtPrice": "159",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 52,
+    "title": "Crown Cactus (Rebutia) &#8212; Orange Blooming Cluster Cactus",
+    "handle": "",
+    "regularPrice": 199,
+    "salePrice": 129,
+    "compareAtPrice": 199,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "199",
+      "compareAtPrice": "199",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 53,
+    "title": "Hens and Chicks (Sempervivum tectorum) &#8212; Hardy Clustering Rosette",
+    "handle": "",
+    "regularPrice": 130,
+    "salePrice": 89,
+    "compareAtPrice": 130,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "130",
+      "compareAtPrice": "130",
+      "salePrice": "89",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 54,
+    "title": "Echeveria Colorata 'Blue Prince' &#8212; Steel Blue Farina Rosette",
+    "handle": "",
+    "regularPrice": 149,
+    "salePrice": 99,
+    "compareAtPrice": 149,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "149",
+      "compareAtPrice": "149",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 55,
+    "title": "Pachyphytum oviferum &#8212; Pearl White Egg Leaf Rare Succulent",
+    "handle": "",
+    "regularPrice": 139,
+    "salePrice": 79,
+    "compareAtPrice": 139,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "139",
+      "compareAtPrice": "139",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 56,
+    "title": "Bergeranthus Concavus &#8212; Rare South African Clustering Succulent",
+    "handle": "",
+    "regularPrice": 209,
+    "salePrice": 119,
+    "compareAtPrice": 209,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "209",
+      "compareAtPrice": "209",
+      "salePrice": "119",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 57,
+    "title": "Green Campfire Crassula &#8212; Stacked Green Leaf Succulent",
+    "handle": "",
+    "regularPrice": 79,
+    "salePrice": 49,
+    "compareAtPrice": 79,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "79",
+      "compareAtPrice": "79",
+      "salePrice": "49",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 58,
+    "title": "Echinopsis subdenudata &#8212; Giromagi White Flowering Cactus",
+    "handle": "",
+    "regularPrice": 159,
+    "salePrice": 99,
+    "compareAtPrice": 159,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "159",
+      "compareAtPrice": "159",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 59,
+    "title": "Pink Moonstone (Pachyphytum oviferum) &#8212; Pearl Pink Egg Leaf Rare Succulent",
+    "handle": "",
+    "regularPrice": 199,
+    "salePrice": 149,
+    "compareAtPrice": 199,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "199",
+      "compareAtPrice": "199",
+      "salePrice": "149",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 60,
+    "title": "Haworthia Herbacea _ - Best Low Light Succulent",
+    "handle": "",
+    "regularPrice": 119,
+    "salePrice": 79,
+    "compareAtPrice": 119,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "119",
+      "compareAtPrice": "119",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 61,
+    "title": "Haworthia attenuata - Best Low Light Succulent",
+    "handle": "",
+    "regularPrice": 179,
+    "salePrice": 129,
+    "compareAtPrice": 179,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "179",
+      "compareAtPrice": "179",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 62,
+    "title": "Sedum Pachyphyllum &#8212; Jelly Bean Red Tip Trailing Stonecrop",
+    "handle": "",
+    "regularPrice": 110,
+    "salePrice": 69,
+    "compareAtPrice": 110,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "110",
+      "compareAtPrice": "110",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 63,
+    "title": "Donkey Tail (Sedum burrito) &#8212; Compact Indoor Hanging Succulent",
+    "handle": "",
+    "regularPrice": 149,
+    "salePrice": 99,
+    "compareAtPrice": 149,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "149",
+      "compareAtPrice": "149",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 64,
+    "title": "Echeveria 'Blue Surprise' &#8212; Lavender Blue Premium Rosette Succulent",
+    "handle": "",
+    "regularPrice": 329,
+    "salePrice": 199,
+    "compareAtPrice": 329,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "329",
+      "compareAtPrice": "329",
+      "salePrice": "199",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 65,
+    "title": "Senecio 'Lime Chalkstick' &#8212; Bright Lime Green Finger Succulent",
+    "handle": "",
+    "regularPrice": 130,
+    "salePrice": 89,
+    "compareAtPrice": 130,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "130",
+      "compareAtPrice": "130",
+      "salePrice": "89",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 66,
+    "title": "Sedum Adolphii 'Lime Gold' &#8212; Yellow Orange Golden Glow Stonecrop",
+    "handle": "",
+    "regularPrice": 109,
+    "salePrice": 69,
+    "compareAtPrice": 109,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "109",
+      "compareAtPrice": "109",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 67,
+    "title": "Thimble Cactus (Mammillaria gracilis) &#8212; White Ball Clustering Cactus",
+    "handle": "",
+    "regularPrice": 179,
+    "salePrice": 119,
+    "compareAtPrice": 179,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "179",
+      "compareAtPrice": "179",
+      "salePrice": "119",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 68,
+    "title": "Haworthiopsis Attenuata &#8212; Zebra Haworthia Low Light Succulent",
+    "handle": "",
+    "regularPrice": 170,
+    "salePrice": 99,
+    "compareAtPrice": 170,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "170",
+      "compareAtPrice": "170",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 69,
+    "title": "Mammillaria Prolifera &#8212; Silver Lace Flowering Cluster Cactus",
+    "handle": "",
+    "regularPrice": 199,
+    "salePrice": 129,
+    "compareAtPrice": 199,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "199",
+      "compareAtPrice": "199",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 70,
+    "title": "Graptoveria Lovely Rose &#8212; Pink Lavender Hybrid Rosette",
+    "handle": "",
+    "regularPrice": 190,
+    "salePrice": 129,
+    "compareAtPrice": 190,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "190",
+      "compareAtPrice": "190",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 71,
+    "title": "Aeonium Haworthii &#8212; Pinwheel Blue Green Variegated Rosette",
+    "handle": "",
+    "regularPrice": 120,
+    "salePrice": 69,
+    "compareAtPrice": 120,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "120",
+      "compareAtPrice": "120",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 72,
+    "title": "Bunny Ear Yellow Cactus (Opuntia microdasys) &#8212; Golden Yellow Polka Dot Cactus",
+    "handle": "",
+    "regularPrice": 120,
+    "salePrice": 79,
+    "compareAtPrice": 120,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "120",
+      "compareAtPrice": "120",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 73,
+    "title": "Echeveria Lilacina &#8212; Ghost Echeveria Silver White Porcelain Rosette",
+    "handle": "",
+    "regularPrice": 150,
+    "salePrice": 99,
+    "compareAtPrice": 150,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "150",
+      "compareAtPrice": "150",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 74,
+    "title": "Echeveria Onslow &#8212; Pink Tipped Pale Green Compact Rosette Succulent",
+    "handle": "",
+    "regularPrice": 170,
+    "salePrice": 119,
+    "compareAtPrice": 170,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "170",
+      "compareAtPrice": "170",
+      "salePrice": "119",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 75,
+    "title": "Vishnu Kamal (Sempervivum) &#8212; Sacred Vastu Rosette Succulent",
+    "handle": "",
+    "regularPrice": 219,
+    "salePrice": 139,
+    "compareAtPrice": 219,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "219",
+      "compareAtPrice": "219",
+      "salePrice": "139",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 76,
+    "title": "String of Tears (Senecio herreianus) &#8212; Teardrop Trailing Succulent",
+    "handle": "",
+    "regularPrice": 79,
+    "salePrice": 39,
+    "compareAtPrice": 79,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "79",
+      "compareAtPrice": "79",
+      "salePrice": "39",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 77,
+    "title": "Jelly Bean Succulent (Sedum rubrotinctum) &#8212; Red Tip Plump Stonecrop",
+    "handle": "",
+    "regularPrice": 109,
+    "salePrice": 69,
+    "compareAtPrice": 109,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "109",
+      "compareAtPrice": "109",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 78,
+    "title": "String of Pearls (Senecio rowleyanus) &#8212; Cascading Trailing Succulent",
+    "handle": "",
+    "regularPrice": 90,
+    "salePrice": 59,
+    "compareAtPrice": 90,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "90",
+      "compareAtPrice": "90",
+      "salePrice": "59",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 79,
+    "title": "Graptopetalum Amethystinum &#8212; Lavender Jewel Pebble Rare Succulent",
+    "handle": "",
+    "regularPrice": 109,
+    "salePrice": 59,
+    "compareAtPrice": 109,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "109",
+      "compareAtPrice": "109",
+      "salePrice": "59",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 80,
+    "title": "Haworthia Cymbiformis Pallida &#8212; Translucent Window Leaf Succulent",
+    "handle": "",
+    "regularPrice": 150,
+    "salePrice": 89,
+    "compareAtPrice": 150,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "150",
+      "compareAtPrice": "150",
+      "salePrice": "89",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 81,
+    "title": "Echeveria 'Starlite' &#8212; Glowing White Silver Premium Rosette",
+    "handle": "",
+    "regularPrice": 169,
+    "salePrice": 99,
+    "compareAtPrice": 169,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "169",
+      "compareAtPrice": "169",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 82,
+    "title": "Variegated Jade Plant (Crassula ovata) &#8212; Lucky Cream Green Money Plant",
+    "handle": "",
+    "regularPrice": 220,
+    "salePrice": 129,
+    "compareAtPrice": 220,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "220",
+      "compareAtPrice": "220",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 83,
+    "title": "Textured Matt Ceramic Round Succulent Planter Pot, Matt Beige, 11.5 x 8 cm, Indoor Decor",
+    "handle": "",
+    "regularPrice": 469,
+    "salePrice": 300,
+    "compareAtPrice": 469,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "469",
+      "compareAtPrice": "469",
+      "salePrice": "300",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 84,
+    "title": "Crassula Perforata Variegata &#8212; Cream Green String of Buttons",
+    "handle": "",
+    "regularPrice": 190,
+    "salePrice": 129,
+    "compareAtPrice": 190,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "190",
+      "compareAtPrice": "190",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 85,
+    "title": "Baby Sunrose (Aptenia cordifolia) &#8212; Flowering Ground Cover Succulent",
+    "handle": "",
+    "regularPrice": 79,
+    "salePrice": 39,
+    "compareAtPrice": 79,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "79",
+      "compareAtPrice": "79",
+      "salePrice": "39",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 86,
+    "title": "Combo 5 - The Prosperity Bundle",
+    "handle": "",
+    "regularPrice": 389,
+    "salePrice": 389,
+    "compareAtPrice": 389,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "389",
+      "compareAtPrice": "389",
+      "salePrice": "389",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 87,
+    "title": "English Ivy (Hedera helix) &#8212; Air Purifying Trailing Indoor Vine",
+    "handle": "",
+    "regularPrice": 70,
+    "salePrice": 49,
+    "compareAtPrice": 70,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "70",
+      "compareAtPrice": "70",
+      "salePrice": "49",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 88,
+    "title": "Echeveria subsessilis &#8212; The Morning Beauty Blue Rosette Succulent",
+    "handle": "",
+    "regularPrice": 199,
+    "salePrice": 129,
+    "compareAtPrice": 199,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "199",
+      "compareAtPrice": "199",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 89,
+    "title": "Zebra Haworthia (Haworthiopsis attenuata) &#8212; Best Low Light Succulent",
+    "handle": "",
+    "regularPrice": 150,
+    "salePrice": 89,
+    "compareAtPrice": 150,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "150",
+      "compareAtPrice": "150",
+      "salePrice": "89",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 90,
+    "title": "Laxmi Kamal (Sempervivum calcareum) &#8212; Sacred Vastu Rosette Succulent",
+    "handle": "",
+    "regularPrice": 79,
+    "salePrice": 39,
+    "compareAtPrice": 79,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "79",
+      "compareAtPrice": "79",
+      "salePrice": "39",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 91,
+    "title": "Gollum Jade (Crassula ovata) &#8212; Vastu Trumpet Leaf Lucky Succulent",
+    "handle": "",
+    "regularPrice": 79,
+    "salePrice": 39,
+    "compareAtPrice": 79,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "79",
+      "compareAtPrice": "79",
+      "salePrice": "39",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 92,
+    "title": "Aeonium Castello-Paivae &#8212; Dwarf Variegated Branching Rosette Succulent",
+    "handle": "",
+    "regularPrice": 129,
+    "salePrice": 75,
+    "compareAtPrice": 129,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "129",
+      "compareAtPrice": "129",
+      "salePrice": "75",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 93,
+    "title": "Crassula Swaziensis &#8212; Compact Red Edge Green Branching Succulent",
+    "handle": "",
+    "regularPrice": 60,
+    "salePrice": 39,
+    "compareAtPrice": 60,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "60",
+      "compareAtPrice": "60",
+      "salePrice": "39",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 94,
+    "title": "Kalanchoe Millotii &#8212; Soft Silver Velvety Scalloped Leaf Succulent",
+    "handle": "",
+    "regularPrice": 109,
+    "salePrice": 69,
+    "compareAtPrice": 109,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "109",
+      "compareAtPrice": "109",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 95,
+    "title": "Echeveria 'Red Hole' &#8212; Bold Red Edged Dramatic Rosette",
+    "handle": "",
+    "regularPrice": 310,
+    "salePrice": 199,
+    "compareAtPrice": 310,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "310",
+      "compareAtPrice": "310",
+      "salePrice": "199",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 96,
+    "title": "Gasteraloe Limpopo &#8212; Rare Hardy Low Light Hybrid Succulent",
+    "handle": "",
+    "regularPrice": 170,
+    "salePrice": 99,
+    "compareAtPrice": 170,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "170",
+      "compareAtPrice": "170",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 97,
+    "title": "Aeonium Arboreum &#8212; Dark Burgundy Tree Rosette Succulent",
+    "handle": "",
+    "regularPrice": 170,
+    "salePrice": 119,
+    "compareAtPrice": 170,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "170",
+      "compareAtPrice": "170",
+      "salePrice": "119",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 98,
+    "title": "Pachyveria Scheideckeri &#8212; Pastel Pink Thick Leaf Hybrid Rosette",
+    "handle": "",
+    "regularPrice": 160,
+    "salePrice": 109,
+    "compareAtPrice": 160,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "160",
+      "compareAtPrice": "160",
+      "salePrice": "109",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 99,
+    "title": "Echeveria 'Topsy Turvy' (Runyonii) &#8212; Curled Sculptural Rosette",
+    "handle": "",
+    "regularPrice": 150,
+    "salePrice": 89,
+    "compareAtPrice": 150,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "150",
+      "compareAtPrice": "150",
+      "salePrice": "89",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 100,
+    "title": "Echeveria Purpusorum &#8212; Spotted Geometric Collector Rosette",
+    "handle": "",
+    "regularPrice": 190,
+    "salePrice": 129,
+    "compareAtPrice": 190,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "190",
+      "compareAtPrice": "190",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 101,
+    "title": "Echeveria 'Cubic Frost' &#8212; Ruffled Purple Lavender Rosette",
+    "handle": "",
+    "regularPrice": 140,
+    "salePrice": 99,
+    "compareAtPrice": 140,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "140",
+      "compareAtPrice": "140",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 102,
+    "title": "Mammillaria &#8212; Pincushion Flowering Globe Cactus",
+    "handle": "",
+    "regularPrice": 180,
+    "salePrice": 119,
+    "compareAtPrice": 180,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "180",
+      "compareAtPrice": "180",
+      "salePrice": "119",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 103,
+    "title": "Crassula Baby Necklace &#8212; Stacked Round Leaf Trailing Succulent",
+    "handle": "",
+    "regularPrice": 149,
+    "salePrice": 99,
+    "compareAtPrice": 149,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "149",
+      "compareAtPrice": "149",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 104,
+    "title": "Aeonium Kiwi &#8212; Tricolor Pink Green Yellow Rosette",
+    "handle": "",
+    "regularPrice": 150,
+    "salePrice": 99,
+    "compareAtPrice": 150,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "150",
+      "compareAtPrice": "150",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 105,
+    "title": "Kalanchoe Blossfeldiana &#8212; Flowering Indoor Succulent",
+    "handle": "",
+    "regularPrice": 109,
+    "salePrice": 69,
+    "compareAtPrice": 109,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "109",
+      "compareAtPrice": "109",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 106,
+    "title": "Echeveria Amoena &#8212; Compact Clustering Blue Pink Rosette Succulent",
+    "handle": "",
+    "regularPrice": 209,
+    "salePrice": 139,
+    "compareAtPrice": 209,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "209",
+      "compareAtPrice": "209",
+      "salePrice": "139",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 107,
+    "title": "Blue Chalksticks (Senecio serpens) &#8212; Powdery Blue Finger Succulent",
+    "handle": "",
+    "regularPrice": 90,
+    "salePrice": 59,
+    "compareAtPrice": 90,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "90",
+      "compareAtPrice": "90",
+      "salePrice": "59",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 108,
+    "title": "Moon Fairy (Echeveria colorata) &#8212; Silver Frosted Large Rosette",
+    "handle": "",
+    "regularPrice": 159,
+    "salePrice": 99,
+    "compareAtPrice": 159,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "159",
+      "compareAtPrice": "159",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 109,
+    "title": "Echeveria Pallida Variegated &#8212; Pink Edge Cream Variegated Rosette",
+    "handle": "",
+    "regularPrice": 219,
+    "salePrice": 129,
+    "compareAtPrice": 219,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "219",
+      "compareAtPrice": "219",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 110,
+    "title": "Echeveria Blue Bird &#8212; Powder Blue Pink Edge Large Rosette",
+    "handle": "",
+    "regularPrice": 149,
+    "salePrice": 99,
+    "compareAtPrice": 149,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "149",
+      "compareAtPrice": "149",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 111,
+    "title": "Peanut Cactus (Echinopsis chamaecereus) &#8212; Orange Blooming Cactus",
+    "handle": "",
+    "regularPrice": 120,
+    "salePrice": 79,
+    "compareAtPrice": 120,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "120",
+      "compareAtPrice": "120",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 112,
+    "title": "Lace Aloe (Aristaloe aristata) &#8212; Low Light Compact Flowering Aloe",
+    "handle": "",
+    "regularPrice": 159,
+    "salePrice": 99,
+    "compareAtPrice": 159,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "159",
+      "compareAtPrice": "159",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 113,
+    "title": "Chinese Dunce Cap (Orostachys iwarenge) &#8212; Rare Conical Succulent",
+    "handle": "",
+    "regularPrice": 139,
+    "salePrice": 79,
+    "compareAtPrice": 139,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "139",
+      "compareAtPrice": "139",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 114,
+    "title": "Chocolate Sedum (Sedum spathulifolium) &#8212; Burgundy Rosette Succulent",
+    "handle": "",
+    "regularPrice": 79,
+    "salePrice": 49,
+    "compareAtPrice": 79,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "79",
+      "compareAtPrice": "79",
+      "salePrice": "49",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 115,
+    "title": "Red Pagoda (Crassula capitella) &#8212; Geometric Stacking Succulent",
+    "handle": "",
+    "regularPrice": 119,
+    "salePrice": 79,
+    "compareAtPrice": 119,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "119",
+      "compareAtPrice": "119",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 116,
+    "title": "Variegated Baby Sunrose &#8212; Cream Green Flowering Trailer",
+    "handle": "",
+    "regularPrice": 89,
+    "salePrice": 49,
+    "compareAtPrice": 89,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "89",
+      "compareAtPrice": "89",
+      "salePrice": "49",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 117,
+    "title": "Pink Wandering Jew (Tradescantia) &#8212; Blush Pink Trailing Succulent",
+    "handle": "",
+    "regularPrice": 119,
+    "salePrice": 79,
+    "compareAtPrice": 119,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "119",
+      "compareAtPrice": "119",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 118,
+    "title": "Purple Wandering Jew (Tradescantia pallida) &#8212; Deep Purple Trailer",
+    "handle": "",
+    "regularPrice": 209,
+    "salePrice": 139,
+    "compareAtPrice": 209,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "209",
+      "compareAtPrice": "209",
+      "salePrice": "139",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 119,
+    "title": "Combo 2 - Cactus",
+    "handle": "",
+    "regularPrice": 389,
+    "salePrice": 389,
+    "compareAtPrice": 389,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "389",
+      "compareAtPrice": "389",
+      "salePrice": "389",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 120,
+    "title": "Crassula Perforata &#8212; String of Buttons Stacked Geometric Succulent",
+    "handle": "",
+    "regularPrice": 129,
+    "salePrice": 79,
+    "compareAtPrice": 129,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "129",
+      "compareAtPrice": "129",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 121,
+    "title": "Austrocephalocereus Dybowskii &#8212; Silver White Hair Column Cactus",
+    "handle": "",
+    "regularPrice": 209,
+    "salePrice": 139,
+    "compareAtPrice": 209,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "209",
+      "compareAtPrice": "209",
+      "salePrice": "139",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 122,
+    "title": "Golden Moss &#8212; Aromatic Kitchen Herb and Mosquito Repellent Plant",
+    "handle": "",
+    "regularPrice": 89,
+    "salePrice": 59,
+    "compareAtPrice": 89,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "89",
+      "compareAtPrice": "89",
+      "salePrice": "59",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 123,
+    "title": "Crassula Sarmentosa &#8212; Fast Trailing Red Edge Balcony Jade Succulent",
+    "handle": "",
+    "regularPrice": 110,
+    "salePrice": 69,
+    "compareAtPrice": 110,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "110",
+      "compareAtPrice": "110",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 124,
+    "title": "Pachyphytum Compactum &#8212; Rare Faceted Jewel Geometric Leaf Succulent",
+    "handle": "",
+    "regularPrice": 119,
+    "salePrice": 45,
+    "compareAtPrice": 119,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "119",
+      "compareAtPrice": "119",
+      "salePrice": "45",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 125,
+    "title": "Orbea Semota &#8212; Exotic Star Flower Blooming Succulent",
+    "handle": "",
+    "regularPrice": 139,
+    "salePrice": 89,
+    "compareAtPrice": 139,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "139",
+      "compareAtPrice": "139",
+      "salePrice": "89",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 126,
+    "title": "Echeveria 'Pink Crystal' &#8212; Rare Pink Variegated Premium Rosette",
+    "handle": "",
+    "regularPrice": 319,
+    "salePrice": 189,
+    "compareAtPrice": 319,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "319",
+      "compareAtPrice": "319",
+      "salePrice": "189",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 127,
+    "title": "Mammillaria Zeilmanniana &#8212; Pink Crown Flowering Pincushion Cactus",
+    "handle": "",
+    "regularPrice": 200,
+    "salePrice": 129,
+    "compareAtPrice": 200,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "200",
+      "compareAtPrice": "200",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 128,
+    "title": "Variegated Gollum Jade (Crassula ovata) &#8212; Rare Yellow Green Succulent",
+    "handle": "",
+    "regularPrice": 170,
+    "salePrice": 99,
+    "compareAtPrice": 170,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "170",
+      "compareAtPrice": "170",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 129,
+    "title": "Bear's Paw (Cotyledon tomentosa) &#8212; Fuzzy Red Tipped Leaf Succulent",
+    "handle": "",
+    "regularPrice": 200,
+    "salePrice": 129,
+    "compareAtPrice": 200,
+    "inventoryQuantity": null,
+    "available": false,
+    "raw": {
+      "price": "200",
+      "compareAtPrice": "200",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "Out of stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 130,
+    "title": "Exotic Wandering Jew (Tradescantia) &#8212; Fast Trailing Succulent",
+    "handle": "",
+    "regularPrice": 119,
+    "salePrice": 79,
+    "compareAtPrice": 119,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "119",
+      "compareAtPrice": "119",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 131,
+    "title": "Combo 1 - Vastu",
+    "handle": "",
+    "regularPrice": 249,
+    "salePrice": 249,
+    "compareAtPrice": 249,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "249",
+      "compareAtPrice": "249",
+      "salePrice": "249",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 132,
+    "title": "Fairy Castle Cactus (Acanthocereus tetragonus)",
+    "handle": "",
+    "regularPrice": 150,
+    "salePrice": 99,
+    "compareAtPrice": 150,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "150",
+      "compareAtPrice": "150",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 133,
+    "title": "Cathedral Window Haworthia (Haworthia cymbiformis) &#8212; Translucent Window Leaf Low Light Succulent",
+    "handle": "",
+    "regularPrice": 159,
+    "salePrice": 89,
+    "compareAtPrice": 159,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "159",
+      "compareAtPrice": "159",
+      "salePrice": "89",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 134,
+    "title": "Bunny Ear White Cactus (Opuntia) &#8212; White Polka Dot Indoor Cactus",
+    "handle": "",
+    "regularPrice": 100,
+    "salePrice": 69,
+    "compareAtPrice": 100,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "100",
+      "compareAtPrice": "100",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 135,
+    "title": "Echinopsis Oxygona &#8212; Pink Flowering Globe Cactus",
+    "handle": "",
+    "regularPrice": 189,
+    "salePrice": 129,
+    "compareAtPrice": 189,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "189",
+      "compareAtPrice": "189",
+      "salePrice": "129",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 136,
+    "title": "Combo 6 - The Echeveria Bundle",
+    "handle": "",
+    "regularPrice": 499,
+    "salePrice": 499,
+    "compareAtPrice": 499,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "499",
+      "compareAtPrice": "499",
+      "salePrice": "499",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 137,
+    "title": "Corpuscularia Lehmannii &#8212; Rare Baby Toes Window Leaf Succulent",
+    "handle": "",
+    "regularPrice": 120,
+    "salePrice": 69,
+    "compareAtPrice": 120,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "120",
+      "compareAtPrice": "120",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 138,
+    "title": "Tiger Tooth Aloe (Aloe juvenna) &#8212; Spiky Clustering Mini Aloe",
+    "handle": "",
+    "regularPrice": 140,
+    "salePrice": 99,
+    "compareAtPrice": 140,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "140",
+      "compareAtPrice": "140",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 139,
+    "title": "Panda Plant Cutting (Kalanchoe tomentosa) &#8212; Propagation Starter",
+    "handle": "",
+    "regularPrice": 150,
+    "salePrice": 99,
+    "compareAtPrice": 150,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "150",
+      "compareAtPrice": "150",
+      "salePrice": "99",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 140,
+    "title": "Variegated String of Pearls (Senecio rowleyanus) &#8212; Rare Beaded Trailer",
+    "handle": "",
+    "regularPrice": 119,
+    "salePrice": 69,
+    "compareAtPrice": 119,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "119",
+      "compareAtPrice": "119",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 141,
+    "title": "Kalanchoe fedtschenkoi &#8212; Lavender Scallop Pink Edge Succulent",
+    "handle": "",
+    "regularPrice": 119,
+    "salePrice": 79,
+    "compareAtPrice": 119,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "119",
+      "compareAtPrice": "119",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 142,
+    "title": "Variegated Wandering Jew (Tradescantia) &#8212; Cream Green Striped Trailer",
+    "handle": "",
+    "regularPrice": 119,
+    "salePrice": 69,
+    "compareAtPrice": 119,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "119",
+      "compareAtPrice": "119",
+      "salePrice": "69",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 143,
+    "title": "Variegated Elephant Bush &#8212; Cream Green Bonsai Succulent",
+    "handle": "",
+    "regularPrice": 100,
+    "salePrice": 59,
+    "compareAtPrice": 100,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "100",
+      "compareAtPrice": "100",
+      "salePrice": "59",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 144,
+    "title": "Bunny Ear Red Cactus (Opuntia) &#8212; Red Polka Dot Decorative Cactus",
+    "handle": "",
+    "regularPrice": 119,
+    "salePrice": 79,
+    "compareAtPrice": 119,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "119",
+      "compareAtPrice": "119",
+      "salePrice": "79",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 145,
+    "title": "Echeveria Chihuahuensis &#8212; Pink Tipped Blue Green Compact Rosette Succulent",
+    "handle": "",
+    "regularPrice": 219,
+    "salePrice": 139,
+    "compareAtPrice": 219,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "219",
+      "compareAtPrice": "219",
+      "salePrice": "139",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  },
+  {
+    "sheetName": "Master Catalog",
+    "rowNumber": 146,
+    "title": "Echeveria Tippy &#8212; Classic Pink Tipped Blue Rosette Succulent",
+    "handle": "",
+    "regularPrice": 229,
+    "salePrice": 159,
+    "compareAtPrice": 229,
+    "inventoryQuantity": null,
+    "available": true,
+    "raw": {
+      "price": "229",
+      "compareAtPrice": "229",
+      "salePrice": "159",
+      "inventoryQuantity": "",
+      "availability": "In stock"
+    }
+  }
+]

@@ -1,0 +1,1771 @@
+[
+  {
+    "docId": "white-cylindrical-pot-with-geometric-design-plant-container-set",
+    "catalogProduct": {
+      "sheetName": "Master Catalog",
+      "rowNumber": 9,
+      "title": "White Cylindrical Pot with Geometric Design Plant Container Set",
+      "handle": "",
+      "regularPrice": 430,
+      "salePrice": 300,
+      "compareAtPrice": 430,
+      "inventoryQuantity": null,
+      "available": true,
+      "raw": {
+        "price": "430",
+        "compareAtPrice": "430",
+        "salePrice": "300",
+        "inventoryQuantity": "",
+        "availability": "In stock"
+      }
+    },
+    "current": {
+      "id": "white-cylindrical-pot-with-geometric-design-plant-container-set",
+      "available": true,
+      "description": "Item Dimensions D x W x H - 10D x 10W x 12H Centimeters Color - White Product Style - Cylindrical Planter Form - Plant Pot Shape - Cylindrical Pattern - Solid Theme - Modern Enclosure Material - Ceramic Drainage Hole - Yes",
+      "plantGenus": "",
+      "source": "shopify-csv",
+      "title": "White Cylindrical Pot with Geometric Design Plant Container Set",
+      "type": "Pots",
+      "imageAlt": "White textured ceramic pot on a wooden surface with a blurred background",
+      "createdAt": "2026-08-11T11:25:22.071Z",
+      "collections": [],
+      "price": 300,
+      "vendor": "Succulent Sphere",
+      "sourceInventoryQuantity": 1,
+      "currency": "INR",
+      "productType": "Pots",
+      "handle": "white-cylindrical-pot-with-geometric-design-plant-container-set",
+      "tags": [],
+      "careLevel": "",
+      "descriptionHtml": "<p>Item Dimensions D x W x H -  10D x 10W x 12H Centimeters<br>Color -  White<br>Product Style -  <span>Cylindrical </span><br>Planter Form -  Plant Pot<br>Shape -  <span>Cylindrical </span><br>Pattern -  Solid<br>Theme -  Modern<br>Enclosure Material - Ceramic<br>Drainage Hole - Yes</p>",
+      "category": "Home & Garden > Lawn & Garden > Gardening > Pots & Planters > Planters",
+      "status": "active",
+      "imageStorage": "hostinger-temporary",
+      "imageStorageUpdatedAt": "2026-08-11T18:16:13.352Z",
+      "seoDescription": "Buy White Cylindrical Pot online in India. Low-maintenance succulent, ideal for Indian homes. Starting ₹300. All India delivery.",
+      "recoveredImageSources": [
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/White_textured_ceramic_pot_on_a_wooden_surface_with_a_blurred_background.webp?v=1773858945",
+          "altText": "White textured ceramic pot on a wooden surface with a blurred background",
+          "relativePath": "white-cylindrical-pot-with-geometric-design-plant-container-set/1-White_textured_ceramic_pot_on_a_wooden_surface_with_a_blurred_background.webp",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/white-cylindrical-pot-with-geometric-design-plant-container-set/1-White_textured_ceramic_pot_on_a_wooden_surface_with_a_blurred_background.webp"
+        }
+      ],
+      "recoverySource": {
+        "csvFile": "products_updated_seo_faq.csv",
+        "type": "shopify-csv-recovery"
+      },
+      "totalInventory": 1,
+      "seoTitle": "Buy White Cylindrical Pot Online India | Succulent Sphere",
+      "productCategory": "Home & Garden > Lawn & Garden > Gardening > Pots & Planters > Planters",
+      "faqs": [
+        {
+          "question": "What size succulent fits best in this pot?",
+          "answer": "This pot is ideal for small to medium succulents and cactus plants. It works perfectly for individual specimens like Echeveria, Haworthia, small Crassula, or compact cacti. For best aesthetics, choose a plant whose foliage extends slightly beyond the pot rim."
+        },
+        {
+          "question": "Is this pot suitable for indoor use in India?",
+          "answer": "Yes, this pot is designed for indoor use and works beautifully on desks, windowsills, shelves, and coffee tables in Indian homes and offices. The material and finish are suited to Indian indoor temperatures and humidity levels."
+        },
+        {
+          "question": "Does this pot have drainage holes?",
+          "answer": "For best plant health with succulents and cacti, use a plastic nursery pot with drainage holes placed inside this decorative pot. If planting directly, add a 2–3 cm gravel layer at the bottom and water very sparingly to prevent root rot."
+        },
+        {
+          "question": "How do I clean and maintain this pot?",
+          "answer": "Clean with a soft damp cloth to remove dust. Avoid harsh chemical cleaners that may damage the finish. If soil residue builds up, rinse gently with water and dry thoroughly before use. Durable for long-term indoor use in Indian home conditions."
+        },
+        {
+          "question": "Is this pot a good gift option in India?",
+          "answer": "Yes! This pot paired with a small succulent or cactus makes a thoughtful gift for housewarmings, birthdays, Diwali, and corporate gifting in India. It is long-lasting, practical, and adds beauty to any home or office space."
+        }
+      ],
+      "sunlight": "",
+      "plantClass": "",
+      "imageAlts": [
+        "White textured ceramic pot on a wooden surface with a blurred background"
+      ],
+      "suitableSpace": "",
+      "compareAtPrice": 430,
+      "image": "https://whitesmoke-cattle-754161.hostingersite.com/products/white-cylindrical-pot-with-geometric-design-plant-container-set/1-White_textured_ceramic_pot_on_a_wooden_surface_with_a_blurred_background.webp",
+      "images": [
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/white-cylindrical-pot-with-geometric-design-plant-container-set/1-White_textured_ceramic_pot_on_a_wooden_surface_with_a_blurred_background.webp",
+          "altText": "White textured ceramic pot on a wooden surface with a blurred background"
+        }
+      ],
+      "updatedAt": "2026-08-13T18:17:53.723Z",
+      "quantity": 10,
+      "inventoryQuantity": 10
+    },
+    "matchType": "title",
+    "update": {
+      "updatedAt": "2026-08-15T19:18:26.290Z",
+      "valueUpdateSource": {
+        "type": "xlsx-product-value-update",
+        "file": "Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+        "sheet": "Master Catalog",
+        "rowNumber": 9,
+        "importedAt": "2026-08-15T19:18:26.290Z"
+      },
+      "price": 300,
+      "compareAtPrice": 430,
+      "available": true,
+      "availability": "InStock",
+      "status": "active"
+    },
+    "change": {
+      "before": {
+        "price": 300,
+        "compareAtPrice": 430,
+        "available": true,
+        "availability": null,
+        "status": "active"
+      },
+      "after": {
+        "price": 300,
+        "compareAtPrice": 430,
+        "available": true,
+        "availability": "InStock",
+        "status": "active"
+      }
+    }
+  },
+  {
+    "docId": "combo-4-pretty-succulents",
+    "catalogProduct": {
+      "sheetName": "Master Catalog",
+      "rowNumber": 15,
+      "title": "Combo 4 - The Radiant Rosette Collection",
+      "handle": "",
+      "regularPrice": 349,
+      "salePrice": 349,
+      "compareAtPrice": 349,
+      "inventoryQuantity": null,
+      "available": true,
+      "raw": {
+        "price": "349",
+        "compareAtPrice": "349",
+        "salePrice": "349",
+        "inventoryQuantity": "",
+        "availability": "In stock"
+      }
+    },
+    "current": {
+      "id": "combo-4-pretty-succulents",
+      "description": "Free Delivery - 4 Succulents 1 - Echeveria Lilacina 2- Aeonium Kiwi 3 - Haworthia Cymbiformis Pallida 4 - Sedum Pachyphyllum",
+      "plantGenus": "Combo",
+      "recoveredImageSources": [
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/vastucombo_6_16b96b3a-a159-4bfa-87f3-b635c32f2be5.png?v=1775454748",
+          "altText": "Combo 4 Radiant Rosette Collection featuring four premium rosette succulents in terracotta pots",
+          "relativePath": "combo-4-pretty-succulents/1-vastucombo_6_16b96b3a-a159-4bfa-87f3-b635c32f2be5.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-4-pretty-succulents/1-vastucombo_6_16b96b3a-a159-4bfa-87f3-b635c32f2be5.png"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/WhatsApp_Image_2026-04-06_at_10.23.24_AM.jpg?v=1775455351",
+          "altText": "Radiant Rosette Combo 4 succulent collection WhatsApp order image for Succulent Sphere",
+          "relativePath": "combo-4-pretty-succulents/2-WhatsApp_Image_2026-04-06_at_10.23.24_AM.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-4-pretty-succulents/2-WhatsApp_Image_2026-04-06_at_10.23.24_AM.jpg"
+        }
+      ],
+      "totalInventory": 0,
+      "seoTitle": "Buy Combo 4 - Online India | Succulent Sphere",
+      "title": "Combo 4 - The Radiant Rosette Collection",
+      "type": "Combo",
+      "imageAlt": "Combo 4 Radiant Rosette Collection featuring four premium rosette succulents in terracotta pots",
+      "productCategory": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "createdAt": "2026-08-13T16:35:56.192Z",
+      "price": 349,
+      "vendor": "Succulent Sphere",
+      "plantClass": "saxifragales; caryophyllales",
+      "currency": "INR",
+      "suitableSpace": "indoors",
+      "productType": "Combo",
+      "compareAtPrice": 0,
+      "seoDescription": "Buy Combo 4 - online in India. Low-maintenance succulent, ideal for Indian homes. Starting ₹349. All India delivery.",
+      "recoverySource": {
+        "csvFile": "products_updated_seo_faq.csv",
+        "type": "shopify-csv-recovery"
+      },
+      "handle": "combo-4-pretty-succulents",
+      "tags": [
+        "free_shipping"
+      ],
+      "faqs": [
+        {
+          "question": "What plants are included in Combo 4 -?",
+          "answer": "Combo 4 - includes a curated selection of healthy succulents chosen for compatibility in care, growth habits, and visual contrast. All plants are sourced fresh and dispatched from our growing facility in India with detailed care instructions."
+        },
+        {
+          "question": "Can I keep all plants in Combo 4 - together in one pot?",
+          "answer": "The plants in Combo 4 - share similar care needs and can be kept together in one large pot or arranged in individual pots. For best long-term results, individual pots with well-draining succulent soil allow each plant to be managed optimally."
+        },
+        {
+          "question": "Are the plants in Combo 4 - suitable for beginners in India?",
+          "answer": "Yes! Combo 4 - is curated for ease of care in Indian conditions. All included plants are low-maintenance, drought tolerant, and adaptable to indoor environments. They thrive with bright indirect light and weekly watering — ideal for first-time plant parents."
+        },
+        {
+          "question": "How are the plants in Combo 4 - packaged for delivery in India?",
+          "answer": "Plants in Combo 4 - are dispatched bare-rooted in individual wrapping to prevent transit damage. Upon receiving, unpack immediately, air dry for 2–3 hours, then plant in well-draining succulent soil in pots with drainage holes."
+        },
+        {
+          "question": "Is Combo 4 - a good gift for housewarmings or birthdays in India?",
+          "answer": "Yes! Combo 4 - makes an excellent gift for housewarmings, birthdays, Diwali, and corporate gifting in India. Succulent combos are thoughtful, long-lasting gifts that require minimal maintenance and suit all ages and spaces."
+        }
+      ],
+      "sunlight": "partial-shade; full-sun",
+      "descriptionHtml": "<p>Free Delivery - 4 Succulents<br>1 - Echeveria Lilacina<br>2- Aeonium Kiwi <br>3 - Haworthia Cymbiformis Pallida<br>4 - Sedum Pachyphyllum</p>",
+      "imageAlts": [
+        "Combo 4 Radiant Rosette Collection featuring four premium rosette succulents in terracotta pots",
+        "Radiant Rosette Combo 4 succulent collection WhatsApp order image for Succulent Sphere"
+      ],
+      "status": "active",
+      "image": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-4-pretty-succulents/1-vastucombo_6_16b96b3a-a159-4bfa-87f3-b635c32f2be5.png",
+      "images": [
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-4-pretty-succulents/1-vastucombo_6_16b96b3a-a159-4bfa-87f3-b635c32f2be5.png",
+          "altText": "Combo 4 Radiant Rosette Collection featuring four premium rosette succulents in terracotta pots"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-4-pretty-succulents/2-WhatsApp_Image_2026-04-06_at_10.23.24_AM.jpg",
+          "altText": "Radiant Rosette Combo 4 succulent collection WhatsApp order image for Succulent Sphere"
+        }
+      ],
+      "updatedAt": "2026-08-13T18:16:03.633Z",
+      "quantity": 10,
+      "inventoryQuantity": 10,
+      "available": true
+    },
+    "matchType": "title",
+    "update": {
+      "updatedAt": "2026-08-15T19:18:26.290Z",
+      "valueUpdateSource": {
+        "type": "xlsx-product-value-update",
+        "file": "Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+        "sheet": "Master Catalog",
+        "rowNumber": 15,
+        "importedAt": "2026-08-15T19:18:26.290Z"
+      },
+      "price": 349,
+      "compareAtPrice": 349,
+      "available": true,
+      "availability": "InStock",
+      "status": "active"
+    },
+    "change": {
+      "before": {
+        "price": 349,
+        "compareAtPrice": 0,
+        "available": true,
+        "availability": null,
+        "status": "active"
+      },
+      "after": {
+        "price": 349,
+        "compareAtPrice": 349,
+        "available": true,
+        "availability": "InStock",
+        "status": "active"
+      }
+    }
+  },
+  {
+    "docId": "mother-of-thousand",
+    "catalogProduct": {
+      "sheetName": "Master Catalog",
+      "rowNumber": 38,
+      "title": "Mother of Thousands (Kalanchoe daigremontiana)",
+      "handle": "",
+      "regularPrice": 79,
+      "salePrice": 49,
+      "compareAtPrice": 79,
+      "inventoryQuantity": null,
+      "available": true,
+      "raw": {
+        "price": "79",
+        "compareAtPrice": "79",
+        "salePrice": "49",
+        "inventoryQuantity": "",
+        "availability": "In stock"
+      }
+    },
+    "current": {
+      "id": "mother-of-thousand",
+      "description": "Mother of Thousands, botanically known as Kalanchoe daigremontiana, is a fascinating succulent famous for its remarkable natural propagation. The long triangular leaves develop tiny baby plantlets along their edges, which eventually fall and grow into new plants — giving the plant its distinctive name. The bluish-green leaves often feature subtle dark patterns and serrated edges, creating a bold and exotic appearance. As the plant matures, it grows upright and continuously produces small plantlets, making it one of the most prolific and easy-to-multiply succulents. Because of its unusual reproduction and fast growth, this plant is highly appreciated by succulent enthusiasts and beginners who enjoy watching plants propagate naturally. In Indian climates, Mother of Thousands grows vigorously with bright light and minimal watering, making it a resilient and low-maintenance plant. This variety is ideal for: Beginner succulent collections Balcony succulent planters Propagation enthusiasts Unique botanical displays Educational plant collections If you're planning to buy Mother of Thousands plant online in India, this extraordinary succulent offers both visual interest and natural propagation — making it a truly unique addition to your plant collection. 🌞 Care Guide (Indian Climate Optimized) ☀ Light: Bright indirect sunlight or mild direct sun (4–6 hours ideal) 💧 Watering: Water only when soil becomes completely dry 🌡 Temperature: 18–35°C 🌱 Soil: Well-draining cactus or succulent mix 🌬 Airflow: Good ventilation recommended, especially during humid months 🚫 Avoid: Overwatering and water stagnation Fallen plantlets can easily root in nearby soil and grow into new plants.",
+      "plantGenus": "Kalanchoe",
+      "source": "shopify-csv",
+      "title": "Mother of Thousands (Kalanchoe daigremontiana)",
+      "type": "Succulent",
+      "imageAlt": "Mother Of Thousand",
+      "createdAt": "2026-08-11T11:25:22.071Z",
+      "collections": [],
+      "price": 49,
+      "vendor": "Succulent Sphere",
+      "sourceInventoryQuantity": -5,
+      "currency": "INR",
+      "productType": "Succulent",
+      "handle": "mother-of-thousand",
+      "tags": [
+        "Beginner"
+      ],
+      "careLevel": "beginner",
+      "descriptionHtml": "<p>Mother of Thousands, botanically known as Kalanchoe daigremontiana, is a fascinating succulent famous for its remarkable natural propagation. The long triangular leaves develop tiny baby plantlets along their edges, which eventually fall and grow into new plants — giving the plant its distinctive name.</p>\n<p>The bluish-green leaves often feature subtle dark patterns and serrated edges, creating a bold and exotic appearance. As the plant matures, it grows upright and continuously produces small plantlets, making it one of the most prolific and easy-to-multiply succulents.</p>\n<p>Because of its unusual reproduction and fast growth, this plant is highly appreciated by succulent enthusiasts and beginners who enjoy watching plants propagate naturally.</p>\n<p>In Indian climates, Mother of Thousands grows vigorously with bright light and minimal watering, making it a resilient and low-maintenance plant.</p>\n<p>This variety is ideal for:</p>\n<p>Beginner succulent collections</p>\n<p>Balcony succulent planters</p>\n<p>Propagation enthusiasts</p>\n<p>Unique botanical displays</p>\n<p>Educational plant collections</p>\n<p>If you're planning to buy Mother of Thousands plant online in India, this extraordinary succulent offers both visual interest and natural propagation — making it a truly unique addition to your plant collection.</p>\n<p>🌞 Care Guide (Indian Climate Optimized)</p>\n<p>☀ Light: Bright indirect sunlight or mild direct sun (4–6 hours ideal)<br>💧 Watering: Water only when soil becomes completely dry<br>🌡 Temperature: 18–35°C<br>🌱 Soil: Well-draining cactus or succulent mix<br>🌬 Airflow: Good ventilation recommended, especially during humid months<br>🚫 Avoid: Overwatering and water stagnation</p>\n<p>Fallen plantlets can easily root in nearby soil and grow into new plants.</p>",
+      "category": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "status": "active",
+      "imageStorage": "hostinger-temporary",
+      "imageStorageUpdatedAt": "2026-08-11T18:16:13.348Z",
+      "seoDescription": "Buy Mother of Thousands (Kalanchoe daigremontiana) online in India. Unique propagating succulent that grows baby plants along leaf edges. Easy-care and...",
+      "recoveredImageSources": [
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Mother_Of_Thousand.png?v=1773649442",
+          "altText": "Mother Of Thousand",
+          "relativePath": "mother-of-thousand/1-Mother_Of_Thousand.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/mother-of-thousand/1-Mother_Of_Thousand.png"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Mother_Of_Thousand_close_up.png?v=1773649725",
+          "altText": "Close-up of a Mother Of Thousand succulent plant with wavy edges.",
+          "relativePath": "mother-of-thousand/2-Mother_Of_Thousand_close_up.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/mother-of-thousand/2-Mother_Of_Thousand_close_up.png"
+        }
+      ],
+      "recoverySource": {
+        "csvFile": "products_updated_seo_faq.csv",
+        "type": "shopify-csv-recovery"
+      },
+      "totalInventory": 0,
+      "seoTitle": "Buy Mother of Thousands Online India | Succulent Sphere",
+      "productCategory": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "faqs": [
+        {
+          "question": "How often does Mother of Thousands flower indoors in India?",
+          "answer": "Mother of Thousands typically flowers once or twice a year, most commonly in winter (November to February). To encourage re-blooming, place in complete darkness 12–14 hours daily for 4–6 weeks, reduce watering, then resume normal care once buds appear."
+        },
+        {
+          "question": "How often should I water Mother of Thousands in India?",
+          "answer": "Water Mother of Thousands once every 7–14 days in summer and every 14–21 days in winter. In Indian monsoon, reduce watering significantly. Overwatering is the most common cause of Kalanchoe failure — always check soil dryness before watering."
+        },
+        {
+          "question": "Can Mother of Thousands survive Indian summers?",
+          "answer": "Yes, Mother of Thousands handles Indian summers well when kept indoors or in partial shade. Avoid direct harsh afternoon sun above 38°C which can scorch leaves. Keep indoors or under a shade net on the balcony during April to June."
+        },
+        {
+          "question": "Is Mother of Thousands safe for pets and children?",
+          "answer": "Mother of Thousands is mildly toxic to dogs and cats if ingested. It is not dangerous to humans when handled normally. Keep it on a high shelf away from pets. It is safe to display in homes with children who won't eat plant leaves."
+        },
+        {
+          "question": "What is the best pot and soil for Mother of Thousands in India?",
+          "answer": "Use a terracotta pot with a drainage hole for Mother of Thousands — terracotta breathes and prevents waterlogging in India's humidity. Fill with 60% potting soil and 40% coarse sand or perlite. Repot every 1–2 years as needed."
+        }
+      ],
+      "sunlight": "",
+      "plantClass": "",
+      "imageAlts": [
+        "Mother Of Thousand",
+        "Close-up of a Mother Of Thousand succulent plant with wavy edges."
+      ],
+      "suitableSpace": "",
+      "compareAtPrice": 79,
+      "image": "https://whitesmoke-cattle-754161.hostingersite.com/products/mother-of-thousand/1-Mother_Of_Thousand.png",
+      "images": [
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/mother-of-thousand/1-Mother_Of_Thousand.png",
+          "altText": "Mother Of Thousand"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/mother-of-thousand/2-Mother_Of_Thousand_close_up.png",
+          "altText": "Close-up of a Mother Of Thousand succulent plant with wavy edges."
+        }
+      ],
+      "updatedAt": "2026-08-13T18:17:21.384Z",
+      "quantity": 10,
+      "inventoryQuantity": 10,
+      "available": true
+    },
+    "matchType": "title",
+    "update": {
+      "updatedAt": "2026-08-15T19:18:26.291Z",
+      "valueUpdateSource": {
+        "type": "xlsx-product-value-update",
+        "file": "Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+        "sheet": "Master Catalog",
+        "rowNumber": 38,
+        "importedAt": "2026-08-15T19:18:26.291Z"
+      },
+      "price": 49,
+      "compareAtPrice": 79,
+      "available": true,
+      "availability": "InStock",
+      "status": "active"
+    },
+    "change": {
+      "before": {
+        "price": 49,
+        "compareAtPrice": 79,
+        "available": true,
+        "availability": null,
+        "status": "active"
+      },
+      "after": {
+        "price": 49,
+        "compareAtPrice": 79,
+        "available": true,
+        "availability": "InStock",
+        "status": "active"
+      }
+    }
+  },
+  {
+    "docId": "combo-3-hanging",
+    "catalogProduct": {
+      "sheetName": "Master Catalog",
+      "rowNumber": 40,
+      "title": "Combo 3 - Hanging",
+      "handle": "",
+      "regularPrice": 289,
+      "salePrice": 289,
+      "compareAtPrice": 289,
+      "inventoryQuantity": null,
+      "available": true,
+      "raw": {
+        "price": "289",
+        "compareAtPrice": "289",
+        "salePrice": "289",
+        "inventoryQuantity": "",
+        "availability": "In stock"
+      }
+    },
+    "current": {
+      "id": "combo-3-hanging",
+      "description": "Free Delivery 1-String Of Pearl 2-Variegated String Of Pearl 3-String of Tear 4-String Of Banana",
+      "plantGenus": "",
+      "source": "shopify-csv",
+      "title": "Combo 3 - Hanging",
+      "type": "Combo",
+      "imageAlt": "Combo 3 - Hanging succulent plant in a terracotta pot on an Indian apartment windowsill",
+      "createdAt": "2026-08-11T11:25:22.069Z",
+      "collections": [],
+      "price": 289,
+      "vendor": "Succulent Sphere",
+      "sourceInventoryQuantity": 0,
+      "currency": "INR",
+      "productType": "Combo",
+      "handle": "combo-3-hanging",
+      "tags": [
+        "free_shipping"
+      ],
+      "careLevel": "",
+      "descriptionHtml": "<p>Free Delivery <br>1-String Of Pearl<br>2-Variegated String Of Pearl<br>3-String of Tear <br>4-String Of Banana</p>",
+      "category": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "status": "active",
+      "imageStorage": "hostinger-temporary",
+      "imageStorageUpdatedAt": "2026-08-11T18:16:13.342Z",
+      "seoDescription": "Buy Combo 3 - Hanging online in India. Low-maintenance succulent, ideal for Indian homes. Starting ₹289. All India delivery.",
+      "recoveredImageSources": [
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/vastu_combo_4.png?v=1774699412",
+          "altText": "Combo 3 - Hanging succulent plant in a terracotta pot on an Indian apartment windowsill",
+          "relativePath": "combo-3-hanging/1-vastu_combo_4.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-3-hanging/1-vastu_combo_4.png"
+        }
+      ],
+      "recoverySource": {
+        "csvFile": "products_updated_seo_faq.csv",
+        "type": "shopify-csv-recovery"
+      },
+      "totalInventory": 0,
+      "seoTitle": "Buy Combo 3 - Hanging Online India | Succulent Sphere",
+      "productCategory": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "faqs": [
+        {
+          "question": "What plants are included in Combo 3 - Hanging?",
+          "answer": "Combo 3 - Hanging includes a curated selection of healthy succulents chosen for compatibility in care, growth habits, and visual contrast. All plants are sourced fresh and dispatched from our growing facility in India with detailed care instructions."
+        },
+        {
+          "question": "Can I keep all plants in Combo 3 - Hanging together in one pot?",
+          "answer": "The plants in Combo 3 - Hanging share similar care needs and can be kept together in one large pot or arranged in individual pots. For best long-term results, individual pots with well-draining succulent soil allow each plant to be managed optimally."
+        },
+        {
+          "question": "Are the plants in Combo 3 - Hanging suitable for beginners in India?",
+          "answer": "Yes! Combo 3 - Hanging is curated for ease of care in Indian conditions. All included plants are low-maintenance, drought tolerant, and adaptable to indoor environments. They thrive with bright indirect light and weekly watering — ideal for first-time plant parents."
+        },
+        {
+          "question": "How are the plants in Combo 3 - Hanging packaged for delivery in India?",
+          "answer": "Plants in Combo 3 - Hanging are dispatched bare-rooted in individual wrapping to prevent transit damage. Upon receiving, unpack immediately, air dry for 2–3 hours, then plant in well-draining succulent soil in pots with drainage holes."
+        },
+        {
+          "question": "Is Combo 3 - Hanging a good gift for housewarmings or birthdays in India?",
+          "answer": "Yes! Combo 3 - Hanging makes an excellent gift for housewarmings, birthdays, Diwali, and corporate gifting in India. Succulent combos are thoughtful, long-lasting gifts that require minimal maintenance and suit all ages and spaces."
+        }
+      ],
+      "sunlight": "partial-shade; full-sun",
+      "plantClass": "caryophyllales; saxifragales",
+      "imageAlts": [
+        "Combo 3 - Hanging succulent plant in a terracotta pot on an Indian apartment windowsill"
+      ],
+      "suitableSpace": "indoors",
+      "compareAtPrice": 0,
+      "image": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-3-hanging/1-vastu_combo_4.png",
+      "images": [
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-3-hanging/1-vastu_combo_4.png",
+          "altText": "Combo 3 - Hanging succulent plant in a terracotta pot on an Indian apartment windowsill"
+        }
+      ],
+      "updatedAt": "2026-08-13T18:16:02.851Z",
+      "quantity": 10,
+      "inventoryQuantity": 10,
+      "available": true
+    },
+    "matchType": "title",
+    "update": {
+      "updatedAt": "2026-08-15T19:18:26.291Z",
+      "valueUpdateSource": {
+        "type": "xlsx-product-value-update",
+        "file": "Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+        "sheet": "Master Catalog",
+        "rowNumber": 40,
+        "importedAt": "2026-08-15T19:18:26.291Z"
+      },
+      "price": 289,
+      "compareAtPrice": 289,
+      "available": true,
+      "availability": "InStock",
+      "status": "active"
+    },
+    "change": {
+      "before": {
+        "price": 289,
+        "compareAtPrice": 0,
+        "available": true,
+        "availability": null,
+        "status": "active"
+      },
+      "after": {
+        "price": 289,
+        "compareAtPrice": 289,
+        "available": true,
+        "availability": "InStock",
+        "status": "active"
+      }
+    }
+  },
+  {
+    "docId": "haworthia-herbacea",
+    "catalogProduct": {
+      "sheetName": "Master Catalog",
+      "rowNumber": 60,
+      "title": "Haworthia Herbacea _ - Best Low Light Succulent",
+      "handle": "",
+      "regularPrice": 119,
+      "salePrice": 79,
+      "compareAtPrice": 119,
+      "inventoryQuantity": null,
+      "available": true,
+      "raw": {
+        "price": "119",
+        "compareAtPrice": "119",
+        "salePrice": "79",
+        "inventoryQuantity": "",
+        "availability": "In stock"
+      }
+    },
+    "current": {
+      "id": "haworthia-herbacea",
+      "description": "Haworthia Herbacea scientifically known as Haworthiopsis attenuata, is arguably India's most beloved low-light succulent. Its rosettes of dark green, fleshy leaves adorned with horizontal white ridges give it an unmistakable zebra stripe appearance that is both visually striking and incredibly resilient. Unlike most succulents, Zebra Haworthia thrives in low-light conditions found inside Indian apartments — a north-facing windowsill or a shaded desk is perfectly suitable. It is nearly impossible to kill, making it the ultimate indoor succulent plant for beginners, busy professionals, and frequent travellers in India. If you're looking to buy Zebra Haworthia online in India, this low-light friendly indoor succulent is the most forgiving and long-lasting succulent you can own. 🌱 Plant Care ☀️ Light: Low to bright indirect light; avoid direct harsh afternoon sun 💧 Water: Every 2–3 weeks; reduce to monthly in winter 🌡️ Temp: 10–40°C | Extremely adaptable to Indian indoor conditions 🌱 Soil: Well-draining succulent mix with perlite 🌬️ Air: Tolerates normal indoor environments well 🚫 Avoid: Direct intense sun and root rot from overwatering 🚚 Shipping 📦 Delivered in: 5–7 Days (1–2 Days to Dispatch) 🪴 Plant Size: 3–4 Inch 🌿 Delivered Bare Rooted",
+      "plantGenus": "",
+      "recoveredImageSources": [
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Haworthia_herbacea_white_pot.png?v=1775841722",
+          "altText": "Green succulent plant in a white pot on a beige surface with a beige background",
+          "relativePath": "haworthia-herbacea/1-Haworthia_herbacea_white_pot.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-herbacea/1-Haworthia_herbacea_white_pot.png"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Haworthia_herbacea_close_up.png?v=1775841794",
+          "altText": "Close-up of a succulent plant with water droplets on its leaves",
+          "relativePath": "haworthia-herbacea/2-Haworthia_herbacea_close_up.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-herbacea/2-Haworthia_herbacea_close_up.png"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Haworthia_herbacea_top_view.jpg?v=1775841826",
+          "altText": "Person holding a small succulent plant with a blurred green background",
+          "relativePath": "haworthia-herbacea/3-Haworthia_herbacea_top_view.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-herbacea/3-Haworthia_herbacea_top_view.jpg"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Haworthia_herbacea_haworthii.jpg?v=1775841872",
+          "altText": "Small potted plant held in a hand with a blurred background",
+          "relativePath": "haworthia-herbacea/4-Haworthia_herbacea_haworthii.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-herbacea/4-Haworthia_herbacea_haworthii.jpg"
+        }
+      ],
+      "totalInventory": 0,
+      "seoTitle": "Buy Haworthia Herbacea _- Online India | Succulent Sphere",
+      "title": "Haworthia Herbacea _- Best Low Light Succulent",
+      "type": "Cactus",
+      "imageAlt": "Green succulent plant in a white pot on a beige surface with a beige background",
+      "productCategory": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "createdAt": "2026-08-13T16:35:56.191Z",
+      "price": 79,
+      "vendor": "Succulent Sphere",
+      "plantClass": "",
+      "currency": "INR",
+      "suitableSpace": "",
+      "productType": "Cactus",
+      "compareAtPrice": 119,
+      "seoDescription": "Buy Haworthia Herbacea _- online in India. Low-maintenance succulent, ideal for Indian homes. Starting ₹79. All India delivery.",
+      "recoverySource": {
+        "csvFile": "products_updated_seo_faq.csv",
+        "type": "shopify-csv-recovery"
+      },
+      "handle": "haworthia-herbacea",
+      "tags": [
+        "Beginner"
+      ],
+      "faqs": [
+        {
+          "question": "Can Haworthia Herbacea _- survive in low light Indian apartments?",
+          "answer": "Haworthia Herbacea _- is one of the best low-light succulents for Indian apartments. It thrives in bright indirect light and tolerates shaded interior spots. Unlike most succulents, it does not need direct sunlight to survive and grow."
+        },
+        {
+          "question": "How often should I water Haworthia Herbacea _- in India?",
+          "answer": "Water Haworthia Herbacea _- once every 10–14 days in summer and every 20 days in winter. In monsoon, reduce watering further. Haworthia is highly drought tolerant and prefers being under-watered — always let soil dry completely first."
+        },
+        {
+          "question": "What makes Haworthia Herbacea _- different from Aloe vera?",
+          "answer": "Haworthia Herbacea _- is much smaller and more compact than Aloe, making it ideal for desk and tabletop display. Unlike Aloe, it thrives in low light, grows slowly, and rarely needs repotting — perfect for busy Indian urban lifestyles."
+        },
+        {
+          "question": "Can I keep Haworthia Herbacea _- on my office desk in India?",
+          "answer": "Absolutely! Haworthia Herbacea _- is a top office desk plant in India as it thrives under fluorescent lighting and in air-conditioned environments. It needs watering only every 10–14 days and stays compact for years without outgrowing its pot."
+        },
+        {
+          "question": "Does Haworthia Herbacea _- grow well in Indian summers?",
+          "answer": "Haworthia Herbacea _- handles Indian summers well when kept away from harsh afternoon sun above 40°C. Keep indoors near a bright window during peak summer. It may go semi-dormant in extreme heat but bounces back fully by September."
+        }
+      ],
+      "sunlight": "",
+      "descriptionHtml": "<div>\n<div class=\"standard-markdown grid-cols-1 grid [&amp;_&gt;_*]:min-w-0 gap-3\">\n<p class=\"font-claude-response-body break-words whitespace-normal leading-[1.7]\">Haworthia Herbacea scientifically known as Haworthiopsis attenuata, is arguably India's most beloved low-light succulent. Its rosettes of dark green, fleshy leaves adorned with horizontal white ridges give it an unmistakable zebra stripe appearance that is both visually striking and incredibly resilient. Unlike most succulents, Zebra Haworthia thrives in low-light conditions found inside Indian apartments — a north-facing windowsill or a shaded desk is perfectly suitable. It is nearly impossible to kill, making it the ultimate indoor succulent plant for beginners, busy professionals, and frequent travellers in India. If you're looking to buy Zebra Haworthia online in India, this low-light friendly indoor succulent is the most forgiving and long-lasting succulent you can own.</p>\n</div>\n</div>\n<div>\n<div class=\"standard-markdown grid-cols-1 grid [&amp;_&gt;_*]:min-w-0 gap-3\">\n<p class=\"font-claude-response-body break-words whitespace-normal leading-[1.7]\"><strong>🌱 Plant Care</strong></p>\n<ul class=\"[li_&amp;]:mb-0 [li_&amp;]:mt-1 [li_&amp;]:gap-1 [&amp;:not(:last-child)_ul]:pb-1 [&amp;:not(:last-child)_ol]:pb-1 list-disc flex flex-col gap-1 pl-8 mb-3\">\n<li class=\"whitespace-normal break-words pl-2\">☀️ <strong>Light:</strong> Low to bright indirect light; avoid direct harsh afternoon sun</li>\n<li class=\"whitespace-normal break-words pl-2\">💧 <strong>Water:</strong> Every 2–3 weeks; reduce to monthly in winter</li>\n<li class=\"whitespace-normal break-words pl-2\">🌡️ <strong>Temp:</strong> 10–40°C | Extremely adaptable to Indian indoor conditions</li>\n<li class=\"whitespace-normal break-words pl-2\">🌱 <strong>Soil:</strong> Well-draining succulent mix with perlite</li>\n<li class=\"whitespace-normal break-words pl-2\">🌬️ <strong>Air:</strong> Tolerates normal indoor environments well</li>\n<li class=\"whitespace-normal break-words pl-2\">🚫 <strong>Avoid:</strong> Direct intense sun and root rot from overwatering</li>\n</ul>\n</div>\n</div>\n<div>\n<div class=\"standard-markdown grid-cols-1 grid [&amp;_&gt;_*]:min-w-0 gap-3\">\n<p class=\"font-claude-response-body break-words whitespace-normal leading-[1.7]\"><strong>🚚 Shipping</strong></p>\n<ul class=\"[li_&amp;]:mb-0 [li_&amp;]:mt-1 [li_&amp;]:gap-1 [&amp;:not(:last-child)_ul]:pb-1 [&amp;:not(:last-child)_ol]:pb-1 list-disc flex flex-col gap-1 pl-8 mb-3\">\n<li class=\"whitespace-normal break-words pl-2\">📦 Delivered in: 5–7 Days (1–2 Days to Dispatch)</li>\n<li class=\"whitespace-normal break-words pl-2\">🪴 Plant Size: 3–4 Inch</li>\n<li class=\"whitespace-normal break-words pl-2\">🌿 Delivered Bare Rooted</li>\n</ul>\n</div>\n</div>",
+      "imageAlts": [
+        "Green succulent plant in a white pot on a beige surface with a beige background",
+        "Close-up of a succulent plant with water droplets on its leaves",
+        "Person holding a small succulent plant with a blurred green background",
+        "Small potted plant held in a hand with a blurred background"
+      ],
+      "status": "active",
+      "image": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-herbacea/1-Haworthia_herbacea_white_pot.png",
+      "images": [
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-herbacea/1-Haworthia_herbacea_white_pot.png",
+          "altText": "Green succulent plant in a white pot on a beige surface with a beige background"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-herbacea/2-Haworthia_herbacea_close_up.png",
+          "altText": "Close-up of a succulent plant with water droplets on its leaves"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-herbacea/3-Haworthia_herbacea_top_view.jpg",
+          "altText": "Person holding a small succulent plant with a blurred green background"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-herbacea/4-Haworthia_herbacea_haworthii.jpg",
+          "altText": "Small potted plant held in a hand with a blurred background"
+        }
+      ],
+      "updatedAt": "2026-08-13T18:17:07.329Z",
+      "quantity": 10,
+      "inventoryQuantity": 10,
+      "available": true
+    },
+    "matchType": "title",
+    "update": {
+      "updatedAt": "2026-08-15T19:18:26.292Z",
+      "valueUpdateSource": {
+        "type": "xlsx-product-value-update",
+        "file": "Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+        "sheet": "Master Catalog",
+        "rowNumber": 60,
+        "importedAt": "2026-08-15T19:18:26.292Z"
+      },
+      "price": 79,
+      "compareAtPrice": 119,
+      "available": true,
+      "availability": "InStock",
+      "status": "active"
+    },
+    "change": {
+      "before": {
+        "price": 79,
+        "compareAtPrice": 119,
+        "available": true,
+        "availability": null,
+        "status": "active"
+      },
+      "after": {
+        "price": 79,
+        "compareAtPrice": 119,
+        "available": true,
+        "availability": "InStock",
+        "status": "active"
+      }
+    }
+  },
+  {
+    "docId": "haworthia-attenuata",
+    "catalogProduct": {
+      "sheetName": "Master Catalog",
+      "rowNumber": 61,
+      "title": "Haworthia attenuata - Best Low Light Succulent",
+      "handle": "",
+      "regularPrice": 179,
+      "salePrice": 129,
+      "compareAtPrice": 179,
+      "inventoryQuantity": null,
+      "available": false,
+      "raw": {
+        "price": "179",
+        "compareAtPrice": "179",
+        "salePrice": "129",
+        "inventoryQuantity": "",
+        "availability": "Out of stock"
+      }
+    },
+    "current": {
+      "id": "haworthia-attenuata",
+      "available": false,
+      "description": "Zebra Haworthia, scientifically known as Haworthiopsis attenuata, is arguably India's most beloved low-light succulent. Its rosettes of dark green, fleshy leaves adorned with horizontal white ridges give it an unmistakable zebra stripe appearance that is both visually striking and incredibly resilient. Unlike most succulents, Zebra Haworthia thrives in low-light conditions found inside Indian apartments — a north-facing windowsill or a shaded desk is perfectly suitable. It is nearly impossible to kill, making it the ultimate indoor succulent plant for beginners, busy professionals, and frequent travellers in India. If you're looking to buy Zebra Haworthia online in India, this low-light friendly indoor succulent is the most forgiving and long-lasting succulent you can own. 🌱 Plant Care ☀️ Light: Low to bright indirect light; avoid direct harsh afternoon sun 💧 Water: Every 2–3 weeks; reduce to monthly in winter 🌡️ Temp: 10–40°C | Extremely adaptable to Indian indoor conditions 🌱 Soil: Well-draining succulent mix with perlite 🌬️ Air: Tolerates normal indoor environments well 🚫 Avoid: Direct intense sun and root rot from overwatering 🚚 Shipping 📦 Delivered in: 5–7 Days (1–2 Days to Dispatch) 🪴 Plant Size: 3–4 Inch 🌿 Delivered Bare Rooted",
+      "plantGenus": "",
+      "recoveredImageSources": [
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Haworthia_attenuata.png?v=1775842830",
+          "altText": "Potted succulent plant on a neutral background",
+          "relativePath": "haworthia-attenuata/1-Haworthia_attenuata.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-attenuata/1-Haworthia_attenuata.png"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Haworthia_attenuata_Close_up.png?v=1775842830",
+          "altText": "Close-up of a green succulent plant with detailed texture",
+          "relativePath": "haworthia-attenuata/2-Haworthia_attenuata_Close_up.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-attenuata/2-Haworthia_attenuata_Close_up.png"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Haworthia_attenuata_Bulk_pintrest.jpg?v=1775989739",
+          "altText": "Row of potted Haworthia attenuata succulents in a greenhouse setting",
+          "relativePath": "haworthia-attenuata/3-Haworthia_attenuata_Bulk_pintrest.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-attenuata/3-Haworthia_attenuata_Bulk_pintrest.jpg"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Haworthia_attenuata_in_nursery.jpg?v=1775989739",
+          "altText": "Small potted succulent plant held by a hand with a blurred green background",
+          "relativePath": "haworthia-attenuata/4-Haworthia_attenuata_in_nursery.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-attenuata/4-Haworthia_attenuata_in_nursery.jpg"
+        }
+      ],
+      "totalInventory": 0,
+      "seoTitle": "Buy Haworthia attenuata - Online India | Succulent Sphere",
+      "title": "Haworthia attenuata -  Best Low Light Succulent",
+      "imageAlt": "Potted succulent plant on a neutral background",
+      "productCategory": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "createdAt": "2026-08-13T16:35:56.191Z",
+      "price": 129,
+      "vendor": "Succulent Sphere",
+      "plantClass": "asparagales",
+      "currency": "INR",
+      "suitableSpace": "indoors",
+      "compareAtPrice": 179,
+      "quantity": 0,
+      "seoDescription": "Buy Haworthia attenuata - online in India. Low-maintenance succulent, ideal for Indian homes. Starting ₹129. All India delivery.",
+      "recoverySource": {
+        "csvFile": "products_updated_seo_faq.csv",
+        "type": "shopify-csv-recovery"
+      },
+      "handle": "haworthia-attenuata",
+      "faqs": [
+        {
+          "question": "Can Haworthia attenuata - survive in low light Indian apartments?",
+          "answer": "Haworthia attenuata - is one of the best low-light succulents for Indian apartments. It thrives in bright indirect light and tolerates shaded interior spots. Unlike most succulents, it does not need direct sunlight to survive and grow."
+        },
+        {
+          "question": "How often should I water Haworthia attenuata - in India?",
+          "answer": "Water Haworthia attenuata - once every 10–14 days in summer and every 20 days in winter. In monsoon, reduce watering further. Haworthia is highly drought tolerant and prefers being under-watered — always let soil dry completely first."
+        },
+        {
+          "question": "What makes Haworthia attenuata - different from Aloe vera?",
+          "answer": "Haworthia attenuata - is much smaller and more compact than Aloe, making it ideal for desk and tabletop display. Unlike Aloe, it thrives in low light, grows slowly, and rarely needs repotting — perfect for busy Indian urban lifestyles."
+        },
+        {
+          "question": "Can I keep Haworthia attenuata - on my office desk in India?",
+          "answer": "Absolutely! Haworthia attenuata - is a top office desk plant in India as it thrives under fluorescent lighting and in air-conditioned environments. It needs watering only every 10–14 days and stays compact for years without outgrowing its pot."
+        },
+        {
+          "question": "Does Haworthia attenuata - grow well in Indian summers?",
+          "answer": "Haworthia attenuata - handles Indian summers well when kept away from harsh afternoon sun above 40°C. Keep indoors near a bright window during peak summer. It may go semi-dormant in extreme heat but bounces back fully by September."
+        }
+      ],
+      "sunlight": "partial-shade; shade",
+      "descriptionHtml": "<div>\n<div class=\"standard-markdown grid-cols-1 grid [&amp;_&gt;_*]:min-w-0 gap-3\">\n<p class=\"font-claude-response-body break-words whitespace-normal leading-[1.7]\">Zebra Haworthia, scientifically known as Haworthiopsis attenuata, is arguably India's most beloved low-light succulent. Its rosettes of dark green, fleshy leaves adorned with horizontal white ridges give it an unmistakable zebra stripe appearance that is both visually striking and incredibly resilient. Unlike most succulents, Zebra Haworthia thrives in low-light conditions found inside Indian apartments — a north-facing windowsill or a shaded desk is perfectly suitable. It is nearly impossible to kill, making it the ultimate indoor succulent plant for beginners, busy professionals, and frequent travellers in India. If you're looking to buy Zebra Haworthia online in India, this low-light friendly indoor succulent is the most forgiving and long-lasting succulent you can own.</p>\n</div>\n</div>\n<div>\n<div class=\"standard-markdown grid-cols-1 grid [&amp;_&gt;_*]:min-w-0 gap-3\">\n<p class=\"font-claude-response-body break-words whitespace-normal leading-[1.7]\"><strong>🌱 Plant Care</strong></p>\n<ul class=\"[li_&amp;]:mb-0 [li_&amp;]:mt-1 [li_&amp;]:gap-1 [&amp;:not(:last-child)_ul]:pb-1 [&amp;:not(:last-child)_ol]:pb-1 list-disc flex flex-col gap-1 pl-8 mb-3\">\n<li class=\"whitespace-normal break-words pl-2\">☀️ <strong>Light:</strong> Low to bright indirect light; avoid direct harsh afternoon sun</li>\n<li class=\"whitespace-normal break-words pl-2\">💧 <strong>Water:</strong> Every 2–3 weeks; reduce to monthly in winter</li>\n<li class=\"whitespace-normal break-words pl-2\">🌡️ <strong>Temp:</strong> 10–40°C | Extremely adaptable to Indian indoor conditions</li>\n<li class=\"whitespace-normal break-words pl-2\">🌱 <strong>Soil:</strong> Well-draining succulent mix with perlite</li>\n<li class=\"whitespace-normal break-words pl-2\">🌬️ <strong>Air:</strong> Tolerates normal indoor environments well</li>\n<li class=\"whitespace-normal break-words pl-2\">🚫 <strong>Avoid:</strong> Direct intense sun and root rot from overwatering</li>\n</ul>\n</div>\n</div>\n<div>\n<div class=\"standard-markdown grid-cols-1 grid [&amp;_&gt;_*]:min-w-0 gap-3\">\n<p class=\"font-claude-response-body break-words whitespace-normal leading-[1.7]\"><strong>🚚 Shipping</strong></p>\n<ul class=\"[li_&amp;]:mb-0 [li_&amp;]:mt-1 [li_&amp;]:gap-1 [&amp;:not(:last-child)_ul]:pb-1 [&amp;:not(:last-child)_ol]:pb-1 list-disc flex flex-col gap-1 pl-8 mb-3\">\n<li class=\"whitespace-normal break-words pl-2\">📦 Delivered in: 5–7 Days (1–2 Days to Dispatch)</li>\n<li class=\"whitespace-normal break-words pl-2\">🪴 Plant Size: 3–4 Inch</li>\n<li class=\"whitespace-normal break-words pl-2\">🌿 Delivered Bare Rooted</li>\n</ul>\n</div>\n</div>",
+      "imageAlts": [
+        "Potted succulent plant on a neutral background",
+        "Close-up of a green succulent plant with detailed texture",
+        "Row of potted Haworthia attenuata succulents in a greenhouse setting",
+        "Small potted succulent plant held by a hand with a blurred green background"
+      ],
+      "image": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-attenuata/1-Haworthia_attenuata.png",
+      "images": [
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-attenuata/1-Haworthia_attenuata.png",
+          "altText": "Potted succulent plant on a neutral background"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-attenuata/2-Haworthia_attenuata_Close_up.png",
+          "altText": "Close-up of a green succulent plant with detailed texture"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-attenuata/3-Haworthia_attenuata_Bulk_pintrest.jpg",
+          "altText": "Row of potted Haworthia attenuata succulents in a greenhouse setting"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/haworthia-attenuata/4-Haworthia_attenuata_in_nursery.jpg",
+          "altText": "Small potted succulent plant held by a hand with a blurred green background"
+        }
+      ],
+      "updatedAt": "2026-08-13T18:17:05.601Z",
+      "inventoryQuantity": 0,
+      "type": "succulent",
+      "productType": "succulent",
+      "status": "sold out",
+      "tags": [
+        "Beginner",
+        "39Rs"
+      ]
+    },
+    "matchType": "title",
+    "update": {
+      "updatedAt": "2026-08-15T19:18:26.292Z",
+      "valueUpdateSource": {
+        "type": "xlsx-product-value-update",
+        "file": "Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+        "sheet": "Master Catalog",
+        "rowNumber": 61,
+        "importedAt": "2026-08-15T19:18:26.292Z"
+      },
+      "price": 129,
+      "compareAtPrice": 179,
+      "available": false,
+      "availability": "OutOfStock",
+      "status": "sold out"
+    },
+    "change": {
+      "before": {
+        "price": 129,
+        "compareAtPrice": 179,
+        "available": false,
+        "availability": null,
+        "status": "sold out"
+      },
+      "after": {
+        "price": 129,
+        "compareAtPrice": 179,
+        "available": false,
+        "availability": "OutOfStock",
+        "status": "sold out"
+      }
+    }
+  },
+  {
+    "docId": "textured-matt-ceramic-round-succulent-planter-pot-matt-beige-11-5-x-8-cm-indoor-decor",
+    "catalogProduct": {
+      "sheetName": "Master Catalog",
+      "rowNumber": 83,
+      "title": "Textured Matt Ceramic Round Succulent Planter Pot, Matt Beige, 11.5 x 8 cm, Indoor Decor",
+      "handle": "",
+      "regularPrice": 469,
+      "salePrice": 300,
+      "compareAtPrice": 469,
+      "inventoryQuantity": null,
+      "available": true,
+      "raw": {
+        "price": "469",
+        "compareAtPrice": "469",
+        "salePrice": "300",
+        "inventoryQuantity": "",
+        "availability": "In stock"
+      }
+    },
+    "current": {
+      "id": "textured-matt-ceramic-round-succulent-planter-pot-matt-beige-11-5-x-8-cm-indoor-decor",
+      "available": true,
+      "description": "Item Dimensions D x W x H - 11.5D x 11.5W x 8H Centimeters Color - Beige Product Style - Modern Round Planter Form - Plant Pot Shape - Round Pattern - Solid Theme - Modern Enclosure Material - Ceramic Drainage Hole - Yes",
+      "plantGenus": "",
+      "source": "shopify-csv",
+      "title": "Textured Matt Ceramic Round Succulent Planter Pot, Matt Beige, 11.5 x 8 cm, Indoor Decor",
+      "type": "Pots",
+      "imageAlt": "Hand holding a small terracotta pot with a succulent plant, blurred outdoor background",
+      "createdAt": "2026-08-11T11:25:22.071Z",
+      "collections": [],
+      "price": 300,
+      "vendor": "Succulent Sphere",
+      "sourceInventoryQuantity": 1,
+      "currency": "INR",
+      "productType": "Pots",
+      "handle": "textured-matt-ceramic-round-succulent-planter-pot-matt-beige-11-5-x-8-cm-indoor-decor",
+      "tags": [],
+      "careLevel": "",
+      "descriptionHtml": "<p>Item Dimensions D x W x H -  11.5D x 11.5W x 8H Centimeters<br>Color -  Beige<br>Product Style -  Modern Round<br>Planter Form -  Plant Pot<br>Shape -  Round<br>Pattern -  Solid<br>Theme -  Modern<br>Enclosure Material - Ceramic<br>Drainage Hole - Yes</p>",
+      "category": "Home & Garden > Lawn & Garden > Gardening > Pots & Planters > Planters",
+      "status": "active",
+      "imageStorage": "hostinger-temporary",
+      "imageStorageUpdatedAt": "2026-08-11T18:16:13.351Z",
+      "seoDescription": "Buy Textured Matt Ceramic online in India. Low-maintenance succulent, ideal for Indian homes. Starting ₹300. All India delivery.",
+      "recoveredImageSources": [
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/beige_pot.jpg?v=1773858834",
+          "altText": "Hand holding a small terracotta pot with a succulent plant, blurred outdoor background",
+          "relativePath": "textured-matt-ceramic-round-succulent-planter-pot-matt-beige-11-5-x-8-cm-indoor-decor/1-beige_pot.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/textured-matt-ceramic-round-succulent-planter-pot-matt-beige-11-5-x-8-cm-indoor-decor/1-beige_pot.jpg"
+        }
+      ],
+      "recoverySource": {
+        "csvFile": "products_updated_seo_faq.csv",
+        "type": "shopify-csv-recovery"
+      },
+      "totalInventory": 1,
+      "seoTitle": "Buy Textured Matt Ceramic Online India | Succulent Sphere",
+      "productCategory": "Home & Garden > Lawn & Garden > Gardening > Pots & Planters > Planters",
+      "faqs": [
+        {
+          "question": "What size succulent fits best in this pot?",
+          "answer": "This pot is ideal for small to medium succulents and cactus plants. It works perfectly for individual specimens like Echeveria, Haworthia, small Crassula, or compact cacti. For best aesthetics, choose a plant whose foliage extends slightly beyond the pot rim."
+        },
+        {
+          "question": "Is this pot suitable for indoor use in India?",
+          "answer": "Yes, this pot is designed for indoor use and works beautifully on desks, windowsills, shelves, and coffee tables in Indian homes and offices. The material and finish are suited to Indian indoor temperatures and humidity levels."
+        },
+        {
+          "question": "Does this pot have drainage holes?",
+          "answer": "For best plant health with succulents and cacti, use a plastic nursery pot with drainage holes placed inside this decorative pot. If planting directly, add a 2–3 cm gravel layer at the bottom and water very sparingly to prevent root rot."
+        },
+        {
+          "question": "How do I clean and maintain this pot?",
+          "answer": "Clean with a soft damp cloth to remove dust. Avoid harsh chemical cleaners that may damage the finish. If soil residue builds up, rinse gently with water and dry thoroughly before use. Durable for long-term indoor use in Indian home conditions."
+        },
+        {
+          "question": "Is this pot a good gift option in India?",
+          "answer": "Yes! This pot paired with a small succulent or cactus makes a thoughtful gift for housewarmings, birthdays, Diwali, and corporate gifting in India. It is long-lasting, practical, and adds beauty to any home or office space."
+        }
+      ],
+      "sunlight": "",
+      "plantClass": "",
+      "imageAlts": [
+        "Hand holding a small terracotta pot with a succulent plant, blurred outdoor background"
+      ],
+      "suitableSpace": "",
+      "compareAtPrice": 469,
+      "image": "https://whitesmoke-cattle-754161.hostingersite.com/products/textured-matt-ceramic-round-succulent-planter-pot-matt-beige-11-5-x-8-cm-indoor-decor/1-beige_pot.jpg",
+      "images": [
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/textured-matt-ceramic-round-succulent-planter-pot-matt-beige-11-5-x-8-cm-indoor-decor/1-beige_pot.jpg",
+          "altText": "Hand holding a small terracotta pot with a succulent plant, blurred outdoor background"
+        }
+      ],
+      "updatedAt": "2026-08-13T18:17:44.362Z",
+      "quantity": 10,
+      "inventoryQuantity": 10
+    },
+    "matchType": "title",
+    "update": {
+      "updatedAt": "2026-08-15T19:18:26.293Z",
+      "valueUpdateSource": {
+        "type": "xlsx-product-value-update",
+        "file": "Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+        "sheet": "Master Catalog",
+        "rowNumber": 83,
+        "importedAt": "2026-08-15T19:18:26.293Z"
+      },
+      "price": 300,
+      "compareAtPrice": 469,
+      "available": true,
+      "availability": "InStock",
+      "status": "active"
+    },
+    "change": {
+      "before": {
+        "price": 300,
+        "compareAtPrice": 469,
+        "available": true,
+        "availability": null,
+        "status": "active"
+      },
+      "after": {
+        "price": 300,
+        "compareAtPrice": 469,
+        "available": true,
+        "availability": "InStock",
+        "status": "active"
+      }
+    }
+  },
+  {
+    "docId": "combo-5-the-prosperity-bundle",
+    "catalogProduct": {
+      "sheetName": "Master Catalog",
+      "rowNumber": 86,
+      "title": "Combo 5 - The Prosperity Bundle",
+      "handle": "",
+      "regularPrice": 389,
+      "salePrice": 389,
+      "compareAtPrice": 389,
+      "inventoryQuantity": null,
+      "available": true,
+      "raw": {
+        "price": "389",
+        "compareAtPrice": "389",
+        "salePrice": "389",
+        "inventoryQuantity": "",
+        "availability": "In stock"
+      }
+    },
+    "current": {
+      "id": "combo-5-the-prosperity-bundle",
+      "description": "Free Delivery - 6 Succulents 1 - Laxmi Kamal 2- String of Pearls 3 - Gollum Jade 4 - Haworthia Cymbiformis Pallida 5 - Baby Sunrose 6 - Crasulla",
+      "plantGenus": "Combo",
+      "recoveredImageSources": [
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/vastucombo_7.png?v=1775538668",
+          "altText": "Combo 5 Prosperity Bundle featuring vastu auspicious succulents in terracotta pots from Succulent Sphere",
+          "relativePath": "combo-5-the-prosperity-bundle/1-vastucombo_7.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-5-the-prosperity-bundle/1-vastucombo_7.png"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/WhatsAppImage2026-04-05at1.28.52PM.jpg?v=1775538668",
+          "altText": "Prosperity Bundle Combo 5 succulent collection WhatsApp order image for Succulent Sphere",
+          "relativePath": "combo-5-the-prosperity-bundle/2-WhatsAppImage2026-04-05at1.28.52PM.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-5-the-prosperity-bundle/2-WhatsAppImage2026-04-05at1.28.52PM.jpg"
+        }
+      ],
+      "totalInventory": 0,
+      "seoTitle": "Buy Combo 5 - Online India | Succulent Sphere",
+      "title": "Combo 5 - The Prosperity Bundle",
+      "type": "Combo",
+      "imageAlt": "Combo 5 Prosperity Bundle featuring vastu auspicious succulents in terracotta pots from Succulent Sphere",
+      "productCategory": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "createdAt": "2026-08-13T16:35:56.192Z",
+      "price": 389,
+      "vendor": "Succulent Sphere",
+      "plantClass": "saxifragales; caryophyllales",
+      "currency": "INR",
+      "suitableSpace": "indoors",
+      "productType": "Combo",
+      "compareAtPrice": 0,
+      "seoDescription": "Buy Combo 5 - online in India. Low-maintenance succulent, ideal for Indian homes. Starting ₹389. All India delivery.",
+      "recoverySource": {
+        "csvFile": "products_updated_seo_faq.csv",
+        "type": "shopify-csv-recovery"
+      },
+      "handle": "combo-5-the-prosperity-bundle",
+      "tags": [
+        "free_shipping"
+      ],
+      "faqs": [
+        {
+          "question": "What plants are included in Combo 5 -?",
+          "answer": "Combo 5 - includes a curated selection of healthy succulents chosen for compatibility in care, growth habits, and visual contrast. All plants are sourced fresh and dispatched from our growing facility in India with detailed care instructions."
+        },
+        {
+          "question": "Can I keep all plants in Combo 5 - together in one pot?",
+          "answer": "The plants in Combo 5 - share similar care needs and can be kept together in one large pot or arranged in individual pots. For best long-term results, individual pots with well-draining succulent soil allow each plant to be managed optimally."
+        },
+        {
+          "question": "Are the plants in Combo 5 - suitable for beginners in India?",
+          "answer": "Yes! Combo 5 - is curated for ease of care in Indian conditions. All included plants are low-maintenance, drought tolerant, and adaptable to indoor environments. They thrive with bright indirect light and weekly watering — ideal for first-time plant parents."
+        },
+        {
+          "question": "How are the plants in Combo 5 - packaged for delivery in India?",
+          "answer": "Plants in Combo 5 - are dispatched bare-rooted in individual wrapping to prevent transit damage. Upon receiving, unpack immediately, air dry for 2–3 hours, then plant in well-draining succulent soil in pots with drainage holes."
+        },
+        {
+          "question": "Is Combo 5 - a good gift for housewarmings or birthdays in India?",
+          "answer": "Yes! Combo 5 - makes an excellent gift for housewarmings, birthdays, Diwali, and corporate gifting in India. Succulent combos are thoughtful, long-lasting gifts that require minimal maintenance and suit all ages and spaces."
+        }
+      ],
+      "sunlight": "partial-shade; full-sun",
+      "descriptionHtml": "<p>Free Delivery - 6 Succulents<br>1 - Laxmi Kamal<br>2- String of Pearls <br>3 - Gollum Jade<br>4 - Haworthia Cymbiformis Pallida<br>5 - Baby Sunrose<br>6 - <span>Crasulla</span></p>",
+      "imageAlts": [
+        "Combo 5 Prosperity Bundle featuring vastu auspicious succulents in terracotta pots from Succulent Sphere",
+        "Prosperity Bundle Combo 5 succulent collection WhatsApp order image for Succulent Sphere"
+      ],
+      "status": "active",
+      "image": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-5-the-prosperity-bundle/1-vastucombo_7.png",
+      "images": [
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-5-the-prosperity-bundle/1-vastucombo_7.png",
+          "altText": "Combo 5 Prosperity Bundle featuring vastu auspicious succulents in terracotta pots from Succulent Sphere"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-5-the-prosperity-bundle/2-WhatsAppImage2026-04-05at1.28.52PM.jpg",
+          "altText": "Prosperity Bundle Combo 5 succulent collection WhatsApp order image for Succulent Sphere"
+        }
+      ],
+      "updatedAt": "2026-08-13T18:16:04.291Z",
+      "quantity": 10,
+      "inventoryQuantity": 10,
+      "available": true
+    },
+    "matchType": "title",
+    "update": {
+      "updatedAt": "2026-08-15T19:18:26.293Z",
+      "valueUpdateSource": {
+        "type": "xlsx-product-value-update",
+        "file": "Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+        "sheet": "Master Catalog",
+        "rowNumber": 86,
+        "importedAt": "2026-08-15T19:18:26.293Z"
+      },
+      "price": 389,
+      "compareAtPrice": 389,
+      "available": true,
+      "availability": "InStock",
+      "status": "active"
+    },
+    "change": {
+      "before": {
+        "price": 389,
+        "compareAtPrice": 0,
+        "available": true,
+        "availability": null,
+        "status": "active"
+      },
+      "after": {
+        "price": 389,
+        "compareAtPrice": 389,
+        "available": true,
+        "availability": "InStock",
+        "status": "active"
+      }
+    }
+  },
+  {
+    "docId": "combo-2-cactus",
+    "catalogProduct": {
+      "sheetName": "Master Catalog",
+      "rowNumber": 119,
+      "title": "Combo 2 - Cactus",
+      "handle": "",
+      "regularPrice": 389,
+      "salePrice": 389,
+      "compareAtPrice": 389,
+      "inventoryQuantity": null,
+      "available": true,
+      "raw": {
+        "price": "389",
+        "compareAtPrice": "389",
+        "salePrice": "389",
+        "inventoryQuantity": "",
+        "availability": "In stock"
+      }
+    },
+    "current": {
+      "id": "combo-2-cactus",
+      "description": "Free Delivery 1 - Gasteraloe Limpopo 2 - Lace Aloe 3 - Haworthiopsis Reinwardtii 4 - Peanut cactus",
+      "plantGenus": "",
+      "source": "shopify-csv",
+      "title": "Combo 2 - Cactus",
+      "type": "Combo",
+      "imageAlt": "Combo 2 - Cactus succulent plant in a terracotta pot on an Indian apartment windowsill",
+      "createdAt": "2026-08-11T11:25:22.069Z",
+      "collections": [],
+      "price": 389,
+      "vendor": "Succulent Sphere",
+      "sourceInventoryQuantity": 0,
+      "currency": "INR",
+      "productType": "Combo",
+      "handle": "combo-2-cactus",
+      "tags": [
+        "free_shipping"
+      ],
+      "careLevel": "",
+      "descriptionHtml": "<p>Free Delivery<br>1 - Gasteraloe Limpopo<br>2 - Lace Aloe<br>3 - Haworthiopsis Reinwardtii <br>4 - Peanut cactus</p>",
+      "category": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "status": "active",
+      "imageStorage": "hostinger-temporary",
+      "imageStorageUpdatedAt": "2026-08-11T18:16:13.342Z",
+      "seoDescription": "Buy Combo 2 - Cactus online in India. Low-maintenance succulent, ideal for Indian homes. Starting ₹389. All India delivery.",
+      "recoveredImageSources": [
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/vastu_combo_5.png?v=1774699551",
+          "altText": "Combo 2 - Cactus succulent plant in a terracotta pot on an Indian apartment windowsill",
+          "relativePath": "combo-2-cactus/1-vastu_combo_5.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-2-cactus/1-vastu_combo_5.png"
+        }
+      ],
+      "recoverySource": {
+        "csvFile": "products_updated_seo_faq.csv",
+        "type": "shopify-csv-recovery"
+      },
+      "totalInventory": 0,
+      "seoTitle": "Buy Combo 2 - Cactus Online India | Succulent Sphere",
+      "productCategory": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "faqs": [
+        {
+          "question": "What plants are included in Combo 2 - Cactus?",
+          "answer": "Combo 2 - Cactus includes a curated selection of healthy succulents chosen for compatibility in care, growth habits, and visual contrast. All plants are sourced fresh and dispatched from our growing facility in India with detailed care instructions."
+        },
+        {
+          "question": "Can I keep all plants in Combo 2 - Cactus together in one pot?",
+          "answer": "The plants in Combo 2 - Cactus share similar care needs and can be kept together in one large pot or arranged in individual pots. For best long-term results, individual pots with well-draining succulent soil allow each plant to be managed optimally."
+        },
+        {
+          "question": "Are the plants in Combo 2 - Cactus suitable for beginners in India?",
+          "answer": "Yes! Combo 2 - Cactus is curated for ease of care in Indian conditions. All included plants are low-maintenance, drought tolerant, and adaptable to indoor environments. They thrive with bright indirect light and weekly watering — ideal for first-time plant parents."
+        },
+        {
+          "question": "How are the plants in Combo 2 - Cactus packaged for delivery in India?",
+          "answer": "Plants in Combo 2 - Cactus are dispatched bare-rooted in individual wrapping to prevent transit damage. Upon receiving, unpack immediately, air dry for 2–3 hours, then plant in well-draining succulent soil in pots with drainage holes."
+        },
+        {
+          "question": "Is Combo 2 - Cactus a good gift for housewarmings or birthdays in India?",
+          "answer": "Yes! Combo 2 - Cactus makes an excellent gift for housewarmings, birthdays, Diwali, and corporate gifting in India. Succulent combos are thoughtful, long-lasting gifts that require minimal maintenance and suit all ages and spaces."
+        }
+      ],
+      "sunlight": "full-sun; partial-shade",
+      "plantClass": "caryophyllales; asparagales",
+      "imageAlts": [
+        "Combo 2 - Cactus succulent plant in a terracotta pot on an Indian apartment windowsill"
+      ],
+      "suitableSpace": "indoors",
+      "compareAtPrice": 0,
+      "image": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-2-cactus/1-vastu_combo_5.png",
+      "images": [
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-2-cactus/1-vastu_combo_5.png",
+          "altText": "Combo 2 - Cactus succulent plant in a terracotta pot on an Indian apartment windowsill"
+        }
+      ],
+      "updatedAt": "2026-08-13T18:16:02.398Z",
+      "quantity": 10,
+      "inventoryQuantity": 10,
+      "available": true
+    },
+    "matchType": "title",
+    "update": {
+      "updatedAt": "2026-08-15T19:18:26.294Z",
+      "valueUpdateSource": {
+        "type": "xlsx-product-value-update",
+        "file": "Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+        "sheet": "Master Catalog",
+        "rowNumber": 119,
+        "importedAt": "2026-08-15T19:18:26.294Z"
+      },
+      "price": 389,
+      "compareAtPrice": 389,
+      "available": true,
+      "availability": "InStock",
+      "status": "active"
+    },
+    "change": {
+      "before": {
+        "price": 389,
+        "compareAtPrice": 0,
+        "available": true,
+        "availability": null,
+        "status": "active"
+      },
+      "after": {
+        "price": 389,
+        "compareAtPrice": 389,
+        "available": true,
+        "availability": "InStock",
+        "status": "active"
+      }
+    }
+  },
+  {
+    "docId": "combo-1-vastu",
+    "catalogProduct": {
+      "sheetName": "Master Catalog",
+      "rowNumber": 131,
+      "title": "Combo 1 - Vastu",
+      "handle": "",
+      "regularPrice": 249,
+      "salePrice": 249,
+      "compareAtPrice": 249,
+      "inventoryQuantity": null,
+      "available": true,
+      "raw": {
+        "price": "249",
+        "compareAtPrice": "249",
+        "salePrice": "249",
+        "inventoryQuantity": "",
+        "availability": "In stock"
+      }
+    },
+    "current": {
+      "id": "combo-1-vastu",
+      "description": "Free Delivery 1 - LaxmiKamal 2- Crasulla 3 - Bear Crasulla 4 - Variegated Elephant Bush",
+      "plantGenus": "Combo",
+      "source": "shopify-csv",
+      "title": "Combo 1 - Vastu",
+      "type": "Combo",
+      "imageAlt": "Combo 1 - Vastu succulent plant in a terracotta pot on an Indian apartment windowsill",
+      "createdAt": "2026-08-11T11:25:22.069Z",
+      "collections": [],
+      "price": 249,
+      "vendor": "Succulent Sphere",
+      "sourceInventoryQuantity": 0,
+      "currency": "INR",
+      "productType": "Combo",
+      "compareAtPrice": null,
+      "handle": "combo-1-vastu",
+      "tags": [
+        "free_shipping"
+      ],
+      "careLevel": "",
+      "descriptionHtml": "<p>Free Delivery<br>1 - LaxmiKamal <br>2- Crasulla<br>3 - Bear Crasulla<br>4 - Variegated Elephant Bush </p>",
+      "category": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "status": "active",
+      "imageStorage": "hostinger-temporary",
+      "imageStorageUpdatedAt": "2026-08-11T18:16:13.342Z",
+      "seoDescription": "Buy Combo 1 - Vastu online in India. Low-maintenance succulent, ideal for Indian homes. Starting ₹249. All India delivery.",
+      "recoveredImageSources": [
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/vastu_combo_3.png?v=1774699213",
+          "altText": "Combo 1 - Vastu succulent plant in a terracotta pot on an Indian apartment windowsill",
+          "relativePath": "combo-1-vastu/1-vastu_combo_3.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-1-vastu/1-vastu_combo_3.png"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Variegated_Elephant_Bush.jpg?v=1774699213",
+          "altText": "Potted plant with green leaves and red stems on a beige surface",
+          "relativePath": "combo-1-vastu/2-Variegated_Elephant_Bush.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-1-vastu/2-Variegated_Elephant_Bush.jpg"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/unnamed_10.jpg?v=1774699213",
+          "altText": "Crassula Ovata jade plant with thick oval glossy green leaves on woody branches in a terracotta pot",
+          "relativePath": "combo-1-vastu/3-unnamed_10.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-1-vastu/3-unnamed_10.jpg"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Crassula_Swaziensis.jpg?v=1774699213",
+          "altText": "Green Crassula Swaziensis succulent plant in a white pot on a beige background",
+          "relativePath": "combo-1-vastu/4-Crassula_Swaziensis.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-1-vastu/4-Crassula_Swaziensis.jpg"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/lakshmi_Kamal.jpg?v=1774699213",
+          "altText": "Green lakshmi Kamal succulent plant in a white pot on a beige surface",
+          "relativePath": "combo-1-vastu/5-lakshmi_Kamal.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-1-vastu/5-lakshmi_Kamal.jpg"
+        }
+      ],
+      "recoverySource": {
+        "csvFile": "products_updated_seo_faq.csv",
+        "type": "shopify-csv-recovery"
+      },
+      "totalInventory": 0,
+      "seoTitle": "Buy Combo 1 - Vastu Online India | Succulent Sphere",
+      "productCategory": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "faqs": [
+        {
+          "question": "What plants are included in Combo 1 - Vastu?",
+          "answer": "Combo 1 - Vastu includes a curated selection of healthy succulents chosen for compatibility in care, growth habits, and visual contrast. All plants are sourced fresh and dispatched from our growing facility in India with detailed care instructions."
+        },
+        {
+          "question": "Can I keep all plants in Combo 1 - Vastu together in one pot?",
+          "answer": "The plants in Combo 1 - Vastu share similar care needs and can be kept together in one large pot or arranged in individual pots. For best long-term results, individual pots with well-draining succulent soil allow each plant to be managed optimally."
+        },
+        {
+          "question": "Are the plants in Combo 1 - Vastu suitable for beginners in India?",
+          "answer": "Yes! Combo 1 - Vastu is curated for ease of care in Indian conditions. All included plants are low-maintenance, drought tolerant, and adaptable to indoor environments. They thrive with bright indirect light and weekly watering — ideal for first-time plant parents."
+        },
+        {
+          "question": "How are the plants in Combo 1 - Vastu packaged for delivery in India?",
+          "answer": "Plants in Combo 1 - Vastu are dispatched bare-rooted in individual wrapping to prevent transit damage. Upon receiving, unpack immediately, air dry for 2–3 hours, then plant in well-draining succulent soil in pots with drainage holes."
+        },
+        {
+          "question": "Is Combo 1 - Vastu a good gift for housewarmings or birthdays in India?",
+          "answer": "Yes! Combo 1 - Vastu makes an excellent gift for housewarmings, birthdays, Diwali, and corporate gifting in India. Succulent combos are thoughtful, long-lasting gifts that require minimal maintenance and suit all ages and spaces."
+        }
+      ],
+      "sunlight": "partial-shade; full-sun",
+      "plantClass": "saxifragales; caryophyllales",
+      "imageAlts": [
+        "Combo 1 - Vastu succulent plant in a terracotta pot on an Indian apartment windowsill",
+        "Potted plant with green leaves and red stems on a beige surface",
+        "Crassula Ovata jade plant with thick oval glossy green leaves on woody branches in a terracotta pot",
+        "Green Crassula Swaziensis succulent plant in a white pot on a beige background",
+        "Green lakshmi Kamal succulent plant in a white pot on a beige surface"
+      ],
+      "suitableSpace": "indoors",
+      "image": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-1-vastu/1-vastu_combo_3.png",
+      "images": [
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-1-vastu/1-vastu_combo_3.png",
+          "altText": "Combo 1 - Vastu succulent plant in a terracotta pot on an Indian apartment windowsill"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-1-vastu/2-Variegated_Elephant_Bush.jpg",
+          "altText": "Potted plant with green leaves and red stems on a beige surface"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-1-vastu/3-unnamed_10.jpg",
+          "altText": "Crassula Ovata jade plant with thick oval glossy green leaves on woody branches in a terracotta pot"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-1-vastu/4-Crassula_Swaziensis.jpg",
+          "altText": "Green Crassula Swaziensis succulent plant in a white pot on a beige background"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-1-vastu/5-lakshmi_Kamal.jpg",
+          "altText": "Green lakshmi Kamal succulent plant in a white pot on a beige surface"
+        }
+      ],
+      "updatedAt": "2026-08-13T18:16:01.942Z",
+      "quantity": 10,
+      "inventoryQuantity": 10,
+      "available": true
+    },
+    "matchType": "title",
+    "update": {
+      "updatedAt": "2026-08-15T19:18:26.295Z",
+      "valueUpdateSource": {
+        "type": "xlsx-product-value-update",
+        "file": "Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+        "sheet": "Master Catalog",
+        "rowNumber": 131,
+        "importedAt": "2026-08-15T19:18:26.295Z"
+      },
+      "price": 249,
+      "compareAtPrice": 249,
+      "available": true,
+      "availability": "InStock",
+      "status": "active"
+    },
+    "change": {
+      "before": {
+        "price": 249,
+        "compareAtPrice": null,
+        "available": true,
+        "availability": null,
+        "status": "active"
+      },
+      "after": {
+        "price": 249,
+        "compareAtPrice": 249,
+        "available": true,
+        "availability": "InStock",
+        "status": "active"
+      }
+    }
+  },
+  {
+    "docId": "fairy-castle-cactus",
+    "catalogProduct": {
+      "sheetName": "Master Catalog",
+      "rowNumber": 132,
+      "title": "Fairy Castle Cactus (Acanthocereus tetragonus)",
+      "handle": "",
+      "regularPrice": 150,
+      "salePrice": 99,
+      "compareAtPrice": 150,
+      "inventoryQuantity": null,
+      "available": true,
+      "raw": {
+        "price": "150",
+        "compareAtPrice": "150",
+        "salePrice": "99",
+        "inventoryQuantity": "",
+        "availability": "In stock"
+      }
+    },
+    "current": {
+      "id": "fairy-castle-cactus",
+      "plantGenus": "Acanthocereus",
+      "source": "shopify-csv",
+      "title": "Fairy Castle Cactus (Acanthocereus tetragonus)",
+      "type": "Cactus",
+      "imageAlt": "Potted cactus on a textured surface with a neutral background",
+      "createdAt": "2026-08-11T11:25:22.069Z",
+      "collections": [],
+      "price": 99,
+      "vendor": "Succulent Sphere",
+      "sourceInventoryQuantity": 0,
+      "currency": "INR",
+      "productType": "Cactus",
+      "handle": "fairy-castle-cactus",
+      "tags": [
+        "Beginner"
+      ],
+      "careLevel": "beginner",
+      "category": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "status": "active",
+      "imageStorage": "hostinger-temporary",
+      "imageStorageUpdatedAt": "2026-08-11T18:16:13.345Z",
+      "seoDescription": "Buy Fairy Castle Cactus online in India. With its multi-columnar castle-like structure, this slow-growing cactus is a stunning low-maintenance...",
+      "description": "The Fairy Castle Cactus earns its name — multiple columnar stems of varying heights grow upward in a formation that genuinely resembles a miniature castle. It's one of the most architectural cacti you can keep indoors, growing slowly and reliably for years without demanding much beyond good light and minimal water. Difficulty — Beginner Friendly | Maintenance — Low | Ideal for — Both Indoor and Outdoor What's in the Box 1 × Live Fairy Castle Cactus Plant (Bare Rooted) No pot included Care Guide ☀️ Sunlight — Bright direct or indirect light, 5–6 hours daily. South or west-facing window preferred. 💧 Watering — Once every 14–18 days in summer. During monsoon (July–September), reduce to once every 30–40 days or skip entirely in high-humidity cities like Mumbai. 🌱 Soil — Fast-draining cactus mix. 40% cocopeat + 40% coarse sand + 20% perlite. 🌡️ Temperature — Thrives in 20°C–40°C. Very well-suited to Indian climate conditions. ✂️ Maintenance tip — Never let water sit in the crown of the stems. Water at the base only. The castle shape is natural and requires no pruning.",
+      "recoveredImageSources": [
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Fairy_Castle_Cactus.jpg?v=1774721453",
+          "altText": "Potted cactus on a textured surface with a neutral background",
+          "relativePath": "fairy-castle-cactus/1-Fairy_Castle_Cactus.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/fairy-castle-cactus/1-Fairy_Castle_Cactus.jpg"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Fairy_Castle_Cactus_close_up.jpg?v=1774721423",
+          "altText": "Close-up of a green cactus with small white spines in a pot.",
+          "relativePath": "fairy-castle-cactus/2-Fairy_Castle_Cactus_close_up.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/fairy-castle-cactus/2-Fairy_Castle_Cactus_close_up.jpg"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Fairy_Castle_Cactus_In_nursery.jpg?v=1774721510",
+          "altText": "Small Fairy Castle Cactus plant held in a hand with a background of various potted plants.",
+          "relativePath": "fairy-castle-cactus/3-Fairy_Castle_Cactus_In_nursery.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/fairy-castle-cactus/3-Fairy_Castle_Cactus_In_nursery.jpg"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/Fairy_Castle_Cactus_close_look.jpg?v=1774721536",
+          "altText": "Close-up of a cactus plant with a blurred natural background",
+          "relativePath": "fairy-castle-cactus/4-Fairy_Castle_Cactus_close_look.jpg",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/fairy-castle-cactus/4-Fairy_Castle_Cactus_close_look.jpg"
+        }
+      ],
+      "recoverySource": {
+        "csvFile": "products_updated_seo_faq.csv",
+        "type": "shopify-csv-recovery"
+      },
+      "totalInventory": 0,
+      "seoTitle": "Buy Fairy Castle Cactus Online India | Succulent Sphere",
+      "productCategory": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "faqs": [
+        {
+          "question": "Can I keep Fairy Castle Cactus indoors in India?",
+          "answer": "Yes, Fairy Castle Cactus can be kept indoors near your brightest window. A south or west-facing window with 4–6 hours of direct sunlight works best. Without adequate light, cacti will stretch and lose their compact shape."
+        },
+        {
+          "question": "How often should I water Fairy Castle Cactus in Indian summers?",
+          "answer": "Water Fairy Castle Cactus once every 10–14 days in summer. In monsoon, reduce watering significantly as humidity keeps soil moist. In winter, once every 20–25 days is enough. Always check soil is bone dry before watering."
+        },
+        {
+          "question": "Is Fairy Castle Cactus safe around children and pets?",
+          "answer": "Fairy Castle Cactus has sharp spines that can injure if touched carelessly — always handle with thick gloves and keep away from children and pets. The plant itself is non-toxic but spines pose a physical hazard."
+        },
+        {
+          "question": "Will Fairy Castle Cactus survive Indian monsoon season?",
+          "answer": "Yes, but move Fairy Castle Cactus under a covered area during monsoon to prevent waterlogging. Ensure excellent pot drainage and avoid watering during rainy periods. Excessive moisture in monsoon is the biggest threat to cacti in India."
+        },
+        {
+          "question": "How often does Fairy Castle Cactus need repotting?",
+          "answer": "Repot Fairy Castle Cactus once every 2 years or when roots emerge from the drainage hole. Use a terracotta pot one size larger with well-draining cactus mix. Best time to repot is spring (February–March) before Indian summer."
+        }
+      ],
+      "sunlight": "",
+      "plantClass": "",
+      "descriptionHtml": "<p>The Fairy Castle Cactus earns its name — multiple columnar stems of varying heights grow upward in a formation that genuinely resembles a miniature castle. It's one of the most architectural cacti you can keep indoors, growing slowly and reliably for years without demanding much beyond good light and minimal water.</p>\n<p><strong>Difficulty —</strong> Beginner Friendly  |  <strong>Maintenance —</strong> Low  |  <strong>Ideal for —</strong> Both Indoor and Outdoor</p>\n<p><strong>What's in the Box</strong></p>\n<ul>\n<li>1 × Live Fairy Castle Cactus Plant (Bare Rooted)</li>\n<li>No pot included</li>\n</ul>\n\n<p><strong>Care Guide</strong></p>\n<p>☀️ <strong>Sunlight —</strong> Bright direct or indirect light, 5–6 hours daily. South or west-facing window preferred.</p><p>💧 <strong>Watering —</strong> Once every 14–18 days in summer. During monsoon (July–September), reduce to once every 30–40 days or skip entirely in high-humidity cities like Mumbai.</p><p>🌱 <strong>Soil —</strong> Fast-draining cactus mix. 40% cocopeat + 40% coarse sand + 20% perlite.</p><p>🌡️ <strong>Temperature —</strong> Thrives in 20°C–40°C. Very well-suited to Indian climate conditions.</p><p>✂️ <strong>Maintenance tip —</strong> Never let water sit in the crown of the stems. Water at the base only. The castle shape is natural and requires no pruning.</p>",
+      "imageAlts": [
+        "Potted cactus on a textured surface with a neutral background",
+        "Close-up of a green cactus with small white spines in a pot.",
+        "Small Fairy Castle Cactus plant held in a hand with a background of various potted plants.",
+        "Close-up of a cactus plant with a blurred natural background"
+      ],
+      "suitableSpace": "",
+      "compareAtPrice": 150,
+      "image": "https://whitesmoke-cattle-754161.hostingersite.com/products/fairy-castle-cactus/1-Fairy_Castle_Cactus.jpg",
+      "images": [
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/fairy-castle-cactus/1-Fairy_Castle_Cactus.jpg",
+          "altText": "Potted cactus on a textured surface with a neutral background"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/fairy-castle-cactus/2-Fairy_Castle_Cactus_close_up.jpg",
+          "altText": "Close-up of a green cactus with small white spines in a pot."
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/fairy-castle-cactus/3-Fairy_Castle_Cactus_In_nursery.jpg",
+          "altText": "Small Fairy Castle Cactus plant held in a hand with a background of various potted plants."
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/fairy-castle-cactus/4-Fairy_Castle_Cactus_close_look.jpg",
+          "altText": "Close-up of a cactus plant with a blurred natural background"
+        }
+      ],
+      "updatedAt": "2026-08-13T18:16:57.432Z",
+      "quantity": 10,
+      "inventoryQuantity": 10,
+      "available": true
+    },
+    "matchType": "title",
+    "update": {
+      "updatedAt": "2026-08-15T19:18:26.295Z",
+      "valueUpdateSource": {
+        "type": "xlsx-product-value-update",
+        "file": "Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+        "sheet": "Master Catalog",
+        "rowNumber": 132,
+        "importedAt": "2026-08-15T19:18:26.295Z"
+      },
+      "price": 99,
+      "compareAtPrice": 150,
+      "available": true,
+      "availability": "InStock",
+      "status": "active"
+    },
+    "change": {
+      "before": {
+        "price": 99,
+        "compareAtPrice": 150,
+        "available": true,
+        "availability": null,
+        "status": "active"
+      },
+      "after": {
+        "price": 99,
+        "compareAtPrice": 150,
+        "available": true,
+        "availability": "InStock",
+        "status": "active"
+      }
+    }
+  },
+  {
+    "docId": "combo-6-the-echeveria-bundle",
+    "catalogProduct": {
+      "sheetName": "Master Catalog",
+      "rowNumber": 136,
+      "title": "Combo 6 - The Echeveria Bundle",
+      "handle": "",
+      "regularPrice": 499,
+      "salePrice": 499,
+      "compareAtPrice": 499,
+      "inventoryQuantity": null,
+      "available": true,
+      "raw": {
+        "price": "499",
+        "compareAtPrice": "499",
+        "salePrice": "499",
+        "inventoryQuantity": "",
+        "availability": "In stock"
+      }
+    },
+    "current": {
+      "id": "combo-6-the-echeveria-bundle",
+      "description": "Free Delivery 1-Echeveria Pink Border 2-Echeveria Onslow 3-Echeveria Desmetiana 4-Echeveria Menina",
+      "plantGenus": "",
+      "recoveredImageSources": [
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/ae0706f4-1ebf-45a9-b118-20c0bc653e23-ezremove_c41a1771-523a-4750-88d9-4257d3379bcb.png?v=1775839059",
+          "altText": "",
+          "relativePath": "combo-6-the-echeveria-bundle/1-ae0706f4-1ebf-45a9-b118-20c0bc653e23-ezremove_c41a1771-523a-4750-88d9-4257d3379bcb.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-6-the-echeveria-bundle/1-ae0706f4-1ebf-45a9-b118-20c0bc653e23-ezremove_c41a1771-523a-4750-88d9-4257d3379bcb.png"
+        },
+        {
+          "sourceUrl": "https://cdn.shopify.com/s/files/1/0787/8210/3575/files/result_0_1_311937fe-16ff-4113-88f9-771ef4d7cee9.png?v=1775839059",
+          "altText": "",
+          "relativePath": "combo-6-the-echeveria-bundle/2-result_0_1_311937fe-16ff-4113-88f9-771ef4d7cee9.png",
+          "finalUrl": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-6-the-echeveria-bundle/2-result_0_1_311937fe-16ff-4113-88f9-771ef4d7cee9.png"
+        }
+      ],
+      "totalInventory": 0,
+      "seoTitle": "Buy Combo 6 - Online India | Succulent Sphere",
+      "title": "Combo 6 - The Echeveria Bundle",
+      "type": "Combo",
+      "imageAlt": "Combo 6 - The Echeveria Bundle",
+      "productCategory": "Home & Garden > Plants > Indoor & Outdoor Plants > Potted Houseplants",
+      "createdAt": "2026-08-13T16:35:56.191Z",
+      "price": 499,
+      "vendor": "Succulent Sphere",
+      "plantClass": "caryophyllales; saxifragales",
+      "currency": "INR",
+      "suitableSpace": "indoors",
+      "productType": "Combo",
+      "compareAtPrice": 0,
+      "seoDescription": "Buy Combo 6 - online in India. Low-maintenance succulent, ideal for Indian homes. Starting ₹499. All India delivery.",
+      "recoverySource": {
+        "csvFile": "products_updated_seo_faq.csv",
+        "type": "shopify-csv-recovery"
+      },
+      "handle": "combo-6-the-echeveria-bundle",
+      "tags": [
+        "free_shipping"
+      ],
+      "faqs": [
+        {
+          "question": "What plants are included in Combo 6 -?",
+          "answer": "Combo 6 - includes a curated selection of healthy succulents chosen for compatibility in care, growth habits, and visual contrast. All plants are sourced fresh and dispatched from our growing facility in India with detailed care instructions."
+        },
+        {
+          "question": "Can I keep all plants in Combo 6 - together in one pot?",
+          "answer": "The plants in Combo 6 - share similar care needs and can be kept together in one large pot or arranged in individual pots. For best long-term results, individual pots with well-draining succulent soil allow each plant to be managed optimally."
+        },
+        {
+          "question": "Are the plants in Combo 6 - suitable for beginners in India?",
+          "answer": "Yes! Combo 6 - is curated for ease of care in Indian conditions. All included plants are low-maintenance, drought tolerant, and adaptable to indoor environments. They thrive with bright indirect light and weekly watering — ideal for first-time plant parents."
+        },
+        {
+          "question": "How are the plants in Combo 6 - packaged for delivery in India?",
+          "answer": "Plants in Combo 6 - are dispatched bare-rooted in individual wrapping to prevent transit damage. Upon receiving, unpack immediately, air dry for 2–3 hours, then plant in well-draining succulent soil in pots with drainage holes."
+        },
+        {
+          "question": "Is Combo 6 - a good gift for housewarmings or birthdays in India?",
+          "answer": "Yes! Combo 6 - makes an excellent gift for housewarmings, birthdays, Diwali, and corporate gifting in India. Succulent combos are thoughtful, long-lasting gifts that require minimal maintenance and suit all ages and spaces."
+        }
+      ],
+      "sunlight": "partial-shade; full-sun",
+      "descriptionHtml": "<p>Free Delivery <br>1-Echeveria Pink Border<br>2-Echeveria Onslow<br>3-Echeveria Desmetiana <br>4-Echeveria Menina</p>",
+      "imageAlts": [
+        "Combo 6 - The Echeveria Bundle",
+        "Combo 6 - The Echeveria Bundle"
+      ],
+      "status": "active",
+      "image": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-6-the-echeveria-bundle/1-ae0706f4-1ebf-45a9-b118-20c0bc653e23-ezremove_c41a1771-523a-4750-88d9-4257d3379bcb.png",
+      "images": [
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-6-the-echeveria-bundle/1-ae0706f4-1ebf-45a9-b118-20c0bc653e23-ezremove_c41a1771-523a-4750-88d9-4257d3379bcb.png",
+          "altText": "Combo 6 - The Echeveria Bundle"
+        },
+        {
+          "url": "https://whitesmoke-cattle-754161.hostingersite.com/products/combo-6-the-echeveria-bundle/2-result_0_1_311937fe-16ff-4113-88f9-771ef4d7cee9.png",
+          "altText": "Combo 6 - The Echeveria Bundle"
+        }
+      ],
+      "updatedAt": "2026-08-13T18:16:05.310Z",
+      "quantity": 10,
+      "inventoryQuantity": 10,
+      "available": true
+    },
+    "matchType": "title",
+    "update": {
+      "updatedAt": "2026-08-15T19:18:26.295Z",
+      "valueUpdateSource": {
+        "type": "xlsx-product-value-update",
+        "file": "Succulent_Sphere_Product_Catalog_134_Products.xlsx",
+        "sheet": "Master Catalog",
+        "rowNumber": 136,
+        "importedAt": "2026-08-15T19:18:26.295Z"
+      },
+      "price": 499,
+      "compareAtPrice": 499,
+      "available": true,
+      "availability": "InStock",
+      "status": "active"
+    },
+    "change": {
+      "before": {
+        "price": 499,
+        "compareAtPrice": 0,
+        "available": true,
+        "availability": null,
+        "status": "active"
+      },
+      "after": {
+        "price": 499,
+        "compareAtPrice": 499,
+        "available": true,
+        "availability": "InStock",
+        "status": "active"
+      }
+    }
+  }
+]

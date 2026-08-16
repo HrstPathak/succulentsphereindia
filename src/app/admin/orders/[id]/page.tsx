@@ -1,5 +1,6 @@
 import { getFirebaseDb } from "@/lib/firebase-admin";
-import { requireAdmin } from "@/lib/admin-auth";
+import { getAdminSession } from "@/lib/admin-auth";
+import { notFound, redirect } from "next/navigation";
 import AdminOrderTrackingForm from "@/components/admin/AdminOrderTrackingForm";
 import AdminResendEmailButton from "@/components/admin/AdminResendEmailButton";
 import AdminWhatsAppMessage from "@/components/admin/AdminWhatsAppMessage";
@@ -7,7 +8,16 @@ import AdminWhatsAppMessage from "@/components/admin/AdminWhatsAppMessage";
 type Props = { params: { id?: string; order?: string } };
 
 export default async function Page({ params }: Props) {
-  await requireAdmin();
+  const session = await getAdminSession();
+  
+  // Redirect to login if not authenticated
+  if (!session.uid) {
+    redirect("/login?next=/admin");
+  }
+  
+  // Return 404 if authenticated but not an admin
+  if (!session.isAdmin) notFound();
+  
   const resolvedParams = await Promise.resolve(params as Props['params']);
   const id = String(resolvedParams?.id ?? resolvedParams?.order ?? "").trim();
   if (!id) return <div className="p-6">Order id required.</div>;

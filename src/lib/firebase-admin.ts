@@ -24,6 +24,10 @@ function getFirebaseAdminApp(): App {
   });
 }
 
+export function initializeFirebaseAdmin() {
+  return getFirebaseAdminApp();
+}
+
 export function getFirebaseAdminAuth() {
   return getAuth(getFirebaseAdminApp());
 }
