@@ -4,6 +4,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchPlantCareArticleByHandle, fetchPlantCareArticles } from "@/lib/commerce";
 
+// Client-side language experience for article translations
+import ArticleLanguageExperience from "@/components/plant-care/ArticleLanguageExperience";
+import YourSucculentsArticle from "@/components/plant-care/YourSucculentsArticle";
+import ArticleBilingual from "@/components/plant-care/ArticleBilingual";
+
 export const revalidate = 3600;
 
 function formatDate(value: string): string {
@@ -49,6 +54,22 @@ function buildFaqSchema(article: { title: string; excerpt: string; handle: strin
   };
 }
 
+function buildArticleSchema(article: { title: string; seoDescription: string; publishedAt: string; handle: string; image?: { url: string } | null }) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.seoDescription || "Succulent care guide — unboxing, potting, watering, and climate-aware tips for Indian homes.",
+    author: { "@type": "Organization", name: "Succulent Sphere" },
+    datePublished: article.publishedAt || new Date().toISOString(),
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://www.succulentsphere.in/plant-care/${article.handle}`,
+    },
+    image: article.image?.url ? [article.image.url] : undefined,
+  };
+}
+
 export async function generateStaticParams() {
   try {
     const articles = await fetchPlantCareArticles(24);
@@ -73,16 +94,49 @@ export async function generateMetadata({
     };
   }
 
+  const seoTitle = `${article.title} | Plant Care | Succulent Sphere`;
+  const seoDescription = article.seoDescription || article.excerpt || "Succulent care guides for Indian homes — unboxing, potting, watering, and climate-aware tips from Succulent Sphere.";
+  const canonical = `/plant-care/${article.handle}`;
+
   return {
-    title: `${article.title} | Plant Care | Succulent Sphere`,
-    description: article.seoDescription || article.excerpt,
+    title: seoTitle,
+    description: seoDescription,
     alternates: {
-      canonical: `/plant-care/${article.handle}`,
+      canonical,
+    },
+    keywords: [
+      "succulent care",
+      "succulent care India",
+      "succulent care tips India",
+      "succulent watering tips",
+      "how to pot succulents",
+      "succulent unboxing guide",
+      "bare-root succulents delivery",
+      "monsoon succulent care",
+      "succulent potting mix India",
+      "succulent care hindi",
+      "सक्सुलेन्ट केयर",
+      "succulent watering India",
+      "plant care guide India",
+      "succulent recovery after shipping",
+      "succulent soil and drainage",
+      "succulent acclimation India",
+      "Succulent Sphere",
+    ],
+    robots: {
+      index: true,
+      follow: true,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seoTitle,
+      description: seoDescription,
+      images: article.image?.url ? [article.image.url] : undefined,
     },
     openGraph: {
-      title: `${article.title} | Plant Care | Succulent Sphere`,
-      description: article.seoDescription || article.excerpt,
-      url: `/plant-care/${article.handle}`,
+      title: seoTitle,
+      description: seoDescription,
+      url: canonical,
       type: "article",
       publishedTime: article.publishedAt,
       images: article.image?.url ? [{ url: article.image.url, alt: article.image.altText || article.title }] : undefined,
@@ -115,54 +169,27 @@ export default async function PlantCareArticlePage({
     handle: article.handle,
   });
 
+  const articleSchema = buildArticleSchema({
+    title: article.title,
+    seoDescription: article.seoDescription || article.excerpt,
+    publishedAt: article.publishedAt,
+    handle: article.handle,
+    image: article.image ?? null,
+  });
+
   return (
     <section
       className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]"
       style={{ paddingTop: "calc(var(--ss-header-offset, 64px) + 24px)" }}
     >
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <div className="mx-auto max-w-5xl px-4 pb-16 md:px-6 md:pb-24">
-        <nav className="mb-6 text-sm text-[var(--color-text)]/75">
-          <Link href="/plant-care" className="transition-colors hover:text-[var(--color-brand)]">
-            Plant Care
-          </Link>
-          <span className="mx-2 text-[var(--color-secondary)]">/</span>
-          <span className="text-[var(--color-brand)]">{article.title}</span>
-        </nav>
-
-        <header className="mb-8 md:mb-10">
-          <p className="mb-3 text-xs uppercase tracking-[0.15em] text-[var(--color-secondary)]">{formatDate(article.publishedAt)}</p>
-          <h1 className="font-serif text-4xl leading-tight text-[var(--color-brand)] md:text-6xl">{article.title}</h1>
-        </header>
-
-        <div className="overflow-hidden rounded-2xl border border-[var(--color-secondary)]/30 bg-white shadow-[0_18px_50px_rgba(52,78,65,0.12)]">
-          <div className="relative aspect-[16/9] w-full">
-            {article.image?.url ? (
-              <Image
-                src={article.image.url}
-                alt={article.image.altText || article.title}
-                fill
-                priority
-                className="object-cover"
-                sizes="100vw"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-[var(--color-secondary)]/20 text-[var(--color-brand)]/70">
-                Plant care article
-              </div>
-            )}
-          </div>
-
-          <article className="px-5 py-8 md:px-10 md:py-12">
-            <div
-              className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-[var(--color-brand)] prose-p:text-[var(--color-text)] prose-p:leading-8 prose-a:text-[var(--color-accent)] prose-strong:text-[var(--color-brand)]"
-              dangerouslySetInnerHTML={{ __html: contentHtml }}
-            />
-            <p className="mt-8 rounded-xl border border-[var(--color-secondary)]/35 bg-[var(--color-secondary)]/8 px-4 py-3 text-sm text-[var(--color-text)]">
-              <span className="font-semibold text-[var(--color-brand)]">Author Name:</span> {article.authorName}
-            </p>
-          </article>
-        </div>
+      {article.handle === 'your-succulents-just-arrived' ? (
+          <ArticleBilingual />
+        ) : (
+          <ArticleLanguageExperience article={article} contentHtml={contentHtml} />
+        )}
       </div>
     </section>
   );

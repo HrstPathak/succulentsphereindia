@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Succulents Just Arrived — What To Do Next (Interactive)</title>
+<meta name="description" content="Succulent care after delivery — interactive guide with 3D visuals and Hindi / English toggle.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,700&family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EAE0C4; --card:#F6F0DE; --ink:#282316; --ink-soft:#5b543f;
+  --accent:#AC4B2C; --accent-dark:#823823; --sage:#5C7245; --line:rgba(40,35,22,0.12);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,Segoe UI,Arial; margin:0; background:linear-gradient(180deg, #FBF7EE 0%, var(--paper) 100%); color:var(--ink);}
+.wrap{max-width:980px;margin:0 auto;padding:20px}
+.topbar{position:sticky;top:0;background:rgba(250,246,240,0.9);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);z-index:40}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--accent-dark)}
+.brand-dot{width:12px;height:12px;border-radius:50%;background:var(--sage);display:inline-block}
+.controls{display:flex;gap:10px;align-items:center}
+.lang-toggle{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:600}
+.lang-toggle.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.hero{display:grid;grid-template-columns:1fr 360px;gap:28px;align-items:start;padding:32px 0}
+.hero-left{padding-right:10px}
+.h1{font-family:Fraunces,serif;font-size:34px;margin:0 0 10px;line-height:1.08}
+.lede{color:var(--ink-soft);font-style:italic;margin:0 0 12px}
+.meta-row{font-family:Space Grotesk, sans-serif;font-size:13px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.06em}
+/* 3D card */
+.scene{width:100%;height:260px;display:flex;align-items:center;justify-content:center;perspective:1000px}
+.box3d{width:320px;height:200px;transform-style:preserve-3d;transition:transform 400ms cubic-bezier(.2,.9,.2,1);}
+.box-face{position:absolute;border-radius:8px;box-shadow:0 18px 30px rgba(20,18,16,0.12);}
+.box-top{width:320px;height:200px;background:linear-gradient(160deg,#D6A46A,#B17A44);transform:translateZ(40px);border:1px solid rgba(0,0,0,0.06)}
+.box-inner-plant{position:relative;width:220px;height:120px;left:50%;transform:translateX(-50%) translateZ(42px);top:24px}
+.plant-svg{width:100%;height:100%}
+.box3d:hover{transform:translateY(-6px) rotateX(6deg) rotateY(-6deg)}
+/* cards and sections */
+.section{background:var(--card);border-radius:10px;padding:18px;margin:18px 0;border:1px solid var(--line);box-shadow:0 6px 18px rgba(24,22,20,0.05);}
+.section h2{margin:0 0 6px;font-family:Fraunces,serif;color:var(--accent-dark)}
+.steps{list-style:none;padding:0;margin:12px 0}
+.steps li{padding:10px 12px;border-radius:8px;margin-bottom:8px;background:linear-gradient(180deg,#fff,#FCF8F0);display:flex;gap:12px;align-items:flex-start;border:1px solid rgba(0,0,0,0.03)}
+.steps li .num{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+/* interactive reveal */
+.reveal{opacity:0;transform:translateY(10px);transition:all 420ms cubic-bezier(.2,.9,.2,1)}
+.reveal.visible{opacity:1;transform:none}
+/* language variants */
+.lang{display:block}
+.lang[hidden]{display:none}
+/* small responsive */
+@media (max-width:920px){.hero{grid-template-columns:1fr;}.scene{order:2}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner wrap">
+    <div class="brand"><span class="brand-dot"></span>Succulent Sphere</div>
+    <div class="controls">
+      <button id="btn-en" class="lang-toggle active" data-lang="en">English</button>
+      <button id="btn-hi" class="lang-toggle" data-lang="hi">हिन्दी</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <header class="hero">
+    <div class="hero-left">
+      <div class="lang" data-lang="en">
+        <h1 class="h1">Your succulents just landed. Here's what to do in the next 30 minutes.</h1>
+        <p class="lede">Not a generic care sheet — exactly how we pack your order and what to do when you open the box.</p>
+        <div class="meta-row">Succulent care · 7 min read · Updated 2026</div>
+      </div>
+      <div class="lang" data-lang="hi" hidden>
+        <h1 class="h1">आपके सकुलेंट अभी-अभी पहुँचे हैं। अगले 30 मिनट में क्या करें।</h1>
+        <p class="lede">कोई सामान्य केयर शीट नहीं — यह बिल्कुल वही तरीका है जिससे हम आपका ऑर्डर पैक करते हैं और खोलने पर क्या करना चाहिए।</p>
+        <div class="meta-row">सकुलेंट देखभाल · 7 मिनट पढ़ें · 2026 में अपडेट</div>
+      </div>
+
+      <div class="section reveal" style="margin-top:16px">
+        <div class="section-label">Quick answer / त्वरित जवाब</div>
+        <div class="lang" data-lang="en">
+          <p>Open the box in shade. Don't water on day one. Pot within 24–48 hours in a well-draining mix. Keep out of harsh sun for a week. Patience matters.</p>
+        </div>
+        <div class="lang" data-lang="hi" hidden>
+          <p>बॉक्स छाँव में खोलें। पहले दिन पानी न दें। 24–48 घंटे में अच्छे ड्रेनेज वाले मिक्स में लगाएँ। एक सप्ताह तक तेज धूप से बचाएँ। धैर्य ज़रूरी है।</p>
+        </div>
+      </div>
+
+      <section id="unboxing" class="section reveal">
+        <div class="lang" data-lang="en">
+          <h2>Unbox it like you actually mean it</h2>
+          <p>Open in shade, unwrap gently, check roots, photograph any damage. Don't rush to water.</p>
+          <ol class="steps">
+            <li><div class="num">1</div><div><b>Open in shade.</b> Not direct sun.</div></li>
+            <li><div class="num">2</div><div><b>Unwrap slowly.</b> Leaves stick to tissue—take care near the base.</div></li>
+            <li><div class="num">3</div><div><b>Check roots.</b> Firm tan roots are OK; black mushy bits should be trimmed.</div></li>
+          </ol>
+        </div>
+        <div class="lang" data-lang="hi" hidden>
+          <h2>ध्यान से बॉक्स खोलें</h2>
+          <p>छाँव में खोलें, धीरे-धीरे खोलें, जड़ें देखें, किसी नुकसान की फोटो लें। पानी डालने के लिए जल्दी ना करें।</p>
+          <ol class="steps">
+            <li><div class="num">1</div><div><b>छाँव में खोलें।</b> सीधी धूप में नहीं।</div></li>
+            <li><div class="num">2</div><div><b>धीरे–धीरे खोलें।</b> पत्तियाँ टिशू से चिपक सकती हैं—नीचे से सावधान रहें।</div></li>
+            <li><div class="num">3</div><div><b>जड़ों की जांच करें।</b> सख्त हल्के रंग की जड़ें ठीक हैं; काली और गली हुई हिस्से काट दें।</div></li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="potting" class="section reveal">
+        <div class="lang" data-lang="en">
+          <h2>Should you pot it immediately, or wait?</h2>
+          <p>Pot within 24–48 hours. Let any trimmed roots callus a day before touching damp soil. Use a well-draining cactus mix and a pot with drainage. Do not water the day you pot it.</p>
+        </div>
+        <div class="lang" data-lang="hi" hidden>
+          <h2>क्या तुरंत गमला में लगाएँ, या इंतज़ार करें?</h2>
+          <p>24–48 घंटे के भीतर गमले में लगाएँ। काटी हुई जड़ों को मिट्टी से पहले एक दिन सुखने दें। अच्छे ड्रेनेज वाले मिक्स और ड्रेनेज होल वाला गमला इस्तेमाल करें। दिन में पानी न दें।</p>
+        </div>
+      </section>
+
+      <section id="watering" class="section reveal">
+        <div class="lang" data-lang="en">
+          <h2>Watering: less often than you think</h2>
+          <p>Water only when soil is completely dry, then water thoroughly until it drains. Freshly potted plants usually get their first proper drink around day 5–10 depending on pot, mix and climate.</p>
+        </div>
+        <div class="lang" data-lang="hi" hidden>
+          <h2>पानी देना: कम बार लेकिन अच्छी तरह</h2>
+          <p>मिट्टी पूरी तरह सूखने पर ही पानी दें, और तब मिट्टी को नाली से बहने तक भिगो दें। नए लगाए गए पौधे आमतौर पर पहले पानी 5–10 दिन के बीच लेते हैं।</p>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="scene" aria-hidden="true">
+      <div class="box3d" id="box3d">
+        <div class="box-face box-top">
+          <div class="box-inner-plant">
+            <svg class="plant-svg" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="60" cy="70" rx="26" ry="5" fill="rgba(0,0,0,0.08)"/>
+              <g id="leaves" transform="translate(10,0)">
+                <path d="M50 50 C 45 35, 30 30, 18 40 C 12 45, 20 60, 36 62 C 44 62, 50 58, 50 50Z" fill="#7EA46B"/>
+                <path d="M70 50 C 75 35, 90 30, 102 40 C 108 45, 100 60, 84 62 C 76 62, 70 58, 70 50Z" fill="#6E8A4F"/>
+                <path d="M60 46 C 62 30, 50 16, 40 20 C 30 24, 28 36, 36 44 C 44 52, 56 52, 60 46Z" fill="#5C7245" opacity="0.9"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="climate" class="section reveal">
+    <div class="lang" data-lang="en">
+      <h2>Care by climate — tap your region</h2>
+      <p>Succulent care varies across India. Use the right light, airflow and mix for your climate: plains, coastal, hills or monsoon.</p>
+    </div>
+    <div class="lang" data-lang="hi" hidden>
+      <h2>जलवायु के अनुसार देखभाल</h2>
+      <p>भारत भर में देखभाल अलग होती है। सही रोशनी, हवादारी और मिक्स का चुनाव करें: मैदान, तटीय, पहाड़ी या मानसून के लिए अलग तरीके चाहिए।</p>
+    </div>
+  </section>
+
+  <section id="mistakes" class="section reveal">
+    <div class="lang" data-lang="en">
+      <h2>Common mistakes to avoid</h2>
+      <ul>
+        <li>Watering the day it arrives.</li>
+        <li>Full sun immediately.</li>
+        <li>Using garden soil.</li>
+      </ul>
+    </div>
+    <div class="lang" data-lang="hi" hidden>
+      <h2>साझा गलतियाँ जिनसे बचें</h2>
+      <ul>
+        <li>पहुंचने पर उसी दिन पानी देना।</li>
+        <li>तुरंत तेज धूप में रखना।</li>
+        <li>बाग़ की मिटटी का इस्तेमाल करना।</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="section reveal">
+    <div class="lang" data-lang="en">
+      <h2>When to reach out</h2>
+      <p>If something is snapped, black roots, or grossly damaged, photograph as-is and message us within 48 hours.</p>
+      <p><a href="/contact">Contact us about a damaged order</a></p>
+    </div>
+    <div class="lang" data-lang="hi" hidden>
+      <h2>कब हमसे संपर्क करें</h2>
+      <p>अगर कुछ टूटा हुआ है, काले जड़ें हों या बहुत नुकसान हुआ हो, वैसे ही फोटो लें और वितरण के 48 घंटों के भीतर हमें संदेश भेजें।</p>
+      <p><a href="/contact">डैमेज्ड ऑर्डर के संबंध में संपर्क करें</a></p>
+    </div>
+  </div>
+
+  <footer style="padding:28px 0;color:var(--ink-soft);font-family:Space Grotesk, sans-serif">
+    <div class="lang" data-lang="en">Written by the Succulent Sphere team · Sources: University of Minnesota Extension</div>
+    <div class="lang" data-lang="hi" hidden>लिखा: Succulent Sphere टीम · स्रोत: University of Minnesota Extension</div>
+  </footer>
+</main>
+
+<script>
+// Language toggle: show/hide blocks with data-lang
+(function(){
+  const btnEn = document.getElementById('btn-en');
+  const btnHi = document.getElementById('btn-hi');
+  function setLang(lang){
+    document.querySelectorAll('[data-lang]').forEach(el=>{
+      el.hidden = el.getAttribute('data-lang') !== lang;
+    });
+    document.querySelectorAll('.lang-toggle').forEach(b=>b.classList.toggle('active', b.dataset.lang===lang));
+    localStorage.setItem('blog-lang', lang);
+  }
+  btnEn.addEventListener('click', ()=>setLang('en'));
+  btnHi.addEventListener('click', ()=>setLang('hi'));
+  // restore
+  const saved = localStorage.getItem('blog-lang') || (navigator.language && navigator.language.startsWith('hi') ? 'hi' : 'en');
+  setLang(saved);
+})();
+
+// Simple mouse-parallax for 3D box
+(function(){
+  const scene = document.getElementById('box3d');
+  if(!scene) return;
+  const rect = scene.getBoundingClientRect();
+  function handle(e){
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const dx = (e.clientX - cx) / rect.width;
+    const dy = (e.clientY - cy) / rect.height;
+    const rx = dy * -12; const ry = dx * 12;
+    scene.style.transform = `translateZ(0px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+  }
+  scene.parentElement.addEventListener('mousemove', handle);
+  scene.parentElement.addEventListener('mouseleave', ()=>{ scene.style.transform=''; });
+})();
+
+// reveal on scroll
+(function(){
+  const items = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+  }, {threshold:0.08});
+  items.forEach(i=>io.observe(i));
+})();
+</script>
+</body>
+</html>

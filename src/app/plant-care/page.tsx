@@ -7,14 +7,31 @@ import { SITE_URL } from "@/lib/seo";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Plant Care Journal | Succulent Sphere",
+  title: "Plant Care Journal — Succulent care guides for Indian homes | Succulent Sphere",
   description:
-    "Succulent plant care guides for Indian homes — watering schedules, monsoon tips, soil mixes, and beginner advice by Succulent Sphere.",
+    "Succulent plant care guides for Indian homes — climate-aware watering schedules, monsoon tips, soil mixes and practical routines from Succulent Sphere.",
   alternates: {
     canonical: "/plant-care",
   },
+  keywords: [
+    "succulent care",
+    "plant care India",
+    "succulent watering",
+    "succulent soil mix",
+    "monsoon plant care",
+  ],
+  robots: {
+    index: true,
+    follow: true,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Plant Care Journal — Succulent Sphere",
+    description:
+      "Practical succulent and cactus care for Indian homes: watering, potting and seasonal tips from Succulent Sphere.",
+  },
   openGraph: {
-    title: "Plant Care Journal | Succulent Sphere",
+    title: "Plant Care Journal — Succulent Sphere",
     description:
       "Succulent plant care guides for Indian homes — watering schedules, monsoon tips, soil mixes, and beginner advice by Succulent Sphere.",
     url: "/plant-care",

@@ -1,4 +1,6 @@
 import "server-only";
+import fs from "fs";
+import path from "path";
 
 import { FieldPath } from "firebase-admin/firestore";
 import { getFirebaseDb } from "@/lib/firebase-admin";
@@ -158,8 +160,62 @@ function mapArticle(id: string, data: Record<string, unknown>): FirebaseArticle 
   const image = data.image && typeof data.image === "object" ? data.image as Record<string, unknown> : null;
   return { id, handle: string(data.handle), title: string(data.title), excerpt: string(data.excerpt) || cleanHtml(data.contentHtml).slice(0, 160), seoDescription: string(data.seoDescription) || cleanHtml(data.contentHtml).slice(0, 220), authorName: string(data.authorName, "Succulent Sphere Editorial Team"), contentHtml: string(data.contentHtml), publishedAt: string(data.publishedAt), image: image ? { url: string(image.url), altText: string(image.altText, string(data.title)), width: numeric(image.width, 1600), height: numeric(image.height, 900) } : null, blogHandle: string(data.blogHandle, "plant-care"), blogTitle: string(data.blogTitle, "Plant Care") };
 }
-export async function fetchPlantCareArticles(limit = 24): Promise<FirebaseArticle[]> { const snapshot = await getFirebaseDb().collection("articles").orderBy("publishedAt", "desc").limit(limit).get(); return snapshot.docs.map((doc) => mapArticle(doc.id, doc.data())); }
-export async function fetchPlantCareArticleByHandle(handleInput: unknown): Promise<FirebaseArticle | null> { const handle = normaliseHandle(handleInput); const snapshot = await getFirebaseDb().collection("articles").where("handle", "==", handle).limit(1).get(); return snapshot.empty ? null : mapArticle(snapshot.docs[0]!.id, snapshot.docs[0]!.data()); }
+// Load fallback article HTML from public/articles to keep large markup out of TypeScript source
+const FALLBACK_ARTICLE_HTML = (() => {
+  try {
+    const p = path.join(process.cwd(), "public", "articles", "your-succulents-arrived.html");
+    const raw = fs.readFileSync(p, "utf8");
+    const m = raw.match(/<div class=\"wrap\">([\s\S]*?)<\/div>/i);
+    return m ? m[0] : raw;
+  } catch (err) {
+    return `<div><h2>Your succulents just landed — quick steps</h2><p>Open the box in shade, unpack gently, pot within 24–48 hours in a well-draining mix, and avoid watering on day one. Full article content unavailable.</p></div>`;
+  }
+})();
+
+const LOCAL_PLANT_CARE_ARTICLES: FirebaseArticle[] = [
+  {
+    id: "local-your-succulents-arrived",
+    handle: "your-succulents-just-arrived",
+    title: "Your Succulents Just Arrived From Succulent Sphere — Here's What To Do Next",
+    excerpt: "How to unbox, pot and care for bare-root succulents after delivery in India — quick practical steps and region-aware tips.",
+    seoDescription: "A concise guide to succulent care right after delivery — unboxing, potting, watering and region specific advice for India.",
+    authorName: "Succulent Sphere",
+    contentHtml: FALLBACK_ARTICLE_HTML,
+    publishedAt: "2026-08-16T00:00:00.000Z",
+    image: null,
+    blogHandle: "plant-care",
+    blogTitle: "Plant Care",
+  },
+];
+
+export async function fetchPlantCareArticles(limit = 24): Promise<FirebaseArticle[]> {
+  try {
+    const snapshot = await getFirebaseDb().collection("articles").orderBy("publishedAt", "desc").limit(limit).get();
+    const remote = snapshot.docs.map((doc) => mapArticle(doc.id, doc.data()));
+    // Merge local static articles, prefer remote articles by handle to avoid duplicates
+    const remoteHandles = new Set(remote.map((a) => a.handle));
+    const combined = [...remote];
+    for (const local of LOCAL_PLANT_CARE_ARTICLES) {
+      if (!remoteHandles.has(local.handle)) combined.push(local);
+    }
+    return combined.slice(0, limit);
+  } catch (error) {
+    // If Firestore is unavailable, fall back to local articles
+    return LOCAL_PLANT_CARE_ARTICLES.slice(0, limit);
+  }
+}
+export async function fetchPlantCareArticleByHandle(handleInput: unknown): Promise<FirebaseArticle | null> {
+  const handle = normaliseHandle(handleInput);
+  try {
+    const snapshot = await getFirebaseDb().collection("articles").where("handle", "==", handle).limit(1).get();
+    if (!snapshot.empty) return mapArticle(snapshot.docs[0]!.id, snapshot.docs[0]!.data());
+  } catch (error) {
+    // ignore and try local fallback below
+  }
+
+  const local = LOCAL_PLANT_CARE_ARTICLES.find((a) => a.handle === handle);
+  return local || null;
+}
 
 function mapOrder(id: string, raw: Record<string, any>): FirebaseCustomerOrder {
   const lineItems = Array.isArray(raw.lineItems) ? raw.lineItems : [];
