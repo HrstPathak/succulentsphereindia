@@ -140,6 +140,24 @@ const normalizeImageList = (value: unknown) =>
     ),
   );
 
+const syncPrimaryImage = (images: string[], fallback = "") => {
+  const nextImages = normalizeImageList(images);
+  return {
+    image: nextImages[0] || fallback,
+    images: nextImages,
+  };
+};
+
+const moveGalleryItem = (items: string[], fromIndex: number, toIndex: number) => {
+  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= items.length || toIndex >= items.length) {
+    return items;
+  }
+  const nextItems = [...items];
+  const [moved] = nextItems.splice(fromIndex, 1);
+  nextItems.splice(toIndex, 0, moved);
+  return nextItems;
+};
+
 const tagSuggestions = [
   "best seller",
   "featured",
@@ -600,8 +618,17 @@ function CreateProductModal({
     vendor: "Succulent Sphere",
   });
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imageUrlInput, setImageUrlInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+
+  const addImageFromUrl = () => {
+    const nextUrl = imageUrlInput.trim();
+    if (!nextUrl) return;
+    const merged = normalizeImageList([...(form.images || []), nextUrl]);
+    setForm({ ...form, image: merged[0] || form.image || "", images: merged });
+    setImageUrlInput("");
+  };
 
   async function save() {
     setBusy(true);
@@ -746,18 +773,34 @@ function CreateProductModal({
             </div>
             <div className="mt-3 grid grid-cols-3 gap-2">
               {normalizeImageList(form.images).map((url: string, index: number) => (
-                <button
-                  key={`${url}-${index}`}
-                  type="button"
-                  onClick={() => setForm({ ...form, image: url })}
-                  className={`overflow-hidden rounded-lg border ${form.image === url ? "border-[#24563e] ring-2 ring-[#dfece2]" : "border-[#d7e0d9]"}`}
-                >
-                  <img src={url} alt="Product preview" className="h-16 w-full object-cover" />
-                </button>
+                <div key={`${url}-${index}`} className="relative overflow-hidden rounded-lg border border-[#d7e0d9]">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, image: url })}
+                    className={`block w-full ${form.image === url ? "ring-2 ring-[#dfece2] ring-offset-1" : ""}`}
+                  >
+                    <img src={url} alt="Product preview" className="h-16 w-full object-cover" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextImages = normalizeImageList((form.images || []).filter((entry) => entry !== url));
+                      setForm({ ...form, images: nextImages, image: nextImages[0] || "" });
+                    }}
+                    className="absolute right-1 top-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white"
+                    aria-label={`Remove ${url}`}
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
+            <div className="mt-3 flex gap-2">
+              <input className={field} value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} placeholder="Add image URL" />
+              <button type="button" onClick={addImageFromUrl} className="rounded-xl bg-[#24563e] px-3 py-2 text-sm font-bold text-white">Add</button>
+            </div>
             <label className="mt-3 block">
-              Or use image URL
+              Main image URL
               <input className={field} value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value, images: normalizeImageList([e.target.value, ...(form.images || [])]) })} placeholder="https://..." />
             </label>
             <label className="mt-3 block">
@@ -1365,7 +1408,33 @@ function ProductEditor({
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [reviewDraft, setReviewDraft] = useState({ authorName: "", authorEmail: "", title: "", content: "", rating: 5, verifiedPurchase: false });
+
+  const addGalleryUrl = () => {
+    const trimmed = newImageUrl.trim();
+    if (!trimmed) return;
+    const merged = normalizeImageList([...(form?.images || []), trimmed]);
+    const synced = syncPrimaryImage(merged, form?.image || "");
+    setForm({ ...form, ...synced });
+    setNewImageUrl("");
+  };
+
+  const removeGalleryImage = (url: string) => {
+    const nextImages = normalizeImageList((form?.images || []).filter((entry: string) => entry !== url));
+    const synced = syncPrimaryImage(nextImages, form?.image || "");
+    setForm({ ...form, ...synced });
+  };
+
+  const onGalleryDragStart = (index: number) => setDraggedIndex(index);
+  const onGalleryDrop = (targetIndex: number) => {
+    if (draggedIndex === null || draggedIndex === targetIndex || !form?.images) return;
+    const reordered = moveGalleryItem(form.images, draggedIndex, targetIndex);
+    const synced = syncPrimaryImage(reordered, form.image || "");
+    setForm({ ...form, ...synced });
+    setDraggedIndex(null);
+  };
   useEffect(() => {
     fetch(`/api/admin/products/${encodeURIComponent(id)}`)
       .then(async (r) => {
@@ -1683,18 +1752,46 @@ function ProductEditor({
             <div className="mt-3 grid grid-cols-3 gap-2">
               {galleryImages.length ? (
                 galleryImages.map((url: string, index: number) => (
-                  <button
+                  <div
                     key={`${url}-${index}`}
-                    type="button"
-                    onClick={() => setForm({ ...form, image: url, images: galleryImages })}
-                    className={`overflow-hidden rounded-lg border ${primaryImage === url ? "border-[#24563e] ring-2 ring-[#dfece2]" : "border-[#d7e0d9]"}`}
+                    draggable
+                    onDragStart={() => onGalleryDragStart(index)}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={() => onGalleryDrop(index)}
+                    className="relative overflow-hidden rounded-lg border border-[#d7e0d9]"
                   >
-                    <img src={url} alt="Product thumbnail" className="h-20 w-full object-cover" />
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const synced = syncPrimaryImage(galleryImages, url);
+                        setForm({ ...form, ...synced });
+                      }}
+                      className={`block w-full ${primaryImage === url ? "ring-2 ring-[#dfece2] ring-offset-1" : ""}`}
+                    >
+                      <img src={url} alt="Product thumbnail" className="h-20 w-full object-cover" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeGalleryImage(url)}
+                      className="absolute right-1 top-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white"
+                      aria-label={`Remove ${url}`}
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))
               ) : (
                 <p className="col-span-3 text-xs text-[#617366]">No gallery images yet.</p>
               )}
+            </div>
+            <div className="mt-3 flex gap-2">
+              <input
+                className={input}
+                value={newImageUrl}
+                onChange={(e) => setNewImageUrl(e.target.value)}
+                placeholder="Add gallery image URL"
+              />
+              <button type="button" onClick={addGalleryUrl} className="rounded-xl bg-[#24563e] px-3 py-2 text-sm font-bold text-white">Add</button>
             </div>
             <label className="mt-3 block">
               Main image URL

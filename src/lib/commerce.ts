@@ -64,9 +64,10 @@ function money(value: unknown, fallback = "0.00"): Money {
 
 function mapProduct(id: string, raw: Record<string, unknown>, reviews: ProductReview[] = []) {
   const images = Array.isArray(raw.images) ? raw.images : [];
-  const firstImage = raw.image || images[0] || "/assets/product-1.jpg";
-  const firstImageUrl = typeof firstImage === "object" && firstImage ? string((firstImage as Record<string, unknown>).url) : string(firstImage);
-  const firstImageAlt = typeof firstImage === "object" && firstImage ? string((firstImage as Record<string, unknown>).altText) : string(raw.imageAlt);
+  const orderedImages = images.length ? images.map((item) => typeof item === "object" && item ? string((item as Record<string, unknown>).url) : string(item)).filter(Boolean) : [string(raw.image)];
+  const firstImage = orderedImages[0] || string(raw.image) || "/assets/product-1.jpg";
+  const firstImageUrl = string(firstImage);
+  const firstImageAlt = typeof images[0] === "object" && images[0] ? string((images[0] as Record<string, unknown>).altText) : string(raw.imageAlt);
   const stats = getReviewStats(reviews);
   const price = numeric(raw.price);
   const inventory = numeric(raw.inventoryQuantity ?? raw.quantity ?? raw.totalInventory, 0);
@@ -77,8 +78,8 @@ function mapProduct(id: string, raw: Record<string, unknown>, reviews: ProductRe
     id,
     title: string(raw.title, "Untitled"), handle: string(raw.handle), description: string(raw.description),
     descriptionHtml: string(raw.descriptionHtml || raw.description), image: firstImageUrl || "/assets/product-1.jpg", imageAlt: firstImageAlt,
-    images: images.length ? images.map((item) => typeof item === "object" && item ? string((item as Record<string, unknown>).url) : string(item)).filter(Boolean) : [firstImageUrl],
-    imageAlts: images.length ? images.map((item) => typeof item === "object" && item ? string((item as Record<string, unknown>).altText) : "") : [firstImageAlt],
+    images: orderedImages.length ? orderedImages : [firstImageUrl],
+    imageAlts: orderedImages.length ? orderedImages.map((_, index) => typeof (images[index] as Record<string, unknown> | undefined) === "object" && (images[index] as Record<string, unknown> | undefined) ? string((images[index] as Record<string, unknown>).altText) : "") : [firstImageAlt],
     price: price.toFixed(2), compareAtPrice: raw.compareAtPrice == null ? null : numeric(raw.compareAtPrice).toFixed(2),
     currency: string(raw.currency, "INR"), quantity: inventory, inventoryQuantity: inventory, totalInventory: inventory,
     available: !soldOut, availability: soldOut ? "OutOfStock" : "InStock",

@@ -94,6 +94,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     // Only update images if they were explicitly provided in the request
     const images = [...new Set([...(Array.isArray(input.images) ? input.images : []), ...text(input.images || "").split(",").map((entry) => entry.trim()).filter(Boolean), text(input.image)].filter(Boolean))];
     const primaryImage = images[0] || text(input.image);
+    const orderedImages = images.length ? images : [primaryImage].filter(Boolean);
 
     const update: any = {
       title, handle, price, compareAtPrice, inventoryQuantity: Math.floor(inventoryQuantity), status,
@@ -106,9 +107,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     };
     
     // Only include image fields if new images were provided (don't overwrite with empty values)
-    if (images.length > 0 || uploadedImages.length > 0 || text(input.image) || text(input.imageAlt)) {
+    if (orderedImages.length > 0 || uploadedImages.length > 0 || text(input.image) || text(input.imageAlt)) {
       update.image = primaryImage.slice(0, 2000);
-      update.images = images.slice(0, 20);
+      update.images = orderedImages.slice(0, 20);
       update.imageAlt = text(input.imageAlt).slice(0, 500);
     }
     const ref = getFirebaseDb().collection("products").doc(text(id));
