@@ -28,7 +28,14 @@ export default function RevampedProductDetail({ product }: Props) {
   const images = useMemo(() => {
     if (Array.isArray(product?.images)) {
       const filtered = product.images
-        .map((img: unknown) => normalizeImageUrl(img, ""))
+        .map((img: unknown) => {
+          if (typeof img === "string") return normalizeImageUrl(img, "");
+          if (img && typeof img === "object") {
+            const candidate = (img as Record<string, unknown>).url;
+            return typeof candidate === "string" ? normalizeImageUrl(candidate, "") : "";
+          }
+          return "";
+        })
         .filter((img: string) => Boolean(img));
       if (filtered.length) return filtered;
     }

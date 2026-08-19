@@ -5,10 +5,27 @@ import { getFirebaseDb } from "@/lib/firebase-admin";
 const text = (value: unknown, fallback = "") => typeof value === "string" ? value.trim() : value == null ? fallback : String(value).trim();
 const number = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const list = (value: unknown) => Array.isArray(value) ? value.map((item) => text(item)).filter(Boolean) : [];
+const imageUrls = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return Array.from(new Set(value.map((entry) => {
+      if (typeof entry === "string") return text(entry);
+      if (entry && typeof entry === "object") {
+        const candidate = (entry as Record<string, unknown>).url;
+        return typeof candidate === "string" ? text(candidate) : "";
+      }
+      return "";
+    }).filter(Boolean)));
+  }
+  if (value && typeof value === "object") {
+    const candidate = (value as Record<string, unknown>).url;
+    return typeof candidate === "string" && candidate.trim() ? [text(candidate)] : [];
+  }
+  return text(value).split(",").map((entry) => entry.trim()).filter(Boolean);
+};
 const statuses = new Set(["active", "draft", "archived", "unlisted", "sold out"]);
 
 function productPayload(id: string, data: Record<string, unknown>) {
-  const images = Array.from(new Set([...(Array.isArray(data.images) ? data.images : []), text(data.image)] .map((entry) => text(entry)).filter(Boolean)));
+  const images = imageUrls([...(Array.isArray(data.images) ? data.images : []), data.image]);
   return {
     id,
     title: text(data.title), handle: text(data.handle), description: text(data.description),
@@ -74,7 +91,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         }
         return "";
       }))).filter(Boolean);
-      const images = [...new Set([...(Array.isArray(input.images) ? input.images : []), ...text(input.images || "").split(",").map((entry) => entry.trim()).filter(Boolean), ...uploadedImages, text(input.image)])].filter(Boolean);
+      const images = [...new Set([...imageUrls(input.images), ...imageUrls(input.image), ...uploadedImages])];
       input.images = images;
     } else {
       input = await request.json();
@@ -92,7 +109,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (compareAtPrice !== null && compareAtPrice < 0) return NextResponse.json({ error: "Compare-at price must be a valid amount." }, { status: 400 });
 
     // Only update images if they were explicitly provided in the request
-    const images = [...new Set([...(Array.isArray(input.images) ? input.images : []), ...text(input.images || "").split(",").map((entry) => entry.trim()).filter(Boolean), text(input.image)].filter(Boolean))];
+    const images = [...new Set([...imageUrls(input.images), ...imageUrls(input.image)])];
     const primaryImage = images[0] || text(input.image);
     const orderedImages = images.length ? images : [primaryImage].filter(Boolean);
 

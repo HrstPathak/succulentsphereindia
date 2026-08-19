@@ -4,6 +4,7 @@ import path from "path";
 
 import { FieldPath } from "firebase-admin/firestore";
 import { getFirebaseDb } from "@/lib/firebase-admin";
+import { sanitizeArticleHtml } from "@/lib/article-html";
 import { getReviewStats, type ProductReview } from "@/lib/reviews";
 
 export interface ProductQueryOptions {
@@ -62,12 +63,30 @@ function money(value: unknown, fallback = "0.00"): Money {
   return { amount: string(data.amount ?? fallback), currencyCode: string(data.currencyCode ?? "INR") };
 }
 
+function extractImageUrls(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return Array.from(new Set(value.map((item) => {
+      if (typeof item === "string") return string(item).trim();
+      if (item && typeof item === "object") {
+        const url = (item as Record<string, unknown>).url;
+        return typeof url === "string" ? string(url).trim() : "";
+      }
+      return "";
+    }).filter(Boolean)));
+  }
+  if (value && typeof value === "object") {
+    const url = (value as Record<string, unknown>).url;
+    return typeof url === "string" && string(url).trim() ? [string(url).trim()] : [];
+  }
+  return string(value).split(",").map((item) => item.trim()).filter(Boolean);
+}
+
 function mapProduct(id: string, raw: Record<string, unknown>, reviews: ProductReview[] = []) {
   const images = Array.isArray(raw.images) ? raw.images : [];
-  const orderedImages = images.length ? images.map((item) => typeof item === "object" && item ? string((item as Record<string, unknown>).url) : string(item)).filter(Boolean) : [string(raw.image)];
+  const orderedImages = extractImageUrls(raw.images).length ? extractImageUrls(raw.images) : [string(raw.image)];
   const firstImage = orderedImages[0] || string(raw.image) || "/assets/product-1.jpg";
   const firstImageUrl = string(firstImage);
-  const firstImageAlt = typeof images[0] === "object" && images[0] ? string((images[0] as Record<string, unknown>).altText) : string(raw.imageAlt);
+  const firstImageAlt = Array.isArray(images) && images.length && images[0] && typeof images[0] === "object" ? string((images[0] as Record<string, unknown>).altText) : string(raw.imageAlt);
   const stats = getReviewStats(reviews);
   const price = numeric(raw.price);
   const inventory = numeric(raw.inventoryQuantity ?? raw.quantity ?? raw.totalInventory, 0);
@@ -79,7 +98,7 @@ function mapProduct(id: string, raw: Record<string, unknown>, reviews: ProductRe
     title: string(raw.title, "Untitled"), handle: string(raw.handle), description: string(raw.description),
     descriptionHtml: string(raw.descriptionHtml || raw.description), image: firstImageUrl || "/assets/product-1.jpg", imageAlt: firstImageAlt,
     images: orderedImages.length ? orderedImages : [firstImageUrl],
-    imageAlts: orderedImages.length ? orderedImages.map((_, index) => typeof (images[index] as Record<string, unknown> | undefined) === "object" && (images[index] as Record<string, unknown> | undefined) ? string((images[index] as Record<string, unknown>).altText) : "") : [firstImageAlt],
+    imageAlts: orderedImages.length ? orderedImages.map((_, index) => Array.isArray(images) && images[index] && typeof images[index] === "object" ? string((images[index] as Record<string, unknown>).altText) : "") : [firstImageAlt],
     price: price.toFixed(2), compareAtPrice: raw.compareAtPrice == null ? null : numeric(raw.compareAtPrice).toFixed(2),
     currency: string(raw.currency, "INR"), quantity: inventory, inventoryQuantity: inventory, totalInventory: inventory,
     available: !soldOut, availability: soldOut ? "OutOfStock" : "InStock",
@@ -173,6 +192,45 @@ const FALLBACK_ARTICLE_HTML = (() => {
   }
 })();
 
+function scopeLocalArticleStyles(css: string): string {
+  return css.replace(/([^{}]+)\{([^{}]*)\}/g, (match, selector: string, declarations: string) => {
+    const trimmed = selector.trim();
+    if (!trimmed || trimmed.startsWith("@") || /^(from|to|\d+%)$/.test(trimmed)) return match;
+    const scoped = trimmed
+      .split(",")
+      .map((part) => {
+        const value = part.trim().replace(/\bhtml\b|\bbody\b/g, ".ss-local-blog");
+        return value.startsWith(".ss-local-blog") ? value : `.ss-local-blog ${value}`;
+      })
+      .join(", ");
+    return `${scoped} {${declarations}}`;
+  });
+}
+
+function loadLocalBlogHtml(fileName: string): string {
+  try {
+    const raw = fs.readFileSync(path.join(process.cwd(), fileName), "utf8");
+    const styles = Array.from(raw.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi))
+      .map((match) => `<style>${scopeLocalArticleStyles(match[1] || "")}</style>`)
+      .join("");
+    const body = raw.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] || raw.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+    let normalized = body
+      .replace(/^\uFEFF/, "")
+      .replace(/https:\/\/succulentsphere\.com\//g, "/")
+      .replace(/<strong\s+href="([^"]*)">([\s\S]*?)<\/strong>/gi, '<a href="$1">$2</a>');
+    if (!/<h1\b/i.test(normalized) && fileName === "blog_succulent_care_india.html") {
+      normalized = `<header class="hero"><div class="hero-cats"><span class="hero-cat">Plant Care</span><span class="hero-cat">India Guide</span></div><h1>The Complete Succulent Care Guide for Indian Homes</h1><div class="hero-meta"><span>Succulent care</span><span>Updated August 2026</span><span>12 min read</span></div></header>${normalized}`;
+    }
+    return sanitizeArticleHtml(`${styles}<div class="ss-local-blog">${normalized}</div>`);
+  } catch (error) {
+    console.error(`Failed to load local article ${fileName}:`, error);
+    return `<div class="ss-local-blog"><p>This article is temporarily unavailable.</p></div>`;
+  }
+}
+
+const LOCAL_BLOG_SUGGESTED_CARE_HTML = loadLocalBlogHtml("blog_succulent_care_india.html");
+const LOCAL_BLOG_DYING_HTML = loadLocalBlogHtml("blog2-succulent-dying.html");
+
 const LOCAL_PLANT_CARE_ARTICLES: FirebaseArticle[] = [
   {
     id: "local-your-succulents-arrived",
@@ -183,6 +241,32 @@ const LOCAL_PLANT_CARE_ARTICLES: FirebaseArticle[] = [
     authorName: "Succulent Sphere",
     contentHtml: FALLBACK_ARTICLE_HTML,
     publishedAt: "2026-08-16T00:00:00.000Z",
+    image: null,
+    blogHandle: "plant-care",
+    blogTitle: "Plant Care",
+  },
+  {
+    id: "local-succulent-care-india",
+    handle: "succulent-care-india",
+    title: "The Complete Succulent Care Guide for Indian Homes",
+    excerpt: "A practical, India-specific guide to watering, sunlight, soil, monsoon survival, pots, pests, and beginner-friendly varieties.",
+    seoDescription: "Learn how to care for succulents in India with climate-aware watering schedules, sunlight advice, soil mixes, monsoon protection, and pest fixes.",
+    authorName: "Succulent Sphere",
+    contentHtml: LOCAL_BLOG_SUGGESTED_CARE_HTML,
+    publishedAt: "2026-08-19T00:00:00.000Z",
+    image: null,
+    blogHandle: "plant-care",
+    blogTitle: "Plant Care",
+  },
+  {
+    id: "local-succulent-dying",
+    handle: "why-is-my-succulent-dying",
+    title: "Why Is My Succulent Dying? 10 Problems and Fixes for Indian Homes",
+    excerpt: "Diagnose mushy bases, yellow leaves, wrinkled stems, pests, sunburn, root rot, and other common succulent problems in Indian homes.",
+    seoDescription: "Find the real cause of a dying succulent and follow practical fixes for overwatering, drainage, light, soil, monsoon humidity, pests, and AC stress in India.",
+    authorName: "Succulent Sphere Team",
+    contentHtml: LOCAL_BLOG_DYING_HTML,
+    publishedAt: "2026-08-19T00:00:00.000Z",
     image: null,
     blogHandle: "plant-care",
     blogTitle: "Plant Care",

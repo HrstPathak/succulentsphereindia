@@ -8,6 +8,7 @@ import { fetchPlantCareArticleByHandle, fetchPlantCareArticles } from "@/lib/com
 import ArticleLanguageExperience from "@/components/plant-care/ArticleLanguageExperience";
 import YourSucculentsArticle from "@/components/plant-care/YourSucculentsArticle";
 import ArticleBilingual from "@/components/plant-care/ArticleBilingual";
+import LocalBlogArticle from "@/components/plant-care/LocalBlogArticle";
 
 export const revalidate = 3600;
 
@@ -185,8 +186,10 @@ export default async function PlantCareArticlePage({
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <div className="mx-auto max-w-5xl px-4 pb-16 md:px-6 md:pb-24">
-      {article.handle === 'your-succulents-just-arrived' ? (
+      {article.handle === "your-succulents-just-arrived" ? (
           <ArticleBilingual />
+        ) : article.handle === "succulent-care-india" || article.handle === "why-is-my-succulent-dying" ? (
+          <LocalBlogArticle contentHtml={contentHtml} />
         ) : (
           <ArticleLanguageExperience article={article} contentHtml={contentHtml} />
         )}

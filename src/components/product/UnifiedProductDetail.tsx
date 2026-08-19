@@ -14,7 +14,16 @@ type Props = {
 
 function getProductImages(product: any): string[] {
   if (Array.isArray(product?.images)) {
-    const images = product.images.filter((img: unknown): img is string => typeof img === "string" && img.length > 0);
+    const images = product.images
+      .map((img: unknown) => {
+        if (typeof img === "string") return img.trim();
+        if (img && typeof img === "object") {
+          const candidate = (img as Record<string, unknown>).url;
+          return typeof candidate === "string" ? candidate.trim() : "";
+        }
+        return "";
+      })
+      .filter((img: string) => Boolean(img));
     if (images.length > 0) return images;
   }
 
@@ -29,6 +38,17 @@ function getProductImageAlts(product: any): string[] {
   if (Array.isArray(product?.imageAlts)) {
     return product.imageAlts
       .map((alt: unknown) => String(alt || "").trim())
+      .filter((alt: string) => Boolean(alt));
+  }
+  if (Array.isArray(product?.images)) {
+    return product.images
+      .map((img: unknown) => {
+        if (img && typeof img === "object") {
+          const alt = (img as Record<string, unknown>).altText;
+          return typeof alt === "string" ? alt.trim() : "";
+        }
+        return "";
+      })
       .filter((alt: string) => Boolean(alt));
   }
   return [];

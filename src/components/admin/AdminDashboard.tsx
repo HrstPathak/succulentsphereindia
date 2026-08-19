@@ -135,7 +135,14 @@ const normalizeImageList = (value: unknown) =>
   Array.from(
     new Set(
       (Array.isArray(value) ? value : typeof value === "string" ? value.split(",") : [])
-        .map((entry) => String(entry).trim())
+        .map((entry) => {
+          if (typeof entry === "string") return entry.trim();
+          if (entry && typeof entry === "object") {
+            const url = (entry as Record<string, unknown>).url;
+            if (typeof url === "string") return url.trim();
+          }
+          return "";
+        })
         .filter(Boolean),
     ),
   );
