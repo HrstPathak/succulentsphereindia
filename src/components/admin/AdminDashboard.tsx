@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Check,
   ChevronRight,
@@ -436,6 +437,12 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
                 </button>
               ))}
             </nav>
+            <Link
+              href="/admin/blog"
+              className="mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10"
+            >
+              <span>📝</span> Blog
+            </Link>
             <div className="mt-8 rounded-2xl border border-white/15 bg-white/10 p-3 text-xs leading-relaxed text-white/70">
               Only email addresses listed in <code>ADMIN_EMAILS</code> can open
               this screen.

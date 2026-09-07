@@ -25,6 +25,7 @@ export interface FirebaseArticle {
   id: string; handle: string; title: string; excerpt: string; seoDescription: string; authorName: string;
   contentHtml: string; publishedAt: string; image: { url: string; altText: string; width: number; height: number } | null;
   blogHandle: string; blogTitle: string;
+  status?: string;
 }
 
 export interface FirebaseCustomerOrder {
@@ -159,7 +160,7 @@ export async function fetchRecommendationCandidates(handleInput: unknown, maxCan
 
 function mapArticle(id: string, data: Record<string, unknown>): FirebaseArticle {
   const image = data.image && typeof data.image === "object" ? data.image as Record<string, unknown> : null;
-  return { id, handle: string(data.handle), title: string(data.title), excerpt: string(data.excerpt) || cleanHtml(data.contentHtml).slice(0, 160), seoDescription: string(data.seoDescription) || cleanHtml(data.contentHtml).slice(0, 220), authorName: string(data.authorName, "Succulent Sphere Editorial Team"), contentHtml: string(data.contentHtml), publishedAt: string(data.publishedAt), image: image ? { url: string(image.url), altText: string(image.altText, string(data.title)), width: numeric(image.width, 1600), height: numeric(image.height, 900) } : null, blogHandle: string(data.blogHandle, "plant-care"), blogTitle: string(data.blogTitle, "Plant Care") };
+  return { id, handle: string(data.handle), title: string(data.title), excerpt: string(data.excerpt) || cleanHtml(data.contentHtml).slice(0, 160), seoDescription: string(data.seoDescription) || cleanHtml(data.contentHtml).slice(0, 220), authorName: string(data.authorName, "Succulent Sphere Editorial Team"), contentHtml: string(data.contentHtml), publishedAt: string(data.publishedAt), status: string(data.status, "published"), image: image ? { url: string(image.url), altText: string(image.altText, string(data.title)), width: numeric(image.width, 1600), height: numeric(image.height, 900) } : null, blogHandle: string(data.blogHandle, "plant-care"), blogTitle: string(data.blogTitle, "Plant Care") };
 }
 // Load fallback article HTML from public/articles to keep large markup out of TypeScript source
 const FALLBACK_ARTICLE_HTML = (() => {
@@ -191,7 +192,7 @@ const LOCAL_PLANT_CARE_ARTICLES: FirebaseArticle[] = [
 
 export async function fetchPlantCareArticles(limit = 24): Promise<FirebaseArticle[]> {
   try {
-    const snapshot = await getFirebaseDb().collection("articles").orderBy("publishedAt", "desc").limit(limit).get();
+    const snapshot = await getFirebaseDb().collection("articles").where("status", "==", "published").orderBy("publishedAt", "desc").limit(limit).get();
     const remote = snapshot.docs.map((doc) => mapArticle(doc.id, doc.data()));
     // Merge local static articles, prefer remote articles by handle to avoid duplicates
     const remoteHandles = new Set(remote.map((a) => a.handle));
@@ -209,7 +210,11 @@ export async function fetchPlantCareArticleByHandle(handleInput: unknown): Promi
   const handle = normaliseHandle(handleInput);
   try {
     const snapshot = await getFirebaseDb().collection("articles").where("handle", "==", handle).limit(1).get();
-    if (!snapshot.empty) return mapArticle(snapshot.docs[0]!.id, snapshot.docs[0]!.data());
+    if (!snapshot.empty) {
+      const article = mapArticle(snapshot.docs[0]!.id, snapshot.docs[0]!.data());
+      // Drafts stay hidden from direct URLs until they are published
+      if (article.status === "published") return article;
+    }
   } catch (error) {
     // ignore and try local fallback below
   }
