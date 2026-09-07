@@ -32,6 +32,10 @@ interface ArticleLanguageExperienceProps {
   contentHtml: string;
 }
 
+function isFullHtmlDoc(html: unknown): boolean {
+  return /<!doctype html|<html[\s>]|<head[\s>]|<style[\s>]/i.test(String(html || ""))
+}
+
 const LABELS = {
   en: {
     section: "Plant Care",
@@ -351,11 +355,20 @@ export default function ArticleLanguageExperience({ article, contentHtml }: Arti
             </div>
 
             <article className="px-5 py-8 md:px-10 md:py-12">
-              <div
-                lang={activeLanguage === "hi" ? "hi" : "en"}
-                className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-[var(--color-brand)] prose-p:text-[var(--color-text)] prose-p:leading-8 prose-a:text-[var(--color-accent)] prose-strong:text-[var(--color-brand)]"
-                dangerouslySetInnerHTML={{ __html: activeVariant.contentHtml || contentHtml }}
-              />
+              {isFullHtmlDoc(activeVariant.contentHtml || contentHtml) ? (
+                <iframe
+                  title="Article content"
+                  sandbox="allow-same-origin"
+                  srcDoc={activeVariant.contentHtml || contentHtml}
+                  className="h-[70vh] w-full rounded-xl border border-[var(--color-secondary)]/25 bg-white"
+                />
+              ) : (
+                <div
+                  lang={activeLanguage === "hi" ? "hi" : "en"}
+                  className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-[var(--color-brand)] prose-p:text-[var(--color-text)] prose-p:leading-8 prose-a:text-[var(--color-accent)] prose-strong:text-[var(--color-brand)]"
+                  dangerouslySetInnerHTML={{ __html: activeVariant.contentHtml || contentHtml }}
+                />
+              )}
               <p className="mt-8 rounded-xl border border-[var(--color-secondary)]/35 bg-[var(--color-secondary)]/8 px-4 py-3 text-sm text-[var(--color-text)]">
                 <span className="font-semibold text-[var(--color-brand)]">{copy.byline}</span> {article.authorName}
               </p>

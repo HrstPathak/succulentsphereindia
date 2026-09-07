@@ -13,6 +13,7 @@ import {
   BookOpenText,
   Camera,
   Code,
+  Eye,
   FileText,
   Heading2,
   Image as ImageIcon,
@@ -57,6 +58,11 @@ function slugify(input: string) {
   return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
 }
 
+function isFullHtmlDoc(html: string | undefined | null): boolean {
+  const value = String(html || "")
+  return /<!doctype html|<html[\s>]|<head[\s>]|<style[\s>]/i.test(value)
+}
+
 function StatusBadge({ status }: { status: string }) {
   const published = status === "published"
   return (
@@ -81,6 +87,7 @@ export default function AdminArticleEditor({
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(!isNew)
   const [htmlMode, setHtmlMode] = useState(false)
+  const [previewMode, setPreviewMode] = useState(false)
   const [mediaOpen, setMediaOpen] = useState(false)
   const [mediaTarget, setMediaTarget] = useState<"cover" | "inline">("cover")
   const [handleTouched, setHandleTouched] = useState(!isNew)
@@ -95,7 +102,33 @@ export default function AdminArticleEditor({
     onUpdate: ({ editor }) => {
       setForm((prev) => ({ ...prev, contentHtml: editor.getHTML() }))
     },
+    editorProps: {
+      handlePaste: (_view, event) => {
+        const pasted = event.clipboardData?.getData("text/html") || ""
+        if (isFullHtmlDoc(pasted)) {
+          event.preventDefault()
+          setForm((prev) => ({ ...prev, contentHtml: pasted }))
+          setHtmlMode(true)
+          setPreviewMode(false)
+          toast.info("Full HTML document pasted — switched to HTML mode")
+          return true
+        }
+        return false
+      },
+    },
   })
+
+  function toggleHtmlMode() {
+    if (htmlMode && isFullHtmlDoc(form.contentHtml)) {
+      toast.info("Full HTML documents are edited in HTML mode")
+      return
+    }
+    if (htmlMode) {
+      editor?.commands.setContent(form.contentHtml)
+      setPreviewMode(false)
+    }
+    setHtmlMode((v) => !v)
+  }
 
 async function loadArticle() {
     try {
@@ -106,6 +139,7 @@ async function loadArticle() {
         return
       }
       const a = json.article
+      const rawHtml = a.contentHtml || "<p></p>"
       setForm({
         title: a.title || "",
         handle: a.handle || "",
@@ -113,12 +147,13 @@ async function loadArticle() {
         seoTitle: a.seoTitle || "",
         seoDescription: a.seoDescription || "",
         authorName: a.authorName || "Succulent Sphere Team",
-        contentHtml: a.contentHtml || "<p></p>",
+        contentHtml: rawHtml,
         status: a.status === "published" ? "published" : "draft",
         tags: Array.isArray(a.tags) ? a.tags.map(String) : [],
         image: a.image && a.image.url ? { url: String(a.image.url), altText: String(a.image.altText || a.title || "") } : null,
       })
-      editor?.commands.setContent(a.contentHtml || "<p></p>")
+      setHtmlMode(isFullHtmlDoc(a.contentHtml))
+      if (!isFullHtmlDoc(a.contentHtml)) editor?.commands.setContent(rawHtml)
     } catch {
       toast.error("Failed to load article")
     } finally {
@@ -245,11 +280,19 @@ return (
                 <BookOpenText size={16} /> Content
               </h2>
               <button
-                onClick={() => setHtmlMode((v) => !v)}
+                onClick={toggleHtmlMode}
                 className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${htmlMode ? "bg-[#24563e] text-white" : "bg-[#f0f4f0] text-[#526257] hover:bg-[#e5ece6]"}`}
               >
                 <Code size={13} /> HTML
               </button>
+              {htmlMode ? (
+                <button
+                  onClick={() => setPreviewMode((v) => !v)}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${previewMode ? "bg-[#24563e] text-white" : "bg-[#f0f4f0] text-[#526257] hover:bg-[#e5ece6]"}`}
+                >
+                  <Eye size={13} /> Preview
+                </button>
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-1 border-y border-[#eef2ee] bg-[#f5f8f4] p-2">
               <button onClick={() => editor?.chain().focus().toggleBold().run()} className="rounded-xl p-2 text-[#44584c] transition hover:bg-white" title="Bold"><Bold size={16} /></button>
@@ -261,13 +304,24 @@ return (
               <button onClick={() => { setMediaTarget("inline"); setMediaOpen(true) }} className="rounded-xl p-2 text-[#44584c] transition hover:bg-white" title="Insert image"><ImageIcon size={16} /></button>
             </div>
             {htmlMode ? (
-              <textarea
-                value={form.contentHtml}
-                onChange={(e) => setForm((prev) => ({ ...prev, contentHtml: e.target.value }))}
-                onBlur={() => editor?.commands.setContent(form.contentHtml)}
-                rows={16}
-                className="w-full p-5 font-mono text-sm outline-none"
-              />
+              <>
+                <textarea
+                  value={form.contentHtml}
+                  onChange={(e) => setForm((prev) => ({ ...prev, contentHtml: e.target.value }))}
+                  rows={16}
+                  className="w-full p-5 font-mono text-sm outline-none"
+                />
+                {previewMode ? (
+                  <div className="border-t border-[#eef2ee] bg-[#f5f8f4] p-3">
+                    <iframe
+                      title="Article preview"
+                      sandbox="allow-same-origin"
+                      srcDoc={form.contentHtml}
+                      className="h-[520px] w-full rounded-xl border border-[#d7e0d9] bg-white"
+                    />
+                  </div>
+                ) : null}
+              </>
             ) : (
               <EditorContent editor={editor} className="prose prose-lg max-w-none min-h-[340px] p-6 outline-none" />
             )}

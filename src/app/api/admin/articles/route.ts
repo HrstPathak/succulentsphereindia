@@ -1,8 +1,19 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 
 const AUTH_ERROR = "ADMIN_REQUIRED";
+
+/** Rebuild the public blog pages immediately after an admin change. */
+function revalidateBlogPages() {
+  try {
+    revalidatePath("/plant-care");
+    revalidatePath("/plant-care/[handle]", "page");
+  } catch {
+    // revalidation is best-effort; never fail the API call because of it
+  }
+}
 
 function slugify(input: string) {
   return String(input)
@@ -85,7 +96,8 @@ export async function POST(request: Request) {
       updatedAt: now,
     }
 
-    const docRef = await db.collection("articles").add(record)
+    const docRef = await db.collection("articles").add(record);
+    revalidateBlogPages();
     return NextResponse.json({ ok: true, article: { id: docRef.id, ...record } })
   } catch (error) {
     return NextResponse.json({ error: authMessage(error, "Unable to create article.") }, { status: authStatus(error) })

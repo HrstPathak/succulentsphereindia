@@ -1,8 +1,19 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 
 const AUTH_ERROR = "ADMIN_REQUIRED";
+
+/** Rebuild the public blog pages immediately after an admin change. */
+function revalidateBlogPages() {
+  try {
+    revalidatePath("/plant-care");
+    revalidatePath("/plant-care/[handle]", "page");
+  } catch {
+    // revalidation is best-effort; never fail the API call because of it
+  }
+}
 
 function slugify(input: string) {
   return String(input)
@@ -87,8 +98,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       update.publishedAt = now
     }
 
-    await ref.update(update)
-    const updated = await ref.get()
+    await ref.update(update);
+    revalidateBlogPages();
+    const updated = await ref.get();
     return NextResponse.json({ ok: true, article: { id: updated.id, ...updated.data() } })
   } catch (error) {
     return NextResponse.json({ error: authMessage(error, "Unable to save article.") }, { status: authStatus(error) })
@@ -99,8 +111,9 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   try {
     await requireAdmin()
     const { id } = await params
-    await getFirebaseDb().collection("articles").doc(id).delete()
-    return NextResponse.json({ ok: true })
+    await getFirebaseDb().collection("articles").doc(id).delete();
+    revalidateBlogPages();
+    return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json({ error: authMessage(error, "Unable to delete article.") }, { status: authStatus(error) })
   }

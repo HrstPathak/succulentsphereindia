@@ -192,8 +192,15 @@ const LOCAL_PLANT_CARE_ARTICLES: FirebaseArticle[] = [
 
 export async function fetchPlantCareArticles(limit = 24): Promise<FirebaseArticle[]> {
   try {
-    const snapshot = await getFirebaseDb().collection("articles").where("status", "==", "published").orderBy("publishedAt", "desc").limit(limit).get();
-    const remote = snapshot.docs.map((doc) => mapArticle(doc.id, doc.data()));
+    // Note: deliberately NOT using .where("status","==","published") here —
+    // combining a where() equality filter with orderBy() on a different field
+    // requires a composite Firestore index, which we'd rather not depend on.
+    // We fetch by publishedAt (single-field, auto-indexed) and filter drafts
+    // in memory instead — same result, no index needed.
+    const snapshot = await getFirebaseDb().collection("articles").orderBy("publishedAt", "desc").limit(limit).get();
+    const remote = snapshot.docs
+      .map((doc) => mapArticle(doc.id, doc.data()))
+      .filter((a) => a.status === "published");
     // Merge local static articles, prefer remote articles by handle to avoid duplicates
     const remoteHandles = new Set(remote.map((a) => a.handle));
     const combined = [...remote];

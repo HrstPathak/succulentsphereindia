@@ -41,18 +41,62 @@ export default function MediaLibrary({
     if (isOpen) void loadItems()
   }, [isOpen])
 
+  const MAX_BYTES = 700_000;
+
+  async function compressImage(file: File): Promise<File> {
+    if (file.size <= MAX_BYTES) return file;
+    if (file.type === "image/gif" || file.type === "image/svg+xml") {
+      throw new Error("Image is over 700 KB — please choose a smaller file.");
+    }
+    if (!file.type.startsWith("image/")) {
+      throw new Error("Please choose an image file.");
+    }
+    const bitmap = await createImageBitmap(file);
+    try {
+      const attempts = [
+        { maxWidth: 1920, quality: 0.85 },
+        { maxWidth: 1280, quality: 0.8 },
+        { maxWidth: 900, quality: 0.72 },
+      ];
+      for (const attempt of attempts) {
+        const scale = Math.min(1, attempt.maxWidth / bitmap.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        const ctx = canvas.getContext("2d");
+        if (!ctx) break;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, "image/jpeg", attempt.quality),
+        );
+        if (blob && blob.size <= MAX_BYTES) {
+          const name = (file.name || "image").replace(/\.[^.]+$/, "") + ".jpg";
+          return new File([blob], name, { type: "image/jpeg" });
+        }
+      }
+    } finally {
+      bitmap.close();
+    }
+    throw new Error("Image could not be compressed under 700 KB — please choose a smaller file.");
+  }
+
   async function handleUpload(file: File) {
     setUploading(true)
     try {
+      const prepared = await compressImage(file)
       const form = new FormData()
-      form.append("file", file)
+      form.append("file", prepared)
       const res = await fetch("/api/admin/media", { method: "POST", body: form })
       const data = await res.json()
       if (data.ok) {
         setItems((prev) => [data.media, ...prev])
       } else {
-        alert(data.error || "Upload failed")
+        window.alert(data.error || "Upload failed")
       }
+    } catch (error) {
+      window.alert((error as Error).message || "Upload failed")
     } finally {
       setUploading(false)
     }
