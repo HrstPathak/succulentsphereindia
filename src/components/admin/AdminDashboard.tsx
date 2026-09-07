@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
+  BookOpenText,
   Check,
   ChevronRight,
   CircleDollarSign,
@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import AdminTestOrderModal from "./AdminTestOrderModal";
+import AdminBlogSection from "./AdminBlogSection";
 import dynamic from "next/dynamic";
 const AdminOrderDetailModal = dynamic(() => import("./AdminOrderDetailModal"), { ssr: false });
 
@@ -82,7 +83,7 @@ type Data = {
   reviews: Review[];
 };
 type Tab =
-  "overview" | "products" | "orders" | "customers" | "reviews" | "mail";
+  "overview" | "products" | "orders" | "customers" | "reviews" | "mail" | "blog";
 type ProductPriceSort = "default" | "price_asc" | "price_desc";
 type ProductDetail = Product & {
   description: string;
@@ -386,6 +387,7 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
     ["customers", "Customers", Users],
     ["reviews", "Reviews", Star],
     ["mail", "Mail", Mail],
+    ["blog", "Blog", BookOpenText],
   ] as const;
   if (!data && busy)
     return (
@@ -437,12 +439,6 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
                 </button>
               ))}
             </nav>
-            <Link
-              href="/admin/blog"
-              className="mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10"
-            >
-              <span>📝</span> Blog
-            </Link>
             <div className="mt-8 rounded-2xl border border-white/15 bg-white/10 p-3 text-xs leading-relaxed text-white/70">
               Only email addresses listed in <code>ADMIN_EMAILS</code> can open
               this screen.
@@ -541,6 +537,7 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
               busy={busy}
             />
           )}
+          {tab === "blog" && <AdminBlogSection query={query} />}
         </section>
       </div>
       {productId && (
