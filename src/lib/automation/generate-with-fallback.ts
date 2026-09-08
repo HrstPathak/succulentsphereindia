@@ -105,6 +105,24 @@ function geminiRetryDelayMs(): number {
 }
 
 /**
+ * Gemini models tried in order on the PRIMARY stage (before OpenRouter).
+ * #1 GEMINI_MODEL (default gemini-flash-latest) — best quality, but the
+ * newest flash alias is also the most congestion-prone (live evidence:
+ * 503 "high demand" / timeouts while stable models answer in ~3s).
+ * #2 GEMINI_MODEL_FALLBACK (default gemini-flash-lite-latest) — a different,
+ * usually-idle capacity pool. It gets a SINGLE attempt: the primary already
+ * spent its retry budget, and the OpenRouter chain still stands behind this.
+ */
+function geminiModelCandidates(): string[] {
+  const primary =
+    String(process.env.GEMINI_MODEL || "").trim() || "gemini-flash-latest";
+  const secondary =
+    String(process.env.GEMINI_MODEL_FALLBACK || "").trim() ||
+    "gemini-flash-lite-latest";
+  return Array.from(new Set([primary, secondary]));
+}
+
+/**
  * Ceiling for ONE blog-generation attempt. Free-tier models streaming a full
  * 4000-token article routinely exceed the shared 25s OpenRouter default (an
  * "OPENROUTER provider timeout" killed real runs), so the blog chain gets its
@@ -174,49 +192,56 @@ export async function generateBlogWithFallback(
   // short fixed delay BEFORE falling back — the free tier's "high demand"
   // 503s are temporary and usually clear within seconds.
   if (String(process.env.GEMINI_API_KEY || "").trim()) {
-    const geminiModel =
-      String(process.env.GEMINI_MODEL || "").trim() || "gemini-flash-latest";
     const maxAttempts = geminiMaxAttempts();
     const retryDelayMs = geminiRetryDelayMs();
+    const geminiCandidates = geminiModelCandidates();
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const { content, provider } = await chatWithFailover(
-          [{ role: "user", content: prompt }],
-          {
-            temperature: BLOG_TEMPERATURE,
-            maxNewTokens: geminiBlogMaxNewTokens(),
-            timeoutMs: blogTimeoutMs(),
-            // Gemini ONLY on the primary attempt — the OpenRouter slots below are
-            // the explicit fallback, not an accidental second Gemini try.
-            providerOrder: ["gemini"],
-          }
-        );
-        const article = parseGeneratedArticle(content);
-        console.log(
-          `[blog-automation] Gemini "${geminiModel}" produced a valid article (${article.contentHtml.length} chars of HTML)` +
-            (attempt > 1 ? ` — succeeded on retry ${attempt - 1}` : "")
-        );
-        return { article, modelUsed: geminiModel, provider };
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        const isTransient = GEMINI_TRANSIENT_ERROR_PATTERN.test(message);
-        if (attempt < maxAttempts && isTransient) {
-          console.warn(
-            `[blog-automation] Gemini "${geminiModel}" transient failure (attempt ${attempt}/${maxAttempts}) — retrying in ${Math.round(retryDelayMs / 1000)}s:`,
-            message
+    for (let candidateIndex = 0; candidateIndex < geminiCandidates.length; candidateIndex++) {
+      const geminiModel = geminiCandidates[candidateIndex];
+      // Primary model gets the full retry budget; the fallback Gemini model
+      // gets a single attempt (fresh capacity pool, chain continues either way).
+      const attemptsForModel = candidateIndex === 0 ? maxAttempts : 1;
+
+      for (let attempt = 1; attempt <= attemptsForModel; attempt++) {
+        try {
+          const { content, provider } = await chatWithFailover(
+            [{ role: "user", content: prompt }],
+            {
+              temperature: BLOG_TEMPERATURE,
+              maxNewTokens: geminiBlogMaxNewTokens(),
+              timeoutMs: blogTimeoutMs(),
+              // Gemini ONLY on the primary stage — the OpenRouter slots below are
+              // the explicit fallback, not an accidental second Gemini try.
+              providerOrder: ["gemini"],
+            }
           );
-          await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
-          continue;
+          const article = parseGeneratedArticle(content);
+          console.log(
+            `[blog-automation] Gemini "${geminiModel}" produced a valid article (${article.contentHtml.length} chars of HTML)` +
+              (attempt > 1 ? ` — succeeded on retry ${attempt - 1}` : "")
+          );
+          return { article, modelUsed: geminiModel, provider };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          const isTransient = GEMINI_TRANSIENT_ERROR_PATTERN.test(message);
+          if (attempt < attemptsForModel && isTransient) {
+            console.warn(
+              `[blog-automation] Gemini "${geminiModel}" transient failure (attempt ${attempt}/${attemptsForModel}) — retrying in ${Math.round(retryDelayMs / 1000)}s:`,
+              message
+            );
+            await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+            continue;
+          }
+          const nextStep =
+            candidateIndex < geminiCandidates.length - 1
+              ? " — trying the fallback Gemini model"
+              : " — falling back to the OpenRouter chain";
+          // Logged individually so each Gemini attempt's failure shows up in
+          // Vercel's logs before the fallback chain starts.
+          console.error(`[blog-automation] Gemini "${geminiModel}" failed${nextStep}:`, message);
+          errors.push(`gemini(${geminiModel}): ${message}`);
+          break;
         }
-        // Logged individually so the primary attempt's failure shows up in
-        // Vercel's logs before the fallback chain starts.
-        console.error(
-          `[blog-automation] Gemini "${geminiModel}" failed — falling back to the OpenRouter chain:`,
-          message
-        );
-        errors.push(`gemini(${geminiModel}): ${message}`);
-        break;
       }
     }
   }
