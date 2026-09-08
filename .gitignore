@@ -13,3 +13,6 @@ public/recovered-product-images-2/
 public/recovered-site-assets/
 tmp/product-recovery/
 *.zip
+
+*.tsbuildinfo
+apikey.txt

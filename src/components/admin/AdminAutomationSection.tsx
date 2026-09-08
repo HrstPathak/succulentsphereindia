@@ -172,6 +172,7 @@ export default function AdminAutomationSection({ query }: { query: string }) {
       // requireAdmin() fallback authorises this, no CRON_SECRET needed.
       const res = await fetch("/api/cron/blog-automation", { method: "POST" })
       const json = await res.json()
+      console.log("RUN-NOW-DEBUG", res.status, JSON.stringify(json, null, 2))
       if (json.ok) {
         if (json.published) {
           toast.success(`Published “${stringify(json.handle)}” via ${stringify(json.modelUsed) || "unknown model"}`)

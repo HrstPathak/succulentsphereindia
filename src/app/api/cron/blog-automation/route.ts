@@ -3,28 +3,21 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { generateBlogWithFallback } from "@/lib/automation/generate-with-fallback";
+import { parseGeneratedArticle } from "@/lib/automation/article-parser";
 import { buildBlogPrompt } from "@/lib/automation/blog-prompt-template";
-import { sanitizeArticleHtml } from "@/lib/article-html";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+// Ceiling for ONE automation run (1 Gemini primary attempt + up to 6 OpenRouter
+// fallback slots, each with its own ~120s budget — the theoretical worst case
+// 7 × 120s far exceeds this, so prod cuts pathological runs at 5 min; in
+// practice Gemini answers on attempt 1 and the run finishes in ~1-2 min).
+// If your Vercel plan rejects 300 on deploy (classic Hobby caps at 60), lower
+// this value accordingly.
+export const maxDuration = 300;
 
 const TOPIC_SCAN_LIMIT = 50;
 const MAX_HANDLE_ATTEMPTS = 1000;
-
-interface GeneratedArticle {
-  title: string;
-  excerpt: string;
-  seoTitle: string;
-  seoDescription: string;
-  primaryKeyword: string;
-  contentHtml: string;
-  tags: string[];
-  faqs: Array<{ question: string; answer: string }>;
-  ogTitle: string;
-  ogDescription: string;
-  canonicalPath: string;
-}
 
 function slugify(input: string) {
   return String(input)
@@ -33,89 +26,6 @@ function slugify(input: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 96);
-}
-
-// Same fence-strip + brace-slice extraction used by src/lib/blog-translation.ts.
-function extractJsonObject(input: string): string | null {
-  const start = input.indexOf("{");
-  const end = input.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) return null;
-  return input.slice(start, end + 1);
-}
-
-function requireField(parsed: Record<string, unknown>, name: string): string {
-  const value = String(parsed[name] || "").trim();
-  if (!value) throw new Error(`Missing required field: ${name}`);
-  return value;
-}
-
-function parseGeneratedArticle(raw: string): GeneratedArticle {
-  const cleaned = raw
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/, "");
-  const candidate = extractJsonObject(cleaned);
-  if (!candidate) throw new Error("AI response did not contain a JSON object.");
-
-  let parsed: Record<string, unknown>;
-  try {
-    parsed = JSON.parse(candidate) as Record<string, unknown>;
-  } catch {
-    throw new Error("AI response contained invalid JSON.");
-  }
-
-  const title = requireField(parsed, "title").slice(0, 60);
-  const excerpt = String(parsed.excerpt || "").trim().slice(0, 160);
-  const seoTitle = String(parsed.seoTitle || title).trim().slice(0, 60);
-  const seoDescription = String(parsed.seoDescription || excerpt).trim().slice(0, 160);
-  const primaryKeyword = requireField(parsed, "primaryKeyword").slice(0, 80);
-  const ogTitle = requireField(parsed, "ogTitle").slice(0, 70);
-  const ogDescription = requireField(parsed, "ogDescription").slice(0, 200);
-  const canonicalPath = requireField(parsed, "canonicalPath");
-
-  const contentHtml = sanitizeArticleHtml(String(parsed.contentHtml || ""));
-  if (!contentHtml) throw new Error("Missing required field: contentHtml");
-  // Defense-in-depth: this HTML lands on a live shared page, so residual
-  // <style>/<script> blocks are a hard failure (inline styles only by contract).
-  if (/<style[\s>]|<script[\s>]/i.test(contentHtml)) {
-    throw new Error("AI output contains a <style> or <script> block — inline styles only.");
-  }
-
-  const rawTags = Array.isArray(parsed.tags)
-    ? parsed.tags.map((value) => String(value).trim().toLowerCase())
-    : [];
-  const tags = Array.from(new Set(rawTags.filter(Boolean))).slice(0, 5);
-
-  const rawFaqs = Array.isArray(parsed.faqs) ? parsed.faqs : null;
-  if (!rawFaqs || rawFaqs.length !== 5) {
-    throw new Error(
-      `Missing required field: faqs (expected exactly 5 entries, got ${rawFaqs ? rawFaqs.length : 0})`
-    );
-  }
-  const faqs = rawFaqs.map((entry, index) => {
-    const record = entry && typeof entry === "object" ? (entry as Record<string, unknown>) : {};
-    const question = String(record.question || "").trim();
-    const answer = String(record.answer || "").trim();
-    if (!question || !answer) {
-      throw new Error(`Missing required field: faqs[${index}] (question and answer are required)`);
-    }
-    return { question: question.slice(0, 220), answer: answer.slice(0, 1200) };
-  });
-
-  return {
-    title,
-    excerpt,
-    seoTitle,
-    seoDescription,
-    primaryKeyword,
-    contentHtml,
-    tags,
-    faqs,
-    ogTitle,
-    ogDescription,
-    canonicalPath,
-  };
 }
 
 // Unique handle without a composite Firestore index: range-query the base
@@ -160,9 +70,9 @@ async function runAutomation() {
 
   try {
     const prompt = buildBlogPrompt(topicLabel, String(topic.notes || ""));
-    const { content, modelUsed } = await generateBlogWithFallback(prompt);
-
-    const article = parseGeneratedArticle(content);
+    // Returns an already-validated article — unparseable model output is
+    // treated as a failed attempt inside the fallback chain itself.
+    const { article, modelUsed } = await generateBlogWithFallback(prompt);
 
     const baseHandle =
       slugify(article.title) || slugify(topicLabel) || `ai-post-${Date.now()}`;
