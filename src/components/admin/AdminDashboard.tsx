@@ -16,10 +16,12 @@ import {
   Sparkles,
   Star,
   Users,
+  Wand2,
   X,
 } from "lucide-react";
 import AdminTestOrderModal from "./AdminTestOrderModal";
 import AdminBlogSection from "./AdminBlogSection";
+import AdminAutomationSection from "./AdminAutomationSection";
 import dynamic from "next/dynamic";
 const AdminOrderDetailModal = dynamic(() => import("./AdminOrderDetailModal"), { ssr: false });
 
@@ -83,7 +85,7 @@ type Data = {
   reviews: Review[];
 };
 type Tab =
-  "overview" | "products" | "orders" | "customers" | "reviews" | "mail" | "blog";
+  "overview" | "products" | "orders" | "customers" | "reviews" | "mail" | "blog" | "automation";
 type ProductPriceSort = "default" | "price_asc" | "price_desc";
 type ProductDetail = Product & {
   description: string;
@@ -388,6 +390,7 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
     ["reviews", "Reviews", Star],
     ["mail", "Mail", Mail],
     ["blog", "Blog", BookOpenText],
+    ["automation", "Automation", Wand2],
   ] as const;
   if (!data && busy)
     return (
@@ -538,6 +541,7 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
             />
           )}
           {tab === "blog" && <AdminBlogSection query={query} />}
+          {tab === "automation" && <AdminAutomationSection query={query} />}
         </section>
       </div>
       {productId && (
