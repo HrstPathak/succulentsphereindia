@@ -87,6 +87,27 @@ function formatDate(value: string) {
   return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
 }
 
+// Coerce arbitrary API/Firestore values to a safe renderable string. Anything
+// displayed in JSX or handed to react-toastify MUST be a string — a raw object
+// (a stray error body, or a non-string failureReason stored by an older run)
+// crashes React with "Element type is invalid" and, without an error boundary,
+// unmounts the whole admin dashboard.
+function stringify(value: unknown): string {
+  if (value === null || value === undefined) return ""
+  if (typeof value === "string") return value
+  if (typeof value === "number" || typeof value === "boolean") return String(value)
+  if (typeof value === "object") {
+    const message = (value as { message?: unknown })?.message
+    if (typeof message === "string" && message) return message
+    try {
+      return JSON.stringify(value)
+    } catch {
+      return String(value)
+    }
+  }
+  return String(value)
+}
+
 export default function AdminAutomationSection({ query }: { query: string }) {
   const [items, setItems] = useState<Topic[]>([])
   const [loading, setLoading] = useState(true)
@@ -107,7 +128,7 @@ export default function AdminAutomationSection({ query }: { query: string }) {
       const res = await fetch("/api/admin/automation/topics", { cache: "no-store" })
       const json = await res.json()
       if (json.ok) setItems(json.items ?? [])
-      else toast.error(json.error || "Failed to load topics")
+      else toast.error(stringify(json.error) || "Failed to load topics")
     } catch {
       toast.error("Failed to load topics")
     } finally {
@@ -135,7 +156,7 @@ export default function AdminAutomationSection({ query }: { query: string }) {
         setForm({ topic: "", notes: "", featuredImageUrl: "", source: "manual" })
         await load()
       } else {
-        toast.error(json.error || "Failed to queue topic")
+        toast.error(stringify(json.error) || "Failed to queue topic")
       }
     } catch {
       toast.error("Failed to queue topic")
@@ -153,13 +174,13 @@ export default function AdminAutomationSection({ query }: { query: string }) {
       const json = await res.json()
       if (json.ok) {
         if (json.published) {
-          toast.success(`Published “${json.handle}” via ${json.modelUsed ?? "unknown model"}`)
+          toast.success(`Published “${stringify(json.handle)}” via ${stringify(json.modelUsed) || "unknown model"}`)
         } else {
-          toast.info(json.message || "No pending topics")
+          toast.info(stringify(json.message) || "No pending topics")
         }
         await load()
       } else {
-        toast.error(json.error || "Automation run failed")
+        toast.error(stringify(json.error) || "Automation run failed")
         await load()
       }
     } catch {
@@ -173,7 +194,7 @@ export default function AdminAutomationSection({ query }: { query: string }) {
     const q = query.trim().toLowerCase()
     return items.filter((item) => {
       const matchesStatus = statusFilter === "all" || item.status === statusFilter
-      const matchesQuery = !q || `${item.topic} ${item.source}`.toLowerCase().includes(q)
+      const matchesQuery = !q || `${stringify(item.topic)} ${stringify(item.source)}`.toLowerCase().includes(q)
       return matchesStatus && matchesQuery
     })
   }, [items, query, statusFilter])
@@ -306,12 +327,12 @@ export default function AdminAutomationSection({ query }: { query: string }) {
                     <tr className="border-t border-[#edf0ed] transition hover:bg-[#f8fbf7]">
                       <td className="p-4">
                         <div className="min-w-0">
-                          <p className="truncate font-semibold text-[#243129]">{item.topic}</p>
+                          <p className="truncate font-semibold text-[#243129]">{stringify(item.topic)}</p>
                           {item.modelUsed ? (
-                            <p className="truncate text-xs text-[#718076]">via {item.modelUsed}</p>
+                            <p className="truncate text-xs text-[#718076]">via {stringify(item.modelUsed)}</p>
                           ) : null}
                           {item.notes ? (
-                            <p className="truncate text-xs text-[#718076]">{item.notes}</p>
+                            <p className="truncate text-xs text-[#718076]">{stringify(item.notes)}</p>
                           ) : null}
                         </div>
                       </td>
@@ -327,7 +348,7 @@ export default function AdminAutomationSection({ query }: { query: string }) {
                           {item.status === "failed" && item.failureReason ? (
                             <button
                               onClick={() => setExpanded(expanded === item.id ? null : item.id)}
-                              title={item.failureReason}
+                              title={stringify(item.failureReason)}
                               className="rounded-lg border border-[#f0e2e2] px-2 py-0.5 text-[10px] font-bold text-[#b3574e] hover:bg-[#fdf4f3]"
                             >
                               Why?
@@ -337,7 +358,7 @@ export default function AdminAutomationSection({ query }: { query: string }) {
                       </td>
                       <td className="p-4 text-xs text-[#718076]">
                         <span className="flex items-center gap-1.5">
-                          <CalendarDays size={13} /> {formatDate(item.createdAt)}
+                          <CalendarDays size={13} /> {formatDate(stringify(item.createdAt))}
                         </span>
                       </td>
                       <td className="p-4 text-xs text-[#718076]">
@@ -347,7 +368,7 @@ export default function AdminAutomationSection({ query }: { query: string }) {
                             title="Published article id — find it in the Blog tab"
                           >
                             <CheckCircle2 size={13} className="text-[#256b3a]" />
-                            {item.publishedArticleId.slice(0, 12)}…
+                            {stringify(item.publishedArticleId).slice(0, 12)}…
                           </span>
                         ) : (
                           <span className="text-[#a7b3aa]">—</span>
@@ -358,7 +379,7 @@ export default function AdminAutomationSection({ query }: { query: string }) {
                       <tr className="border-t border-[#f3e2e0] bg-[#fdf7f5]">
                         <td colSpan={5} className="p-4 text-xs text-[#b3574e]">
                           <span className="font-bold uppercase tracking-wide">Failure reason:</span>{" "}
-                          {item.failureReason}
+                          {stringify(item.failureReason)}
                         </td>
                       </tr>
                     ) : null}

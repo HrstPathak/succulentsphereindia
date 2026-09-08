@@ -22,6 +22,7 @@ import {
 import AdminTestOrderModal from "./AdminTestOrderModal";
 import AdminBlogSection from "./AdminBlogSection";
 import AdminAutomationSection from "./AdminAutomationSection";
+import ErrorBoundary from "./ErrorBoundary";
 import dynamic from "next/dynamic";
 const AdminOrderDetailModal = dynamic(() => import("./AdminOrderDetailModal"), { ssr: false });
 
@@ -541,7 +542,11 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
             />
           )}
           {tab === "blog" && <AdminBlogSection query={query} />}
-          {tab === "automation" && <AdminAutomationSection query={query} />}
+          {tab === "automation" && (
+            <ErrorBoundary>
+              <AdminAutomationSection query={query} />
+            </ErrorBoundary>
+          )}
         </section>
       </div>
       {productId && (
