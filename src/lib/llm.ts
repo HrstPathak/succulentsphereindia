@@ -111,6 +111,14 @@ async function chatWithOpenAICompatible(input: {
   }
 
   if (!response.ok) {
+    // Log the failing provider/model/status/body BEFORE the fallback chain moves
+    // on — otherwise a swallowed provider error is impossible to diagnose in
+    // Vercel's logs (e.g. blog-automation's silent OpenRouter 4xx/5xx).
+    console.error(
+      `${provider.toUpperCase()} failed for model "${model}"`,
+      response.status,
+      text
+    );
     throw new Error(`${provider.toUpperCase()} API ${response.status}: ${text || response.statusText}`);
   }
 

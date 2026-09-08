@@ -242,6 +242,9 @@ async function handleAutomation(req: Request) {
     const result = await runAutomation();
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
+    // Log the final thrown error before returning the 500 so the root cause is
+    // visible in Vercel's runtime logs, not just in the HTTP response body.
+    console.error("[blog-automation] cron route failed:", error);
     return NextResponse.json(
       { ok: false, error: String((error as Error).message || error) },
       { status: 500 }

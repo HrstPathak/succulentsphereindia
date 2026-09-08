@@ -88,6 +88,14 @@ export async function generateBlogWithFallback(
       return { content, modelUsed: resolveUsedModel(model, provider), provider };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      // Log each model attempt individually so every failure in the chain shows
+      // up in Vercel's logs — the route only surfaces the final summary error.
+      // (The message already includes the HTTP status and response body thrown
+      // by src/lib/llm.ts's chatWithOpenAICompatible.)
+      console.error(
+        `[blog-automation] automation model "${model}" failed:`,
+        message
+      );
       errors.push(`${model}: ${message}`);
     }
   }
