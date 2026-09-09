@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirestore } from 'firebase-admin/firestore';
 import { initializeFirebaseAdmin } from '@/lib/firebase-admin';
+import { invalidateCatalogCache } from '@/lib/commerce';
 
 interface BulkUpdateRequest {
   updates: Array<{
@@ -92,6 +93,7 @@ export async function POST(req: NextRequest) {
     }
 
     await batch.commit();
+    invalidateCatalogCache();
 
     return NextResponse.json({
       success: true,

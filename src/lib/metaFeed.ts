@@ -5,6 +5,16 @@ import { Redis } from "@upstash/redis";
 // TTL for caches
 export const CACHE_TTL_SECONDS = 60 * 60; // 1 hour
 export const REDIS_KEY = "meta:catalog:csv";
+// Long-lived TTL for the cached CSV itself: the hourly "warm" scheduler checks
+// GENERATED_AT_KEY instead of re-reading Firestore, so the CSV must outlive the
+// serving freshness window or every hourly run would still rebuild the feed.
+const FEED_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
+// How old the generated feed may be before the scheduler regenerates it.
+// Meta catalog feeds do not need hourly rebuilds — a daily refresh is plenty.
+// Tunable via META_FEED_MAX_AGE_HOURS.
+const FEED_MAX_AGE_MS =
+  Math.max(1, Number.parseInt(process.env.META_FEED_MAX_AGE_HOURS || "", 10) || 23) * 60 * 60 * 1000;
+export const GENERATED_AT_KEY = "meta:catalog:generatedAt";
 
 let redisClient: Redis | null = null;
 try {
@@ -67,7 +77,7 @@ async function writeRedisCsv(value: string) {
       try {
         await nativeRedisClient.set(REDIS_KEY, value);
         // Set TTL if supported via expire
-        await nativeRedisClient.expire(REDIS_KEY, CACHE_TTL_SECONDS);
+        await nativeRedisClient.expire(REDIS_KEY, FEED_CACHE_TTL_SECONDS);
         return;
       } catch (_e) {
         // fallthrough to Upstash
@@ -79,7 +89,7 @@ async function writeRedisCsv(value: string) {
 
   if (!redisClient) return;
   try {
-    await redisClient.set(REDIS_KEY, value, { ex: CACHE_TTL_SECONDS });
+    await redisClient.set(REDIS_KEY, value, { ex: FEED_CACHE_TTL_SECONDS });
   } catch (_e) {
     // ignore write failures
   }
@@ -215,11 +225,67 @@ export async function writeCaches(csvText: string) {
   }
 }
 
+async function readGeneratedAt(): Promise<number | null> {
+  try {
+    if ((await ensureNativeRedis()) && nativeRedisClient) {
+      const v = await nativeRedisClient.get(GENERATED_AT_KEY);
+      if (typeof v === "string" && v) {
+        const n = Number(v);
+        if (Number.isFinite(n)) return n;
+      }
+    }
+  } catch {
+    // fallthrough to Upstash
+  }
+  if (!redisClient) return null;
+  try {
+    const v = await redisClient.get(GENERATED_AT_KEY);
+    if (v === null || v === undefined) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+async function writeGeneratedAt(at: number) {
+  try {
+    if ((await ensureNativeRedis()) && nativeRedisClient) {
+      try {
+        await nativeRedisClient.set(GENERATED_AT_KEY, String(at));
+        await nativeRedisClient.expire(GENERATED_AT_KEY, FEED_CACHE_TTL_SECONDS);
+        return;
+      } catch {
+        // fallthrough to Upstash
+      }
+    }
+  } catch {
+    // ignore
+  }
+  if (!redisClient) return;
+  try {
+    await redisClient.set(GENERATED_AT_KEY, String(at), { ex: FEED_CACHE_TTL_SECONDS });
+  } catch {
+    // ignore write failures
+  }
+}
+
 /** Generate and write caches; fall back to mock CSV if generation fails */
 export async function generateAndCache(siteUrl: string) {
   try {
+    // Skip the full-catalog regeneration while the feed is still fresh: the
+    // hourly scheduler used to re-read the entire products collection on all
+    // 24 daily runs (~2000 reads each), which alone could exhaust the
+    // Firestore free-tier daily read quota. Regenerate at most once per
+    // META_FEED_MAX_AGE_HOURS (default 23h).
+    const generatedAt = await readGeneratedAt();
+    if (generatedAt && Date.now() - generatedAt < FEED_MAX_AGE_MS) {
+      const cached = await getCachedCsv();
+      if (cached) return { ok: true, csv: cached.csv, source: "cached_fresh" };
+    }
     const csvText = await generateCsv(siteUrl);
     await writeCaches(csvText);
+    await writeGeneratedAt(Date.now());
     return { ok: true, csv: csvText, source: "generated" };
   } catch (e) {
     console.info("[metaFeed] generation failed:", String((e as Error)?.message || e));

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
+import { invalidateCatalogCache } from "@/lib/commerce";
 
 const text = (value: unknown, fallback = "") => typeof value === "string" ? value.trim() : value == null ? fallback : String(value).trim();
 const number = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -115,6 +116,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const ref = getFirebaseDb().collection("products").doc(text(id));
     if (!(await ref.get()).exists) return NextResponse.json({ error: "Product not found." }, { status: 404 });
     await ref.set(update, { merge: true });
+    invalidateCatalogCache();
     return NextResponse.json({ ok: true, product: productPayload(text(id), update) });
   } catch (error) {
     return NextResponse.json({ error: text((error as Error).message, "Unable to save product.") }, { status: text((error as Error).message) === "ADMIN_REQUIRED" ? 404 : 500 });

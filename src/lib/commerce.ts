@@ -96,12 +96,34 @@ async function getReviewsForProduct(productId: string): Promise<ProductReview[]>
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as ProductReview)).sort((a, b) => string(b.createdAt).localeCompare(string(a.createdAt)));
 }
 
+// Catalog cache: allProducts() powers every storefront catalog path (shop,
+// collections, /api/products, search, combo). Each call used to read the whole
+// products collection (up to 1000 docs) — multiplied by every filter/sort/
+// pagination request (the shop grid calls /api/products with cache:"no-store")
+// and every ISR regeneration of the revalidate=60 catalog pages, that alone
+// could exhaust the Firestore free-tier daily read quota. Cache the mapped
+// catalog in memory for a short TTL; admin product mutations call
+// invalidateCatalogCache() so edits show up immediately on the same instance
+// (other warm instances catch up within the TTL).
+const CATALOG_CACHE_TTL_MS =
+  Math.max(30_000, Number.parseInt(process.env.CATALOG_CACHE_TTL_MS || "", 10) || 5 * 60 * 1000);
+let catalogCache: { at: number; items: ReturnType<typeof mapProduct>[] } | null = null;
+
+export function invalidateCatalogCache() {
+  catalogCache = null;
+}
+
 async function allProducts() {
+  if (catalogCache && Date.now() - catalogCache.at < CATALOG_CACHE_TTL_MS) {
+    return catalogCache.items;
+  }
   const snapshot = await getFirebaseDb().collection("products").limit(1000).get();
   // Catalog and filter pages do not need every individual review document.
   // Fetching reviews once per product made a 119-item catalog request issue
   // hundreds of Firestore reads and delayed normal storefront pages.
-  return snapshot.docs.map((doc) => mapProduct(doc.id, doc.data()));
+  const items = snapshot.docs.map((doc) => mapProduct(doc.id, doc.data()));
+  catalogCache = { at: Date.now(), items };
+  return items;
 }
 
 function sortProducts(items: any[], options: ProductQueryOptions) {
