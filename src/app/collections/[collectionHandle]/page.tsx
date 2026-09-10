@@ -9,7 +9,7 @@ import { getRequestOrigin } from "@/lib/request-origin";
 import { buildListingOfferStructuredData } from "@/lib/structured-data";
 import { buildCatalogApiSearchParams, parseCatalogQueryState } from "@/lib/catalogQueryParams";
 
-export const revalidate = 60;
+export const revalidate = 300;
 const PAGE_SIZE = 20;
 const NOINDEX_COLLECTIONS = new Set(["pots", "gift-collection", "air-purifier"]);
 type ListingSearchParams = Record<string, string | string[] | undefined>;

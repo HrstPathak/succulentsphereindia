@@ -22,15 +22,29 @@ export type BestSellerProduct = {
 
 export default function BestSellerGrid({ products }: { products: BestSellerProduct[] }) {
   const [startIndex, setStartIndex] = useState(0);
+  const [tabVisible, setTabVisible] = useState(true);
   const pool = useMemo(() => products.filter(Boolean).slice(0, 20), [products]);
 
   useEffect(() => {
-    if (pool.length <= 4) return;
+    const onVisibility = () => setTabVisible(document.visibilityState === "visible");
+  const [startIndex, setStartIndex] = useState(0);
+  const pool = useMemo(() => products.filter(Boolean).slice(0, 20), [products]);
+
+  useEffect(() => {
+    // Skip re-render work for off-screen rotations while the tab is hidden.
+    if (document.visibilityState === "hidden") return;
+    const onVisibility = () => setTabVisible(document.visibilityState === "visible");
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+  useEffect(() => {
+    if (pool.length <= 4 || !tabVisible) return;
     const interval = window.setInterval(() => {
       setStartIndex((current) => (current + 4) % pool.length);
     }, 4000);
     return () => window.clearInterval(interval);
-  }, [pool.length]);
+  }, [pool.length, tabVisible]);
 
   const visibleProducts = useMemo(() => {
     if (!pool.length) return [];

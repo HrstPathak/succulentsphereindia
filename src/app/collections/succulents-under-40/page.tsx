@@ -6,7 +6,7 @@ import RecentlyViewedProducts from "../../../components/shop/RecentlyViewedProdu
 import { getRequestOrigin } from "@/lib/request-origin";
 import { buildCatalogApiSearchParams, parseCatalogQueryState } from "@/lib/catalogQueryParams";
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 const PAGE_SIZE = 20;
 const BASE_PATH = "/collections/succulents-under-40";

@@ -38,7 +38,10 @@ function sanitizeHtml(value: string): string {
   return value
     .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
     .replace(/\son\w+="[^"]*"/gi, "")
-    .replace(/\son\w+='[^']*'/gi, "");
+    .replace(/\son\w+='[^']*'/gi, "")
+    // Product descriptions render below the fold via dangerouslySetInnerHTML;
+    // force native lazy-loading on their images (stored HTML predates this).
+    .replace(/<img\b(?![^>]*\bloading\s*=)([^>]*)>/gi, '<img loading="lazy" decoding="async" $1>');
 }
 
 function escapeHtml(value: string): string {

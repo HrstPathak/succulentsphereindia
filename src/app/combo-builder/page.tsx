@@ -4,7 +4,7 @@ import ComboBuilder from "@/components/combo/ComboBuilder";
 import { fetchProductsByQuery } from "@/lib/commerce";
 import { resolveProductImageAlt } from "@/lib/imageAlt";
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Combo Builder | Succulent Sphere",

@@ -5,7 +5,7 @@ import { resolveProductImageAlt } from "@/lib/imageAlt";
 import ComboCollectionGrid from "@/components/combo/ComboCollectionGrid";
 import { mediaAsset } from "@/lib/media";
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Combo Collection | Succulent Sphere",

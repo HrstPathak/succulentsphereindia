@@ -26,7 +26,11 @@ function sanitizeHtml(value: string): string {
   return value
     .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
     .replace(/\son\w+="[^"]*"/gi, "")
-    .replace(/\son\w+='[^']*'/gi, "");
+    .replace(/\son\w+='[^']*'/gi, "")
+    // Article body HTML renders below the header via dangerouslySetInnerHTML;
+    // force native lazy-loading on its images (older stored articles predate
+    // generation-time lazy attributes).
+    .replace(/<img\b(?![^>]*\bloading\s*=)([^>]*)>/gi, '<img loading="lazy" decoding="async" $1>');
 }
 
 function buildFaqSchema(article: { title: string; excerpt: string; handle: string }) {

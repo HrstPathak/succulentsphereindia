@@ -8,7 +8,7 @@ import { SITE_URL } from "@/lib/seo";
 import { buildListingOfferStructuredData } from "@/lib/structured-data";
 import { buildCatalogApiSearchParams, parseCatalogQueryState } from "@/lib/catalogQueryParams";
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 const PAGE_SIZE = 20;
 const BASE_PATH = "/shop";

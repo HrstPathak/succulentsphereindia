@@ -50,6 +50,30 @@ export default function RecommendedProducts({
   const [loading, setLoading] = useState(true);
   const [ready, setReady] = useState(false);
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+  const sectionRef = useRef<HTMLElement | null>(null);
+  // Defer the recommendations API call until the widget is close to the
+  // viewport so product pages stay interactive on first paint.
+  const [nearViewport, setNearViewport] = useState(false);
+
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      setNearViewport(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setNearViewport(true);
+          observer.disconnect();
+        }
+      },
+      // Start loading shortly before the widget scrolls into view.
+      { rootMargin: "400px 0px" }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!handle) {
