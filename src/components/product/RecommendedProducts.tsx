@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -76,6 +76,7 @@ export default function RecommendedProducts({
   }, []);
 
   useEffect(() => {
+    if (!nearViewport) return;
     if (!handle) {
       setLoading(false);
       setReady(true);
@@ -116,10 +117,13 @@ export default function RecommendedProducts({
 
     run();
     return () => controller.abort();
-  }, [handle, maxItems]);
+  }, [handle, maxItems, nearViewport]);
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-[#e8ddd0] bg-[var(--color-bg)] p-5 sm:p-6">
+    <section
+      ref={sectionRef}
+      className="relative overflow-hidden rounded-3xl border border-[#e8ddd0] bg-[var(--color-bg)] p-5 sm:p-6"
+    >
       <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(163,177,138,0.28),transparent_70%)]" />
       <div className="pointer-events-none absolute -bottom-16 -left-14 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(203,153,126,0.2),transparent_70%)]" />
 

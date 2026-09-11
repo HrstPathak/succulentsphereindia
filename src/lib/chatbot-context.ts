@@ -34,9 +34,22 @@ export function getChatbotContext(): string {
 }
 
 /** Async version — fetches live products from the Firebase catalogue. */
+// The knowledge context is identical for every conversation until the product
+// catalog changes — rebuilding it (mapped catalog read + string assembly) on
+// every chat message wasted CPU and kept Firestore hot for no freshness
+// benefit. Short in-memory cache; the underlying catalog data has its own
+// 5-min TTL, so worst-case staleness here is ~15 minutes.
+const CONTEXT_TTL_MS = 10 * 60 * 1000;
+let cachedContext: { at: number; value: string } | null = null;
+
 export async function getChatbotContextAsync(): Promise<string> {
+  if (cachedContext && Date.now() - cachedContext.at < CONTEXT_TTL_MS) {
+    return cachedContext.value;
+  }
   const knowledge = await buildKnowledgeContextAsync();
-  return `${SYSTEM_INSTRUCTIONS}\n\n--- KNOWLEDGE BASE (use this to answer) ---\n${knowledge}`;
+  const context = `${SYSTEM_INSTRUCTIONS}\n\n--- KNOWLEDGE BASE (use this to answer) ---\n${knowledge}`;
+  cachedContext = { at: Date.now(), value: context };
+  return context;
 }
 
 export const CHATBOT_CONTEXT = getChatbotContext();

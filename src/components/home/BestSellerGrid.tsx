@@ -25,14 +25,8 @@ export default function BestSellerGrid({ products }: { products: BestSellerProdu
   const [tabVisible, setTabVisible] = useState(true);
   const pool = useMemo(() => products.filter(Boolean).slice(0, 20), [products]);
 
+  // Skip re-render work for the off-screen carousel while the tab is hidden.
   useEffect(() => {
-    const onVisibility = () => setTabVisible(document.visibilityState === "visible");
-  const [startIndex, setStartIndex] = useState(0);
-  const pool = useMemo(() => products.filter(Boolean).slice(0, 20), [products]);
-
-  useEffect(() => {
-    // Skip re-render work for off-screen rotations while the tab is hidden.
-    if (document.visibilityState === "hidden") return;
     const onVisibility = () => setTabVisible(document.visibilityState === "visible");
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
