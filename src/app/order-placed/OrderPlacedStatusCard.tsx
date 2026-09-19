@@ -146,7 +146,7 @@ export default function OrderPlacedStatusCard({
 
           <div className="rounded-xl border border-[#e8dece] bg-white/70 px-4 py-3 text-sm text-[#3f4f45]">
             {isConfirmed
-              ? "You will receive a confirmation email with your Order ID shortly. Our team will contact you within 24 hours."
+              ? "You will receive an order confirmation email with your Order ID shortly. Please check your inbox and spam folder. Our team will contact you within 24 hours."
               : "We will update this page automatically as soon as the order is created."}
           </div>
 

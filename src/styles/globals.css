@@ -240,6 +240,67 @@ button:focus-visible, a:focus-visible {
   100% { transform: translateX(180%); }
 }
 
+@keyframes succulentFill {
+  0% {
+    y: 128px;
+    height: 0;
+  }
+
+  48% {
+    y: 38px;
+    height: 90px;
+  }
+
+  100% {
+    y: 8px;
+    height: 120px;
+  }
+}
+
+@keyframes succulentSheen {
+  0% {
+    opacity: 0;
+    transform: translateX(-38%) rotate(-18deg);
+  }
+
+  45% {
+    opacity: 0.55;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(38%) rotate(-18deg);
+  }
+}
+
+@keyframes succulentProgress {
+  0% {
+    transform: translateX(-72%);
+  }
+
+  55% {
+    transform: translateX(-18%);
+  }
+
+  100% {
+    transform: translateX(12%);
+  }
+}
+
+.succulent-fill-rect {
+  animation: succulentFill 1.55s ease-in-out infinite alternate;
+}
+
+.succulent-loader-sheen {
+  background: linear-gradient(100deg, transparent 18%, rgba(255,255,255,0.64) 50%, transparent 82%);
+  animation: succulentSheen 1.8s ease-in-out infinite;
+}
+
+.succulent-progress-bar {
+  width: 92%;
+  animation: succulentProgress 1.35s ease-in-out infinite alternate;
+}
+
 .wave-emoji {
   transform-origin: 70% 70%;
   animation: assistantWave 1.8s ease-in-out infinite;

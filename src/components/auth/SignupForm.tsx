@@ -6,6 +6,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "./Button";
 import Input from "./Input";
+import SucculentAuthLoader from "./SucculentAuthLoader";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { getFirebaseClientAuth, getGoogleProvider } from "@/lib/firebase-client";
 import { signInWithPopup } from "firebase/auth";
@@ -43,6 +44,7 @@ export default function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
@@ -66,6 +68,7 @@ export default function SignupForm() {
       const json = await response.json();
       if (!response.ok) {
         showErrorToast(String(json?.error || "Signup failed."));
+        setLoading(false);
         return;
       }
 
@@ -75,13 +78,13 @@ export default function SignupForm() {
       router.refresh();
     } catch (error) {
       showErrorToast((error as Error).message || "Unable to create account.");
-    } finally {
       setLoading(false);
     }
   }
 
   async function onGoogleSignup() {
     setLoading(true);
+    setGoogleLoading(true);
     try {
       const credential = await signInWithPopup(getFirebaseClientAuth(), getGoogleProvider());
       const idToken = await credential.user.getIdToken(true);
@@ -99,16 +102,22 @@ export default function SignupForm() {
       router.refresh();
     } catch (error) {
       showErrorToast(firebaseErrorMessage(error));
-    } finally {
+      setGoogleLoading(false);
       setLoading(false);
     }
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      <SucculentAuthLoader
+        show={googleLoading}
+        title="Growing your account..."
+        message="Google has verified you. We are preparing your secure session and opening your account page."
+      />
       <button
         type="button"
         onClick={onGoogleSignup}
+        disabled={loading}
         className="group relative inline-flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl border border-[#d6ddd8] bg-[linear-gradient(165deg,#ffffff_0%,#f6f8f7_52%,#edf2ef_100%)] px-4 py-2.5 text-sm font-semibold text-[#203128] shadow-[0_10px_24px_rgba(20,34,26,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#bdc9c2] hover:shadow-[0_16px_34px_rgba(20,34,26,0.18)]"
         >
           <span className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.5),transparent)] transition-transform duration-700 group-hover:translate-x-[420%]" />
