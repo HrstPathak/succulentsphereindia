@@ -14,10 +14,12 @@ import {
   ShieldCheck,
   ShoppingBag,
   Truck,
+  Wallet,
 } from "lucide-react";
 import Button from "./Button";
 import Input from "./Input";
 import OrdersListClient from "./OrdersListClient";
+import WalletSection from "./WalletSection";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import type { FirebaseAuthenticatedCustomer, FirebaseCustomerAddress } from "@/lib/commerce";
 
@@ -537,6 +539,21 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
           </div>
 
           <div className="mt-4 space-y-2.5">
+            <WalletSection
+              balance={data.wallet?.balance || 0}
+              availableBalance={data.wallet?.availableBalance || 0}
+              activeCredits={data.wallet?.activeCredits || []}
+              transactions={data.wallet?.transactions || []}
+            />
+          </div>
+
+          <div className="mt-4 space-y-2.5">
+            <AccountMenuItem
+              label="Wallet"
+              meta="Cashback balance"
+              icon={<Wallet size={20} strokeWidth={1.8} />}
+              onClick={() => showSuccessToast("Your wallet cashback balance is shown below.")}
+            />
             <AccountMenuItem
               label="Orders"
               meta={ordersMeta}

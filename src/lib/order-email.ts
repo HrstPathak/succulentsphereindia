@@ -22,6 +22,9 @@ export type OrderConfirmationEmail = {
   discount?: number;
   codFee?: number;
   paymentReceived?: number;
+  walletAmountUsed?: number;
+  cashbackEarned?: number;
+  payableAmount?: number;
 };
 
 function escapeHtml(value: unknown) {
@@ -153,6 +156,9 @@ function adminOrderHtml(order: OrderConfirmationEmail) {
   const shipping = Number(order.shipping || 0);
   const discount = Number(order.discount || 0);
   const codFee = Number(order.codFee || 0);
+  const walletAmountUsed = Number(order.walletAmountUsed || 0);
+  const cashbackEarned = Number(order.cashbackEarned || 0);
+  const amountPaid = Number(order.paymentReceived ?? order.payableAmount ?? order.total);
   const subtotal = order.total + discount + shipping - codFee;
   const fullAddress = [
     (order as any).address || order.address || (order as any).address1 || (order as any).address_line1,
@@ -202,7 +208,7 @@ function adminOrderHtml(order: OrderConfirmationEmail) {
                   <div style="background:#f7f5ef;border:1px solid #efe4d7;border-radius:14px;padding:16px;">
                     <p style="margin:0 0 8px;font-size:12px;font-weight:bold;letter-spacing:1px;color:#7b6753;text-transform:uppercase">Payment</p>
                     <p style="margin:0 0 6px;font-size:18px;font-weight:bold;color:#223d32">${escapeHtml(order.paymentMode === "cod_deposit" ? "COD Deposit" : order.paymentMode === "admin_test" ? "Admin Test" : "Prepaid")}</p>
-                    <p style="margin:0 0 6px;color:#52665b">Total collected: <strong>${formatInr(order.total)}</strong></p>
+                    <p style="margin:0 0 6px;color:#52665b">Amount paid: <strong>${formatInr(amountPaid)}</strong></p>
                     <p style="margin:0;color:#52665b">COD fee: ${formatInr(codFee)} · Shipping: ${formatInr(shipping)} · Discount: ${formatInr(discount)}</p>
                   </div>
                 </td>
@@ -245,8 +251,20 @@ function adminOrderHtml(order: OrderConfirmationEmail) {
                   <td style="padding:6px 0;text-align:right">-${formatInr(discount)}</td>
                 </tr>
                 <tr>
+                  <td style="padding:6px 0">Wallet used <span style="color:#7b6753">- deducted from customer wallet, not extra discount</span></td>
+                  <td style="padding:6px 0;text-align:right">-${formatInr(walletAmountUsed)}</td>
+                </tr>
+                <tr>
                   <td style="padding:6px 0">COD fee</td>
                   <td style="padding:6px 0;text-align:right">${formatInr(codFee)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0">Amount paid through Razorpay</td>
+                  <td style="padding:6px 0;text-align:right">${formatInr(amountPaid)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0">Cashback credited after confirmation</td>
+                  <td style="padding:6px 0;text-align:right">${formatInr(cashbackEarned)}</td>
                 </tr>
                 <tr style="border-top:1px solid #d7e8d8">
                   <td style="padding:10px 0 0;font-weight:bold">Total</td>

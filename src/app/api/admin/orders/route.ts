@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { sendTrackingEmail } from "@/lib/order-email";
+import { applyWalletOrderCancellationPolicy } from "@/lib/wallet";
 
 export async function PATCH(request: Request) {
   try {
@@ -57,6 +58,11 @@ export async function PATCH(request: Request) {
         { status: 400 },
       );
     await orderRef.set(update, { merge: true });
+    const nextFulfillmentStatus = String(update.fulfillmentStatus || "").toUpperCase();
+    const nextFinancialStatus = String(update.financialStatus || "").toUpperCase();
+    if (nextFulfillmentStatus === "CANCELLED" || nextFinancialStatus === "REFUNDED") {
+      await applyWalletOrderCancellationPolicy(String(id));
+    }
     let trackingEmailSent = false;
     if (safeTrackingNumber && safeTrackingNumber !== previousTrackingNumber) {
       const order = existing.data() || {};

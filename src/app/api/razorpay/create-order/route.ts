@@ -10,6 +10,7 @@ import {
 } from "@/lib/razorpayCheckout";
 import { COD_DEPOSIT_AMOUNT } from "@/lib/checkoutConfig";
 import { getAuthenticatedCustomer } from "@/lib/auth";
+import { releaseWalletHold, reserveWalletForCheckout } from "@/lib/wallet";
 
 export const runtime = "nodejs";
 
@@ -31,12 +32,23 @@ export async function POST(req: Request) {
     const customer = (body?.customer || {}) as CustomerInfo;
     const gathering = (body?.gathering || {}) as GatheringInfo;
     const paymentMode = body?.paymentMode === "cod_deposit" ? "cod_deposit" : "prepaid";
+    const requestedWalletAmount = Math.max(0, Number(body?.walletAmount || 0));
 
     validateCheckoutPayload({ items, customer, paymentMode });
 
-    const pricingSummary = getCheckoutAmounts(items, paymentMode);
-    const amount = pricingSummary.expectedAmountPaise;
+    const basePricingSummary = getCheckoutAmounts(items, paymentMode);
+    const session = await getAuthenticatedCustomer();
     const receipt = `ss_${Date.now()}`;
+    const walletReservation = session.uid
+      ? await reserveWalletForCheckout({
+          uid: session.uid,
+          requestedAmount: requestedWalletAmount,
+          orderTotal: basePricingSummary.totalWithCod,
+          holdId: receipt,
+        })
+      : { walletAmountApplied: 0, walletBalance: 0, walletAvailableBalance: 0, walletHoldId: null };
+    const pricingSummary = getCheckoutAmounts(items, paymentMode, walletReservation.walletAmountApplied);
+    const amount = pricingSummary.expectedAmountPaise;
     const authHeader = `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`;
 
     const razorpayRes = await fetch("https://api.razorpay.com/v1/orders", {
@@ -53,6 +65,7 @@ export async function POST(req: Request) {
           source: "succulent-sphere-custom-checkout",
           shipping: String(pricingSummary.pricing.shipping),
           discount: String(pricingSummary.pricing.discount),
+          wallet_used: String(pricingSummary.walletAmountApplied.toFixed(2)),
           payment_mode: paymentMode,
           cod_deposit: paymentMode === "cod_deposit" ? String(COD_DEPOSIT_AMOUNT) : "0",
           cod_fee: String(pricingSummary.codFee.toFixed(2)),
@@ -64,32 +77,53 @@ export async function POST(req: Request) {
 
     const razorpayData = await razorpayRes.json();
     if (!razorpayRes.ok) {
+      if (session.uid && walletReservation.walletHoldId) {
+        await releaseWalletHold({ uid: session.uid, holdId: walletReservation.walletHoldId });
+      }
       return NextResponse.json(
         { error: razorpayData?.error?.description || "Failed to create Razorpay order." },
         { status: razorpayRes.status }
       );
     }
 
-    const session = await getAuthenticatedCustomer();
-    await createCheckoutSession({
-      razorpayOrderId: String(razorpayData?.id || "").trim(),
-      receipt,
-      items,
-      customer,
-      gathering,
-      userId: session.uid,
-      paymentMode,
-      currency: "INR",
-      expectedAmountPaise: amount,
-      subtotal: pricingSummary.subtotal,
-      shipping: pricingSummary.pricing.shipping,
-      discount: pricingSummary.pricing.discount,
-      total: pricingSummary.pricing.total,
-      codFee: pricingSummary.codFee,
-      totalWithCod: pricingSummary.totalWithCod,
-    });
+    try {
+      await createCheckoutSession({
+        razorpayOrderId: String(razorpayData?.id || "").trim(),
+        receipt,
+        items,
+        customer,
+        gathering,
+        userId: session.uid,
+        paymentMode,
+        currency: "INR",
+        expectedAmountPaise: amount,
+        subtotal: pricingSummary.subtotal,
+        shipping: pricingSummary.pricing.shipping,
+        discount: pricingSummary.pricing.discount,
+        total: pricingSummary.pricing.total,
+        codFee: pricingSummary.codFee,
+        totalWithCod: pricingSummary.totalWithCod,
+        walletAmountApplied: pricingSummary.walletAmountApplied,
+        walletHoldId: walletReservation.walletHoldId,
+        payableAmount: pricingSummary.payableAmount,
+        cashbackBasisAmount: pricingSummary.cashbackBasisAmount,
+      });
+    } catch (error) {
+      if (session.uid && walletReservation.walletHoldId) {
+        await releaseWalletHold({ uid: session.uid, holdId: walletReservation.walletHoldId });
+      }
+      throw error;
+    }
 
-    return NextResponse.json(razorpayData);
+    return NextResponse.json({
+      ...razorpayData,
+      walletAmountApplied: pricingSummary.walletAmountApplied,
+      walletAvailableBalance: walletReservation.walletAvailableBalance,
+      payableAmount: pricingSummary.payableAmount,
+      orderTotalAfterWallet: pricingSummary.orderTotalAfterWallet,
+      cashbackBasisAmount: pricingSummary.cashbackBasisAmount,
+      walletHoldId: walletReservation.walletHoldId,
+    });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }

@@ -6,6 +6,7 @@ import { COD_DEPOSIT_AMOUNT, COD_FEE_AMOUNT, COD_ORDER_LIMIT } from "@/lib/check
 import type { OrderConfirmationEmail } from "@/lib/order-email";
 import { sendOrderConfirmationEmail } from "@/lib/order-email";
 import { enqueueShipment, processShipmentJob } from "@/lib/shipping";
+import { consumeWalletHoldForOrder, creditWalletCashback } from "@/lib/wallet";
 
 export type CartItem = {
   id?: string;
@@ -52,6 +53,10 @@ export type CheckoutSession = {
   total: number;
   codFee: number;
   totalWithCod: number;
+  walletAmountApplied: number;
+  walletHoldId?: string | null;
+  payableAmount: number;
+  cashbackBasisAmount: number;
   createdAt: string;
   updatedAt: string;
   status: string;
@@ -145,7 +150,7 @@ export async function priceCartItems(items: CartItem[]) {
   return out;
 }
 
-export function getCheckoutAmounts(items: CartItem[], paymentMode: PaymentMode) {
+export function getCheckoutAmounts(items: CartItem[], paymentMode: PaymentMode, walletAmountApplied = 0) {
   const subtotal = items.reduce((sum, item) => sum + Number(item.price || 0) * Math.max(1, Number(item.quantity || 1)), 0);
   if (subtotal < MIN_ORDER_AMOUNT) throw new Error(`Minimum order is INR ${MIN_ORDER_AMOUNT}.`);
 
@@ -154,14 +159,20 @@ export function getCheckoutAmounts(items: CartItem[], paymentMode: PaymentMode) 
 
   const codFee = paymentMode === "cod_deposit" ? COD_FEE_AMOUNT : 0;
   const totalWithCod = Number((pricing.total + codFee).toFixed(2));
-  const payableAmount = paymentMode === "cod_deposit" ? COD_DEPOSIT_AMOUNT : totalWithCod;
+  const safeWalletAmount = Math.min(Math.max(0, Number(walletAmountApplied || 0)), totalWithCod);
+  const orderTotalAfterWallet = Number(Math.max(0, totalWithCod - safeWalletAmount).toFixed(2));
+  const payableAmount = paymentMode === "cod_deposit" ? COD_DEPOSIT_AMOUNT : orderTotalAfterWallet;
+  const cashbackBasisAmount = Number(Math.max(0, pricing.total - safeWalletAmount).toFixed(2));
 
   return {
     subtotal,
     pricing,
     codFee,
     totalWithCod,
+    walletAmountApplied: safeWalletAmount,
+    orderTotalAfterWallet,
     payableAmount,
+    cashbackBasisAmount,
     expectedAmountPaise: Math.round(payableAmount * 100),
   };
 }
@@ -288,6 +299,20 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
       };
     });
 
+    const walletAmountUsed = session.userId
+      ? await consumeWalletHoldForOrder(tx, {
+          uid: session.userId,
+          holdId: session.walletHoldId,
+          amount: session.walletAmountApplied || 0,
+          orderId: orderRef.id,
+        })
+      : 0;
+    const walletCashbackEarned = creditWalletCashback(tx, {
+      uid: session.userId,
+      orderId: orderRef.id,
+      orderTotal: session.cashbackBasisAmount,
+    });
+
     tx.set(counterRef, { orderNumber }, { merge: true });
     tx.set(orderRef, {
       orderNumber,
@@ -299,6 +324,12 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
       subtotal: session.subtotal,
       shipping: session.shipping,
       discount: session.discount,
+      walletAmountUsed,
+      payableAmount: session.payableAmount,
+      walletCashbackEarned,
+      walletCashbackBasisAmount: session.cashbackBasisAmount,
+      walletCashbackReversed: false,
+      walletRefunded: false,
       total: session.totalWithCod,
       currency: "INR",
       totalPrice: { amount: String(session.totalWithCod), currencyCode: "INR" },
@@ -364,6 +395,9 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
         discount: session.discount,
         codFee: session.codFee,
         paymentReceived: Number(input.amountPaise) / 100,
+        walletAmountUsed,
+        cashbackEarned: walletCashbackEarned,
+        payableAmount: session.payableAmount,
       },
     };
   });

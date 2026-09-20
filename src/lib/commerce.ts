@@ -5,6 +5,7 @@ import path from "path";
 import { FieldPath } from "firebase-admin/firestore";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { getReviewStats, type ProductReview } from "@/lib/reviews";
+import { getWalletSummary, type WalletSummary } from "@/lib/wallet";
 
 export interface ProductQueryOptions {
   first?: number;
@@ -47,6 +48,7 @@ export interface FirebaseCustomerAddress {
 export interface FirebaseAuthenticatedCustomer {
   id: string; firstName: string; lastName: string; displayName: string; email: string; phone: string | null;
   defaultAddressId: string | null; addresses: FirebaseCustomerAddress[]; orders: FirebaseCustomerOrder[];
+  wallet?: WalletSummary;
 }
 export type Money = { amount: string; currencyCode: string };
 
@@ -273,6 +275,13 @@ export async function fetchCustomerByUid(uid: string): Promise<FirebaseAuthentic
     const addressesSnapshot = await userDoc.ref.collection("addresses").get();
     const orders = await fetchCustomerOrdersByUid(uid);
 
+    let wallet: WalletSummary | undefined;
+    try {
+      wallet = await getWalletSummary(uid);
+    } catch (error) {
+      console.info(`[fetchCustomerByUid] Wallet lookup failed; continuing without wallet: ${String((error as Error)?.message || error)}`);
+    }
+
     return {
       id: uid,
       firstName: string(data.firstName),
@@ -295,6 +304,7 @@ export async function fetchCustomerByUid(uid: string): Promise<FirebaseAuthentic
         phone: string(doc.get("phone")),
       })),
       orders,
+      wallet,
     };
   } catch (error) {
     // Firestore errors (quota, network, credential issues) may surface here.

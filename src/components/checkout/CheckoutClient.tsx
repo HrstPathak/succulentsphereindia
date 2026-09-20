@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Wallet } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { formatINR } from "@/lib/currency";
 import {
@@ -67,6 +68,12 @@ type CustomerProfile = {
   phone: string | null;
   defaultAddressId: string | null;
   addresses: CustomerAddress[];
+  wallet?: {
+    balance: number;
+    availableBalance: number;
+    heldBalance: number;
+    activeCredits: Array<{ id: string; amount: number; expiresAt: string | null }>;
+  };
 };
 
 function calculateSubtotal(items: { price: string; quantity: number }[]) {
@@ -125,6 +132,7 @@ export default function CheckoutClient() {
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const pendingVerificationRef = useRef<RazorpayVerificationPayload | null>(null);
   const backgroundVerificationTriggeredRef = useRef(false);
+  const walletHoldRef = useRef<string | null>(null);
   const isLoggedInCustomer = Boolean(customerProfile?.email);
 
   const subtotal = useMemo(() => calculateSubtotal(items), [items]);
@@ -134,6 +142,14 @@ export default function CheckoutClient() {
   const total = pricing.total;
   const codFee = paymentMethod === "cod_deposit" ? COD_FEE_AMOUNT : 0;
   const totalWithCod = Number((total + codFee).toFixed(2));
+  const walletAvailableBalance = Number(customerProfile?.wallet?.availableBalance || 0);
+  const walletBalance = Number(customerProfile?.wallet?.balance || 0);
+  const walletEligible = isLoggedInCustomer && totalWithCod > 199 && walletAvailableBalance > 0;
+  const maxWalletRedeem = Math.min(walletAvailableBalance, 50);
+  const [applyWallet, setApplyWallet] = useState(false);
+  const [walletAmountInput, setWalletAmountInput] = useState("");
+  const requestedWalletAmount = applyWallet && walletEligible ? Math.min(Math.max(0, Number(walletAmountInput || maxWalletRedeem)), maxWalletRedeem) : 0;
+  const totalAfterWallet = Number(Math.max(0, totalWithCod - requestedWalletAmount).toFixed(2));
   const shippingDisplay = pricing.shippingDiscount > 0 ? pricing.baseShipping : shipping;
   const freeShippingLabel =
     pricing.freeShippingSource === "tag" ? FREE_SHIPPING_TAG_DISCOUNT_TITLE : FREE_SHIPPING_DISCOUNT_TITLE;
@@ -146,6 +162,18 @@ export default function CheckoutClient() {
   function clearPendingVerification() {
     pendingVerificationRef.current = null;
     backgroundVerificationTriggeredRef.current = false;
+  }
+
+  async function releaseWalletHold() {
+    const holdId = walletHoldRef.current;
+    if (!holdId) return;
+    walletHoldRef.current = null;
+    await fetch("/api/wallet/release-hold", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ holdId }),
+      keepalive: true,
+    }).catch(() => undefined);
   }
 
   function triggerBackgroundVerification() {
@@ -190,6 +218,17 @@ export default function CheckoutClient() {
       setPaymentMethod("prepaid");
     }
   }, [isCodEligible, paymentMethod]);
+
+  useEffect(() => {
+    if (!walletEligible) {
+      setApplyWallet(false);
+      setWalletAmountInput("");
+      return;
+    }
+    if (applyWallet && (!walletAmountInput || Number(walletAmountInput) > maxWalletRedeem)) {
+      setWalletAmountInput(String(maxWalletRedeem));
+    }
+  }, [applyWallet, maxWalletRedeem, walletAmountInput, walletEligible]);
 
   useEffect(() => {
     if (!isPaymentBusy || typeof window === "undefined") return;
@@ -418,6 +457,7 @@ export default function CheckoutClient() {
           customer: customerPayload,
           gathering,
           paymentMode: mode,
+          walletAmount: requestedWalletAmount,
         }),
       });
 
@@ -425,6 +465,10 @@ export default function CheckoutClient() {
       if (!createOrderRes.ok) {
         throw new Error(orderData?.error || "Failed to create payment order.");
       }
+      walletHoldRef.current = String(orderData?.walletHoldId || "").trim() || null;
+      const serverWalletAmount = Number(orderData?.walletAmountApplied || 0);
+      const serverPayableAmount = Number(orderData?.payableAmount || Number(orderData?.amount || 0) / 100 || 0);
+      const serverOrderTotalAfterWallet = Number(orderData?.orderTotalAfterWallet || Math.max(0, orderTotal - serverWalletAmount));
 
       const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
       const Razorpay = (window as any).Razorpay;
@@ -525,7 +569,7 @@ export default function CheckoutClient() {
               if (purchaseItems.length > 0) {
                 const purchasePayload = {
                   id: String(response.razorpay_order_id || "").trim(),
-                  totalAmount: orderTotal,
+                  totalAmount: serverOrderTotalAfterWallet,
                   taxAmount: 0,
                   shippingAmount: shipping,
                   items: purchaseItems,
@@ -535,7 +579,7 @@ export default function CheckoutClient() {
               }
             }
 
-            const paidAmount = mode === "cod_deposit" ? COD_DEPOSIT_AMOUNT : Number(orderTotal.toFixed(2));
+            const paidAmount = mode === "cod_deposit" ? serverPayableAmount : serverPayableAmount;
             const nextParams = new URLSearchParams({
               orderId: String(response.razorpay_order_id || "").trim(),
               paymentId: String(response.razorpay_payment_id || "").trim(),
@@ -548,6 +592,7 @@ export default function CheckoutClient() {
             }
 
             clear();
+            walletHoldRef.current = null;
             router.replace(`/order-placed?${nextParams.toString()}`);
           } catch (verificationError) {
             clearPendingVerification();
@@ -557,6 +602,7 @@ export default function CheckoutClient() {
         },
         modal: {
           ondismiss: () => {
+            void releaseWalletHold();
             setPaymentStatus("idle");
           },
           escape: false,
@@ -567,6 +613,7 @@ export default function CheckoutClient() {
 
       const rzp = new Razorpay(options);
       rzp.on("payment.failed", (failure: any) => {
+        void releaseWalletHold();
         setPaymentStatus("failed");
         setError(failure?.error?.description || "Payment failed. Please try again.");
       });
