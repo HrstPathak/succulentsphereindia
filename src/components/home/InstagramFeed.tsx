@@ -3,7 +3,7 @@ import Link from "next/link";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
 import { mediaAsset } from "@/lib/media";
 
-const posts = [1, 2, 3, 4, 5].map((n) => ({
+const posts = [1, 2, 3, 4, 5, 6, 7].map((n) => ({
   id: n,
   img: mediaAsset("sites/images/Insta" + n + ".webp"),
   alt: "Succulent plant inspiration from Instagram post " + n,
@@ -19,7 +19,8 @@ export default function InstagramFeed() {
           rel="noopener noreferrer"
           className="hover:underline"
         >
-          Follow Succulent Plant Ideas @succulentsphere
+          Follow Succulent Plant Ideas{" "}
+          <span className="font-semibold italic text-[#2e5b3f]"> @succulentsphere</span>
         </Link>
       </h2>
       <div className="flex gap-4 px-4 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
