@@ -134,7 +134,7 @@ export default async function PotsPage({
             <h1 className="mt-4 text-4xl font-serif text-[var(--color-text)] md:text-6xl">
               Pots Collection
             </h1>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-[var(--color-text)]/80 md:text-base">
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-[rgb(var(--ss-text-rgb)/0.8)] md:text-base">
               Elegant pots for premium plant styling. Browse all designs below and add to cart instantly.
             </p>
           </div>

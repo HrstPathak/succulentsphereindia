@@ -61,7 +61,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-semibold">{item.title}</span>
-                      <span className="rounded-full bg-[var(--color-secondary)]/35 px-2 py-0.5 text-[10px] font-medium">
+                      <span className="rounded-full bg-[rgb(var(--ss-secondary-rgb)/0.35)] px-2 py-0.5 text-[10px] font-medium">
                         {item.score}/100
                       </span>
                     </div>

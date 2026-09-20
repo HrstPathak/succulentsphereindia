@@ -159,8 +159,8 @@ function AccountMenuItem({
       onClick={onClick}
       className={`group flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-all ${
         expanded
-          ? "border-[var(--color-brand)]/45 bg-[var(--color-secondary)]/18 shadow-[0_8px_18px_rgba(52,78,65,0.12)]"
-          : "border-[var(--auth-border)] bg-white/55 hover:border-[var(--color-brand)]/35 hover:bg-white/75"
+          ? "border-[rgb(var(--ss-brand-rgb)/0.45)] bg-[rgb(var(--ss-secondary-rgb)/0.18)] shadow-[0_8px_18px_rgba(52,78,65,0.12)]"
+          : "border-[var(--auth-border)] bg-white/55 hover:border-[rgb(var(--ss-brand-rgb)/0.35)] hover:bg-white/75"
       }`}
     >
       <div className="flex items-center gap-3">
@@ -496,16 +496,19 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
               <Link
                 href="/shop"
                 aria-label="Go to shop"
-                className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--auth-border)] bg-white/70 text-[var(--color-text)] transition-colors hover:border-[var(--color-brand)]/45 hover:text-[var(--color-brand)]"
+                className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--auth-border)] bg-white/70 text-[var(--color-text)] transition-colors hover:border-[rgb(var(--ss-brand-rgb)/0.45)] hover:text-[var(--color-brand)]"
               >
                 <ShoppingBag size={18} strokeWidth={1.8} />
               </Link>
             </div>
-            <p className="mt-2 text-2xl text-[var(--color-text)]/90">Welcome back, {data.firstName || "Customer"}.</p>
+            <p className="mt-2 text-2xl text-[rgb(var(--ss-text-rgb)/0.9)]">Welcome back, {data.firstName || "Customer"}.</p>
             <p className="mt-2 max-w-xl text-base text-[var(--auth-muted)]">Manage your orders, addresses and plant care preferences.</p>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-[var(--auth-border)] bg-white/62 p-4 shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
+          {/* bg-white/[0.62] (bracket syntax) -- Tailwind v3's opacity scale has no
+              `/62` step, so the bare `bg-white/62` this used to read emitted NO CSS
+              at all and the card rendered transparent in light mode. */}
+          <div className="mt-4 rounded-2xl border border-[var(--auth-border)] bg-white/[0.62] p-4 shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <div className="grid h-16 w-16 place-items-center rounded-full border border-white/70 bg-[linear-gradient(145deg,#ece3d8_0%,#ccb59a_100%)] text-lg font-semibold text-[var(--color-brand)] shadow-inner">
@@ -521,7 +524,7 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
                 {isAdmin ? (
                   <Link
                     href="/admin"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-brand)]/35 bg-white/80 px-4 py-2.5 text-sm font-semibold text-[var(--color-brand)] transition-colors hover:bg-[var(--color-secondary)]/20"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-[rgb(var(--ss-brand-rgb)/0.35)] bg-white/80 px-4 py-2.5 text-sm font-semibold text-[var(--color-brand)] transition-colors hover:bg-[rgb(var(--ss-secondary-rgb)/0.2)]"
                   >
                     <ShieldCheck size={17} />
                     Admin dashboard
@@ -569,7 +572,7 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
                     type="button"
                     onClick={() => refreshCustomerData(true)}
                     disabled={refreshingOrders}
-                    className="rounded-lg border border-[var(--color-brand)]/30 px-2.5 py-1 text-xs font-semibold text-[var(--color-brand)] disabled:opacity-60"
+                    className="rounded-lg border border-[rgb(var(--ss-brand-rgb)/0.3)] px-2.5 py-1 text-xs font-semibold text-[var(--color-brand)] disabled:opacity-60"
                   >
                     {refreshingOrders ? "Refreshing..." : "Refresh"}
                   </button>
@@ -630,7 +633,7 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
                               {[address.firstName, address.lastName].filter(Boolean).join(" ") || "Address"}
                             </p>
                             {isDefault ? (
-                              <span className="rounded-full bg-[var(--color-secondary)]/30 px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--color-brand)]">
+                              <span className="rounded-full bg-[rgb(var(--ss-secondary-rgb)/0.3)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--color-brand)]">
                                 Default
                               </span>
                             ) : null}
@@ -642,7 +645,7 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
                             <button
                               type="button"
                               onClick={() => openEditAddress(address)}
-                              className="rounded-lg border border-[var(--color-secondary)]/35 px-2.5 py-1 text-xs font-semibold text-[var(--color-text)]"
+                              className="rounded-lg border border-[rgb(var(--ss-secondary-rgb)/0.35)] px-2.5 py-1 text-xs font-semibold text-[var(--color-text)]"
                             >
                               Edit
                             </button>
@@ -659,7 +662,7 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
                                 type="button"
                                 disabled={settingDefaultId === address.id}
                                 onClick={() => setDefaultAddress(address.id)}
-                                className="rounded-lg border border-[var(--color-brand)]/35 px-2.5 py-1 text-xs font-semibold text-[var(--color-brand)] disabled:opacity-60"
+                                className="rounded-lg border border-[rgb(var(--ss-brand-rgb)/0.35)] px-2.5 py-1 text-xs font-semibold text-[var(--color-brand)] disabled:opacity-60"
                               >
                                 {settingDefaultId === address.id ? "Saving..." : "Set Default"}
                               </button>
@@ -710,7 +713,7 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
                     </div>
                     <div className="grid grid-cols-4 gap-2">
                       {[0, 1, 2, 3].map((index) => (
-                        <div key={index} className={`h-1.5 rounded-full ${index < strength.score ? strength.color : "bg-[var(--color-secondary)]/25"}`} />
+                        <div key={index} className={`h-1.5 rounded-full ${index < strength.score ? strength.color : "bg-[rgb(var(--ss-secondary-rgb)/0.25)]"}`} />
                       ))}
                     </div>
                   </div>
@@ -777,7 +780,7 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
                   type="button"
                   disabled={savingProfile}
                   onClick={() => setProfileModalOpen(false)}
-                  className="rounded-xl border border-[var(--color-secondary)]/35 px-4 py-2 text-sm font-semibold text-[var(--color-text)] hover:bg-[var(--color-secondary)]/20 disabled:opacity-60"
+                  className="rounded-xl border border-[rgb(var(--ss-secondary-rgb)/0.35)] px-4 py-2 text-sm font-semibold text-[var(--color-text)] hover:bg-[rgb(var(--ss-secondary-rgb)/0.2)] disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -873,7 +876,7 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
                   type="button"
                   disabled={addressSaving}
                   onClick={() => setAddressModalOpen(false)}
-                  className="rounded-xl border border-[var(--color-secondary)]/35 px-4 py-2 text-sm font-semibold text-[var(--color-text)] hover:bg-[var(--color-secondary)]/20 disabled:opacity-60"
+                  className="rounded-xl border border-[rgb(var(--ss-secondary-rgb)/0.35)] px-4 py-2 text-sm font-semibold text-[var(--color-text)] hover:bg-[rgb(var(--ss-secondary-rgb)/0.2)] disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -900,7 +903,7 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
                 type="button"
                 disabled={deletingAddress}
                 onClick={() => setDeleteAddressId(null)}
-                className="rounded-xl border border-[var(--color-secondary)]/35 px-4 py-2 text-sm font-semibold text-[var(--color-text)] hover:bg-[var(--color-secondary)]/20 disabled:opacity-60"
+                className="rounded-xl border border-[rgb(var(--ss-secondary-rgb)/0.35)] px-4 py-2 text-sm font-semibold text-[var(--color-text)] hover:bg-[rgb(var(--ss-secondary-rgb)/0.2)] disabled:opacity-60"
               >
                 Cancel
               </button>

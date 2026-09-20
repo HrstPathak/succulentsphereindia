@@ -34,7 +34,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         {type === "password" ? (
           <button
             type="button"
-            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[var(--color-text)]/70 transition-colors hover:text-[var(--color-text)]"
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[rgb(var(--ss-text-rgb)/0.7)] transition-colors hover:text-[var(--color-text)]"
             onClick={() => setShowPassword((current) => !current)}
             aria-label={showPassword ? "Hide password" : "Show password"}
           >

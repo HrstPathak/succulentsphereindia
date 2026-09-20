@@ -43,7 +43,7 @@ export default function ComboTeaserBanner() {
           Build Your Combo
         </Link>
 
-        <div className="mt-8 w-full rounded-[28px] border border-white/85 bg-white/88 p-6 shadow-[0_20px_46px_rgba(13,27,21,0.18)] backdrop-blur">
+        <div className="mt-8 w-full rounded-[28px] border border-white/85 bg-white/[0.88] p-6 shadow-[0_20px_46px_rgba(13,27,21,0.18)] backdrop-blur">
           <div className="mb-3 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-800">Pick any 4</div>
           <div className="mx-auto flex items-center justify-center gap-3">
             {Array.from({ length: 4 }).map((_, index) => (

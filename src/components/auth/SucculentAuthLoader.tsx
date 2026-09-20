@@ -31,13 +31,13 @@ export default function SucculentAuthLoader({ show, title, message }: SucculentA
 
   return (
     <div
-      className="fixed inset-0 z-[120] grid place-items-center bg-[#f5f3ef]/88 px-4 backdrop-blur-xl dark:bg-[#071018]/88"
+      className="fixed inset-0 z-[120] grid place-items-center bg-[#f5f3ef]/[0.88] px-4 backdrop-blur-xl dark:bg-[#071018]/[0.88]"
       role="status"
       aria-live="polite"
       aria-busy="true"
     >
       <div className="w-full max-w-sm rounded-[1.75rem] border border-[var(--auth-border)] bg-[var(--auth-surface-strong)] p-6 text-center shadow-[0_28px_90px_rgba(18,31,24,0.24)]">
-        <div className="mx-auto grid h-36 w-36 place-items-center rounded-full border border-[var(--auth-border)] bg-white/72 shadow-inner dark:bg-white/5">
+        <div className="mx-auto grid h-36 w-36 place-items-center rounded-full border border-[var(--auth-border)] bg-white/[0.72] shadow-inner dark:bg-white/5">
           <div className="relative h-28 w-28">
             <div className="absolute inset-0 rounded-full border border-[#d7e3d6] bg-[#f7faf5]" />
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 128 128" aria-hidden="true">
@@ -66,7 +66,7 @@ export default function SucculentAuthLoader({ show, title, message }: SucculentA
 
         <h2 className="mt-5 font-serif text-2xl text-[var(--color-text)]">{title}</h2>
         <p className="mt-2 text-sm text-[var(--auth-muted)]">{message}</p>
-        <div className="mt-5 h-2 overflow-hidden rounded-full bg-[var(--color-secondary)]/20">
+        <div className="mt-5 h-2 overflow-hidden rounded-full bg-[rgb(var(--ss-secondary-rgb)/0.2)]">
           <div className="succulent-progress-bar h-full rounded-full bg-[linear-gradient(90deg,#344E41,#8FBF94,#CB997E)]" />
         </div>
       </div>

@@ -49,7 +49,7 @@ export default function NewsletterSignup() {
             type="email"
             autoComplete="email"
             placeholder="Enter your email"
-            className="w-full rounded-xl border border-black/10 bg-white/80 px-4 py-3 text-sm shadow-sm placeholder:text-[var(--color-text)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] dark:bg-black/20"
+            className="w-full rounded-xl border border-black/10 bg-white/80 px-4 py-3 text-sm shadow-sm placeholder:text-[rgb(var(--ss-text-rgb)/0.6)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] dark:bg-black/20"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required

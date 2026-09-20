@@ -27,7 +27,7 @@ export function ChatInput({ onSend, disabled = false, placeholder = "Ask about p
 
   return (
     <div
-      className="flex gap-2 p-3 rounded-xl border border-white/40 dark:border-[color:rgba(143,191,148,0.24)] bg-white/68 dark:bg-[#102733]/62 backdrop-blur-xl"
+      className="flex gap-2 p-3 rounded-xl border border-white/40 dark:border-[color:rgba(143,191,148,0.24)] bg-white/[0.68] dark:bg-[#102733]/[0.62] backdrop-blur-xl"
     >
       <textarea
         value={value}

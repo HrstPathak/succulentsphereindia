@@ -100,7 +100,7 @@ export default function ImageGallery({
             }}
           />
         </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/12 via-black/0 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/[0.12] via-black/0 to-transparent" />
         {normalizedImages.length > 1 ? (
           <>
             <button

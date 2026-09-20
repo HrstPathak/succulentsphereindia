@@ -59,7 +59,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Succulent Sphere on Instagram"
-                  className="rounded-xl p-2 transition-colors hover:bg-[var(--color-accent)]/20 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
+                  className="rounded-xl p-2 transition-colors hover:bg-[rgb(var(--ss-accent-rgb)/0.2)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
                 >
                   <Instagram size={18} strokeWidth={1.8} />
                 </a>
@@ -68,7 +68,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Succulent Sphere on Pinterest"
-                  className="rounded-xl p-2 transition-colors hover:bg-[var(--color-accent)]/20 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
+                  className="rounded-xl p-2 transition-colors hover:bg-[rgb(var(--ss-accent-rgb)/0.2)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
                 >
                   <Pin size={18} strokeWidth={1.8} />
                 </a>
@@ -77,7 +77,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Succulent Sphere on Facebook"
-                  className="rounded-xl p-2 transition-colors hover:bg-[var(--color-accent)]/20 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
+                  className="rounded-xl p-2 transition-colors hover:bg-[rgb(var(--ss-accent-rgb)/0.2)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
                 >
                   <Facebook size={18} strokeWidth={1.8} />
                 </a>
@@ -135,7 +135,7 @@ export default function Footer() {
                 </li>
               </ul>
 
-              <div className="mt-5 rounded-2xl border border-black/5 bg-[var(--color-bg)]/70 p-4 dark:border-white/10">
+              <div className="mt-5 rounded-2xl border border-black/5 bg-[rgb(var(--ss-bg-rgb)/0.7)] p-4 dark:border-white/10">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-60">Talk to us</p>
 
                 <div className="mt-3 space-y-3 text-sm">
@@ -144,7 +144,7 @@ export default function Footer() {
                     className="group flex items-start gap-3 rounded-xl transition-colors hover:text-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
                   >
                     <span
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)]/12 text-[var(--color-brand)]"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--ss-brand-rgb)/0.12)] text-[var(--color-brand)]"
                       aria-hidden="true"
                     >
                       <Phone size={16} strokeWidth={1.9} />
@@ -160,7 +160,7 @@ export default function Footer() {
                     className="group flex items-start gap-3 rounded-xl transition-colors hover:text-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
                   >
                     <span
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)]/18 text-[var(--color-accent)]"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--ss-accent-rgb)/0.18)] text-[var(--color-accent)]"
                       aria-hidden="true"
                     >
                       <Mail size={16} strokeWidth={1.9} />

@@ -131,10 +131,10 @@ export default function CollectionsPage() {
           </div>
 
           <div className="mx-auto mt-10 max-w-5xl rounded-2xl border border-[var(--auth-border)] bg-[linear-gradient(150deg,rgba(255,255,255,0.94),rgba(244,238,232,0.9))] p-6 shadow-[0_16px_38px_rgba(12,20,14,0.1)] md:p-8 dark:border-white/10 dark:bg-[linear-gradient(150deg,rgba(8,20,28,0.94),rgba(6,16,22,0.9))] dark:shadow-[0_16px_38px_rgba(0,0,0,0.45)]">
-            <p className="text-sm leading-7 text-[var(--color-text)]/85 md:text-base">
+            <p className="text-sm leading-7 text-[rgb(var(--ss-text-rgb)/0.85)] md:text-base">
               Browse handpicked succulent and cactus collections, curated for Indian homes.
             </p>
-            <p className="mt-4 text-sm leading-7 text-[var(--color-text)]/85 md:text-base">
+            <p className="mt-4 text-sm leading-7 text-[rgb(var(--ss-text-rgb)/0.85)] md:text-base">
               Whether you're a first-time plant parent or a seasoned collector, every collection at Succulent Sphere is selected for
               health, shape, and shelf appeal. From low-maintenance beginner-friendly succulents to bold architectural cacti - each
               plant is packed for safe doorstep delivery across India. Explore our gifting sets for ready-to-gift green hampers, or

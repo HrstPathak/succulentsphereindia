@@ -67,7 +67,7 @@ export default function WalletSection({
 
   return (
     <div className="mt-4 rounded-2xl border border-[var(--auth-border)] bg-white/70 p-5 shadow-[0_12px_30px_rgba(0,0,0,0.06)]">
-      <div className="flex items-center gap-3 border-b border-[var(--auth-border)]/40 pb-4">
+      <div className="flex items-center gap-3 border-b border-[rgb(var(--ss-border-rgb)/0.4)] pb-4">
         <div className="grid h-10 w-10 place-items-center rounded-full bg-[linear-gradient(135deg,#1d4534,#6a8257)] text-white shadow-inner">
           <Wallet size={20} strokeWidth={1.8} />
         </div>
@@ -103,7 +103,7 @@ export default function WalletSection({
                   return (
                     <li
                       key={credit.id}
-                      className="flex items-center justify-between rounded-lg border border-[var(--auth-border)]/40 bg-white/60 px-3 py-2"
+                      className="flex items-center justify-between rounded-lg border border-[rgb(var(--ss-border-rgb)/0.4)] bg-white/60 px-3 py-2"
                     >
                       <div className="flex items-center gap-3">
                         <span className="font-medium text-[var(--color-text)]">{formatINR(credit.amount, 0)}</span>
@@ -144,9 +144,9 @@ export default function WalletSection({
           </div>
         </div>
       ) : (
-        <div className="mt-6 flex flex-col items-center rounded-xl border border-dashed border-[var(--auth-border)]/60 bg-white/40 p-6 text-center">
+        <div className="mt-6 flex flex-col items-center rounded-xl border border-dashed border-[rgb(var(--ss-border-rgb)/0.6)] bg-white/40 p-6 text-center">
           <div className="grid h-14 w-14 place-items-center rounded-full bg-[linear-gradient(135deg,#f3ede4,#e2d4c0)] shadow-inner">
-            <Wallet size={26} strokeWidth={1.4} className="text-[var(--color-text)]/50" />
+            <Wallet size={26} strokeWidth={1.4} className="text-[rgb(var(--ss-text-rgb)/0.5)]" />
           </div>
           <p className="mt-4 font-serif text-xl text-[var(--color-text)]">No wallet balance yet</p>
           <p className="mt-1 max-w-xs text-sm text-[var(--auth-muted)]">

@@ -199,7 +199,7 @@ export default async function AccountOrderDetailPage({
           </div>
         </div>
 
-        <div className="relative z-10 overflow-hidden rounded-[28px] border border-[rgba(52,78,65,0.2)] bg-white/92 p-6 shadow-[0_30px_65px_-40px_rgba(35,58,48,0.55)] backdrop-blur-xl sm:p-8">
+        <div className="relative z-10 overflow-hidden rounded-[28px] border border-[rgba(52,78,65,0.2)] bg-white/[0.92] p-6 shadow-[0_30px_65px_-40px_rgba(35,58,48,0.55)] backdrop-blur-xl sm:p-8">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#a5b396_0%,#dcb89a_55%,#8ea181_100%)]" />
           <div className="flex items-end justify-between gap-3">
             <h2 className="font-playfair text-3xl text-[var(--color-text)]">Shipping Details</h2>

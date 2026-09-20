@@ -18,6 +18,31 @@
   --auth-danger-bg: rgba(185, 28, 28, 0.08);
   --auth-danger-border: rgba(185, 28, 28, 0.32);
   --auth-danger-text: #991b1b;
+  /* Route-level skeleton placeholders (see src/app/account/loading.tsx).
+     Deliberately NEUTRAL mid-tones rather than a dark brand tint: the same
+     placeholders sit on two different surfaces -- the cream hero (light in
+     both themes) and the cards, which the `.dark [class*="bg-white/"]` rule
+     below flips to dark navy. A mid-tone at ~45% alpha darkens the light
+     surface and lightens the dark one, so one value works for both. */
+  --auth-skeleton: rgba(140, 156, 144, 0.45);
+  --auth-skeleton-strong: rgba(126, 144, 130, 0.55);
+  --auth-skeleton-shine: rgba(255, 255, 255, 0.55);
+  /* Space-separated RGB channel triplets mirroring the palette above.
+     Required because Tailwind v3 CANNOT apply an opacity modifier to an
+     arbitrary var() colour -- it has to statically resolve the colour to
+     inject the alpha channel, and `var(--color-brand)` is opaque at build
+     time. So `bg-[var(--color-brand)]/10` (and even `/[0.1]`) emits NO rule
+     at all. The supported pattern is to keep the channels separate and
+     compose them inside one arbitrary value:
+         bg-[rgb(var(--ss-brand-rgb)/0.1)]
+     Both parts live inside [ ... ], so no opacity modifier is involved and
+     the class is emitted verbatim. Keep these in sync with the hex values. */
+  --ss-brand-rgb: 52 78 65;      /* #344E41 */
+  --ss-secondary-rgb: 163 177 138; /* #A3B18A */
+  --ss-accent-rgb: 203 153 126;  /* #CB997E */
+  --ss-text-rgb: 43 43 43;       /* #2B2B2B */
+  --ss-bg-rgb: 245 243 239;      /* #F5F3EF */
+  --ss-border-rgb: 52 78 65;     /* channels of --auth-border */
   --auth-shell-gradient: radial-gradient(1020px 560px at 8% 0%, rgba(143,191,148,0.24), transparent),
     radial-gradient(1080px 560px at 100% 100%, rgba(203,153,126,0.24), transparent),
     linear-gradient(172deg, rgba(7,16,24,0.11) 0%, transparent 44%);
@@ -40,6 +65,19 @@
   --auth-danger-bg: rgba(248, 113, 113, 0.12);
   --auth-danger-border: rgba(248, 113, 113, 0.32);
   --auth-danger-text: #fecaca;
+  /* NOTE: --auth-skeleton* are intentionally NOT redefined here. The account
+     dashboard shell keeps its cream gradient in BOTH themes, so the loading
+     placeholders must use the light values on top of it or they lose contrast. */
+  /* RGB triplets re-declared so `rgb(var(--ss-*-rgb)/a)` follows the theme.
+     These MUST be repeated per theme -- unlike a plain var() colour, the
+     channels are baked into each emitted utility at build time, so the
+     cascade is the only thing that can make them theme-aware. */
+  --ss-brand-rgb: 143 191 148;    /* #8FBF94 */
+  --ss-secondary-rgb: 155 184 146; /* #9BB892 */
+  --ss-accent-rgb: 191 160 137;   /* #BFA089 */
+  --ss-text-rgb: 231 246 238;     /* #E7F6EE */
+  --ss-bg-rgb: 7 16 24;           /* #071018 */
+  --ss-border-rgb: 143 191 148;   /* channels of --auth-border (dark) */
   --auth-shell-gradient: radial-gradient(1020px 560px at 8% 0%, rgba(143,191,148,0.22), transparent),
     radial-gradient(1080px 560px at 100% 100%, rgba(203,153,126,0.2), transparent),
     linear-gradient(172deg, rgba(7,16,24,0.2) 0%, transparent 44%);
@@ -478,3 +516,49 @@ button:focus-visible, a:focus-visible {
     background-position: 0 0, 0 0, -100% 0;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Route-level skeleton placeholders -- used by src/app/account/loading.tsx.
+
+   Written as plain CSS instead of Tailwind utilities for a specific reason:
+   Tailwind v3 silently drops an opacity modifier applied to an arbitrary
+   var() colour, e.g. `bg-[var(--color-brand)]/20` emits NO rule at all (no
+   color-mix() fallback). The previous account loader was built from those
+   classes, so every placeholder bar rendered unstyled/invisible -- bordered
+   empty boxes.
+
+   Colours read from --auth-skeleton* so a single definition covers both
+   themes (see the comment on those variables in :root).
+--------------------------------------------------------------------------- */
+
+@keyframes ssSkeletonShimmer {
+  from { background-position: 150% 0; }
+  to   { background-position: -50% 0; }
+}
+
+.ss-skeleton {
+  background-color: var(--auth-skeleton);
+  /* Highlight sweep layered over the flat base colour. */
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 20%,
+    var(--auth-skeleton-shine) 50%,
+    rgba(255, 255, 255, 0) 80%
+  );
+  background-repeat: no-repeat;
+  background-size: 220% 100%;
+  animation: ssSkeletonShimmer 1.4s ease-in-out infinite;
+}
+
+/* Higher-contrast variant for primary elements (avatar, name, balance, icons). */
+.ss-skeleton-strong {
+  background-color: var(--auth-skeleton-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-skeleton {
+    animation: none;
+    background-image: none;
+  }
+}
+

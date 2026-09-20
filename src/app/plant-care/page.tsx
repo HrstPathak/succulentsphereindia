@@ -96,7 +96,7 @@ export default async function PlantCarePage() {
           <details className="mx-auto mt-5 max-w-2xl text-left">
             <summary className="cursor-pointer list-none">
               <span
-                className="block text-sm leading-7 text-[var(--color-text)]/80 md:text-base"
+                className="block text-sm leading-7 text-[rgb(var(--ss-text-rgb)/0.8)] md:text-base"
                 style={{
                   display: "-webkit-box",
                   WebkitLineClamp: 2,
@@ -110,7 +110,7 @@ export default async function PlantCarePage() {
                 Read full intro
               </span>
             </summary>
-            <div className="mt-3 space-y-4 text-sm leading-7 text-[var(--color-text)]/90 md:text-base">
+            <div className="mt-3 space-y-4 text-sm leading-7 text-[rgb(var(--ss-text-rgb)/0.9)] md:text-base">
               <p>
                 Succulent and cactus care guides written specifically for Indian homes — not generic advice copied from foreign gardening blogs.
               </p>
@@ -123,14 +123,14 @@ export default async function PlantCarePage() {
             </div>
           </details>
         </header>
-        <p className="mb-6 text-center text-sm text-[var(--color-text)]/75 md:text-base">
+        <p className="mb-6 text-center text-sm text-[rgb(var(--ss-text-rgb)/0.75)] md:text-base">
           {articles.length} {articles.length === 1 ? "curated guide" : "curated guides"}
         </p>
 
         {articles.length === 0 ? (
-          <div className="mx-auto max-w-3xl rounded-2xl border border-[var(--color-secondary)]/30 bg-white/70 p-10 text-center shadow-[0_12px_40px_rgba(52,78,65,0.08)]">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-[rgb(var(--ss-secondary-rgb)/0.3)] bg-white/70 p-10 text-center shadow-[0_12px_40px_rgba(52,78,65,0.08)]">
             <h2 className="font-serif text-3xl text-[var(--color-brand)]">No articles yet</h2>
-            <p className="mt-3 text-sm text-[var(--color-text)]/80 md:text-base">
+            <p className="mt-3 text-sm text-[rgb(var(--ss-text-rgb)/0.8)] md:text-base">
               We are preparing fresh plant care stories. Please check back shortly.
             </p>
           </div>
@@ -140,7 +140,7 @@ export default async function PlantCarePage() {
               {articles.map((article) => (
                 <article
                   key={article.id}
-                  className="group overflow-hidden rounded-2xl border border-[var(--color-secondary)]/30 bg-white shadow-[0_14px_36px_rgba(52,78,65,0.08)] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_18px_44px_rgba(52,78,65,0.15)]"
+                  className="group overflow-hidden rounded-2xl border border-[rgb(var(--ss-secondary-rgb)/0.3)] bg-white shadow-[0_14px_36px_rgba(52,78,65,0.08)] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_18px_44px_rgba(52,78,65,0.15)]"
                 >
                   <Link href={`/plant-care/${article.handle}`} className="block">
                     <div className="relative aspect-[4/3] overflow-hidden">
@@ -153,7 +153,7 @@ export default async function PlantCarePage() {
                           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-[var(--color-secondary)]/25 text-sm text-[var(--color-brand)]/80">
+                        <div className="flex h-full w-full items-center justify-center bg-[rgb(var(--ss-secondary-rgb)/0.25)] text-sm text-[rgb(var(--ss-brand-rgb)/0.8)]">
                           Plant care article
                         </div>
                       )}
@@ -161,12 +161,12 @@ export default async function PlantCarePage() {
                     <div className="space-y-4 p-6">
                       <p className="text-xs uppercase tracking-[0.12em] text-[var(--color-secondary)]">{formatDate(article.publishedAt)}</p>
                       <h2 className="font-serif text-2xl leading-tight text-[var(--color-brand)]">{article.title}</h2>
-                      <p className="line-clamp-3 text-sm leading-7 text-[var(--color-text)]/85">{article.excerpt}</p>
+                      <p className="line-clamp-3 text-sm leading-7 text-[rgb(var(--ss-text-rgb)/0.85)]">{article.excerpt}</p>
                       <div className="flex items-center justify-between gap-3">
                         <span className="inline-flex items-center rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition-colors duration-300 group-hover:bg-[var(--color-brand)]">
                           Read More
                         </span>
-                        <span className="text-[11px] tracking-[0.08em] uppercase text-[var(--color-brand)]/75">
+                        <span className="text-[11px] tracking-[0.08em] uppercase text-[rgb(var(--ss-brand-rgb)/0.75)]">
                           by {article.authorName || "Succulent Sphere Editorial Team"}
                         </span>
                       </div>

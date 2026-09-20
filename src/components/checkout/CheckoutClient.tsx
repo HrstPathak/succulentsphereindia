@@ -717,7 +717,7 @@ export default function CheckoutClient() {
                 ? "Back navigation is blocked until verification finishes. Please stay on this page for a few more seconds."
                 : "Please do not press back, refresh, or close this tab until verification is complete."}
             </div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--color-secondary)]/25">
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-[rgb(var(--ss-secondary-rgb)/0.25)]">
               <div className="h-full w-1/3 bg-[var(--color-brand)] animate-[paymentBar_1.4s_ease_infinite]" />
             </div>
           </div>
@@ -752,7 +752,7 @@ export default function CheckoutClient() {
                           type="button"
                           onClick={() => applySavedAddress(address)}
                           className={`text-left border rounded p-3 transition ${
-                            isSelected ? "border-[var(--color-brand)] bg-[var(--color-brand)]/5" : "border-gray-200 hover:border-gray-300"
+                            isSelected ? "border-[var(--color-brand)] bg-[rgb(var(--ss-brand-rgb)/0.05)]" : "border-gray-200 hover:border-gray-300"
                           }`}
                         >
                           <p className="text-sm font-semibold">{addressName}</p>
@@ -942,7 +942,7 @@ export default function CheckoutClient() {
                   <p className="mt-1 text-xs text-[var(--auth-muted)]">
                     Please wait here and do not press back, refresh, or close the tab until order confirmation finishes.
                   </p>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-secondary)]/25">
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-[rgb(var(--ss-secondary-rgb)/0.25)]">
                     <div className="h-full w-1/3 bg-[var(--color-brand)] animate-[paymentBar_1.4s_ease_infinite]" />
                   </div>
                 </div>

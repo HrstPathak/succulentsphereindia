@@ -44,7 +44,7 @@ export default function PoliciesPage() {
           <div className="pointer-events-none absolute -right-20 -bottom-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(203,153,126,0.35),transparent_70%)] blur-3xl" />
 
           <div className="relative z-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-brand)]/70">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[rgb(var(--ss-brand-rgb)/0.7)]">
               Policies
             </p>
             <h1 className="mt-3 font-serif text-4xl text-[var(--color-text)] sm:text-5xl">
@@ -67,7 +67,7 @@ export default function PoliciesPage() {
                 <Link
                   key={policy.href}
                   href={policy.href}
-                  className="group rounded-xl border border-transparent px-3 py-2 text-sm font-medium text-[var(--color-text)] transition hover:border-[var(--color-brand)]/35 hover:bg-[var(--color-brand)]/10"
+                  className="group rounded-xl border border-transparent px-3 py-2 text-sm font-medium text-[var(--color-text)] transition hover:border-[rgb(var(--ss-brand-rgb)/0.35)] hover:bg-[rgb(var(--ss-brand-rgb)/0.1)]"
                 >
                   <span className="flex items-center justify-between">
                     {policy.title}

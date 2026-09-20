@@ -54,10 +54,10 @@ export function ChatWindow({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
             transition={{ type: "spring", damping: 26, stiffness: 260 }}
-            className="fixed bottom-24 right-4 z-50 flex max-h-[calc(100vh-10rem)] w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/55 shadow-[0_26px_60px_rgba(23,34,29,0.28)] backdrop-blur-2xl dark:border-[color:rgba(143,191,148,0.24)] dark:bg-[#0a1a24]/58 md:bottom-28 md:right-8 md:w-[390px]"
+            className="fixed bottom-24 right-4 z-50 flex max-h-[calc(100vh-10rem)] w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/55 shadow-[0_26px_60px_rgba(23,34,29,0.28)] backdrop-blur-2xl dark:border-[color:rgba(143,191,148,0.24)] dark:bg-[#0a1a24]/[0.58] md:bottom-28 md:right-8 md:w-[390px]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/35 dark:border-[color:rgba(143,191,148,0.2)] bg-white/45 dark:bg-[#0f2531]/56 backdrop-blur-xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/35 dark:border-[color:rgba(143,191,148,0.2)] bg-white/45 dark:bg-[#0f2531]/[0.56] backdrop-blur-xl">
               <div className="flex items-center gap-2">
                 <span className="text-lg" aria-hidden="true">🌿</span>
                 <h2 className="font-serif text-base font-semibold text-[var(--color-text)]">
@@ -93,7 +93,7 @@ export function ChatWindow({
                         key={text}
                         type="button"
                         onClick={() => onQuickReply?.(text)}
-                        className="px-3 py-1.5 text-xs rounded-full border border-white/45 dark:border-[color:rgba(143,191,148,0.28)] text-[var(--color-text)] bg-white/62 dark:bg-[#102732]/62 hover:bg-[var(--color-brand)] hover:text-[var(--color-bg)] hover:border-transparent transition-colors"
+                        className="px-3 py-1.5 text-xs rounded-full border border-white/45 dark:border-[color:rgba(143,191,148,0.28)] text-[var(--color-text)] bg-white/[0.62] dark:bg-[#102732]/[0.62] hover:bg-[var(--color-brand)] hover:text-[var(--color-bg)] hover:border-transparent transition-colors"
                       >
                         {text}
                       </button>
@@ -107,7 +107,7 @@ export function ChatWindow({
             </div>
 
             {/* Input */}
-            <div className="p-3 border-t border-white/35 dark:border-[color:rgba(143,191,148,0.2)] bg-white/44 dark:bg-[#0f2430]/56 backdrop-blur-xl">
+            <div className="p-3 border-t border-white/35 dark:border-[color:rgba(143,191,148,0.2)] bg-white/[0.44] dark:bg-[#0f2430]/[0.56] backdrop-blur-xl">
               <ChatInput onSend={onSend} disabled={isLoading} />
             </div>
           </motion.div>

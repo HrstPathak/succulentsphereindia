@@ -78,7 +78,7 @@ export default function ProductCard({
   const productImage = normalizeImageUrl(product.image);
   const stockPillClass = isOutOfStock
     ? "inline-flex bg-slate-200 text-slate-600"
-    : "inline-flex bg-[var(--color-secondary)]/20 text-[var(--color-brand)]";
+    : "inline-flex bg-[rgb(var(--ss-secondary-rgb)/0.2)] text-[var(--color-brand)]";
   const showStockPill = isOutOfStock || !compareAtPrice;
 
   const productHref =
@@ -143,7 +143,7 @@ export default function ProductCard({
             className="transition-transform duration-500 md:group-hover:scale-110"
           />
 
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/38 via-black/2 to-transparent opacity-70" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/[0.38] via-black/[0.02] to-transparent opacity-70" />
 
           {product.badge && normalizedBadge !== "combo" && (
             <span
@@ -193,7 +193,7 @@ export default function ProductCard({
             </div>
           )}
 
-          <div className="pointer-events-none absolute inset-0 flex items-end bg-black/22 p-4 opacity-0 backdrop-blur-[1px] transition-opacity duration-200 md:group-hover:pointer-events-auto md:group-hover:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100">
+          <div className="pointer-events-none absolute inset-0 flex items-end bg-black/[0.22] p-4 opacity-0 backdrop-blur-[1px] transition-opacity duration-200 md:group-hover:pointer-events-auto md:group-hover:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100">
             <div className="w-full text-white">
               <div className="mb-3 flex items-center justify-between">
                 {reviewCount > 0 ? <span className="text-sm font-semibold">{reviewCount} reviews</span> : <span />}

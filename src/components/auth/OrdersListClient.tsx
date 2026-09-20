@@ -70,7 +70,7 @@ export default function OrdersListClient({ orders, maxItems, className }: Props)
                 router.push(orderHref);
               }
             }}
-            className="cursor-pointer overflow-hidden rounded-2xl border border-[#e2d7c8] bg-[linear-gradient(150deg,#fff9ef_0%,#f5efe5_55%,#edf4ea_100%)] shadow-[0_18px_45px_-34px_rgba(53,69,58,0.75)] transition hover:shadow-[0_24px_52px_-32px_rgba(53,69,58,0.85)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/40"
+            className="cursor-pointer overflow-hidden rounded-2xl border border-[#e2d7c8] bg-[linear-gradient(150deg,#fff9ef_0%,#f5efe5_55%,#edf4ea_100%)] shadow-[0_18px_45px_-34px_rgba(53,69,58,0.75)] transition hover:shadow-[0_24px_52px_-32px_rgba(53,69,58,0.85)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--ss-brand-rgb)/0.4)]"
           >
             <div className="border-b border-[#ebe1d2] px-4 py-3 sm:px-5">
               <div className="flex flex-wrap items-start justify-between gap-3">

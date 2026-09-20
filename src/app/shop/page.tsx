@@ -162,11 +162,11 @@ export default async function ShopPage({
           <TrustBar />
           <RecentlyViewedProducts className="mt-6" />
 
-          <section className="mx-auto mt-8 max-w-5xl rounded-2xl border border-[var(--color-secondary)]/25 bg-white/70 px-6 py-7 shadow-[0_10px_30px_rgba(52,78,65,0.08)] md:px-8 md:py-9">
+          <section className="mx-auto mt-8 max-w-5xl rounded-2xl border border-[rgb(var(--ss-secondary-rgb)/0.25)] bg-white/70 px-6 py-7 shadow-[0_10px_30px_rgba(52,78,65,0.08)] md:px-8 md:py-9">
             <details>
               <summary className="cursor-pointer list-none">
                 <span
-                  className="block text-sm leading-7 text-[var(--color-text)]/90 md:text-base"
+                  className="block text-sm leading-7 text-[rgb(var(--ss-text-rgb)/0.9)] md:text-base"
                   style={{
                     display: "-webkit-box",
                     WebkitLineClamp: 2,
@@ -181,13 +181,13 @@ export default async function ShopPage({
                 </span>
               </summary>
               <div className="mt-4 space-y-4">
-                <p className="text-sm leading-7 text-[var(--color-text)]/90 md:text-base">
+                <p className="text-sm leading-7 text-[rgb(var(--ss-text-rgb)/0.9)] md:text-base">
                   Browse 50+ premium succulent plants, cacti, and rare varieties — handpicked for Indian homes and shipped safely across India.
                 </p>
-                <p className="text-sm leading-7 text-[var(--color-text)]/90 md:text-base">
+                <p className="text-sm leading-7 text-[rgb(var(--ss-text-rgb)/0.9)] md:text-base">
                   Finding healthy succulents online in India used to mean taking a gamble — plants arriving wilted, mislabelled, or packed in soil that guaranteed root rot within a week. Every plant at Succulent Sphere is individually selected for health, root strength, and shelf appeal before it is packed. Whether you are looking for a low-maintenance desk plant for your office in Bangalore, a statement cactus for a Mumbai balcony, or a rare Echeveria to add to your collection in Delhi — you will find it here.
                 </p>
-                <p className="text-sm leading-7 text-[var(--color-text)]/90 md:text-base">
+                <p className="text-sm leading-7 text-[rgb(var(--ss-text-rgb)/0.9)] md:text-base">
                   All plants ship with India-specific care instructions, and every order is backed by our secure packaging guarantee. Starting from just 39Rs.
                 </p>
               </div>

@@ -112,7 +112,7 @@ function FloatingTranslateButton(props: {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.96 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="w-[220px] overflow-hidden rounded-[24px] border border-[var(--color-secondary)]/25 bg-white/95 p-3 shadow-[0_18px_42px_rgba(52,78,65,0.22)] backdrop-blur-xl"
+            className="w-[220px] overflow-hidden rounded-[24px] border border-[rgb(var(--ss-secondary-rgb)/0.25)] bg-white/95 p-3 shadow-[0_18px_42px_rgba(52,78,65,0.22)] backdrop-blur-xl"
           >
             <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--color-brand)]">
               <Sparkles className="h-4 w-4" />
@@ -131,11 +131,11 @@ function FloatingTranslateButton(props: {
                     className={`w-full rounded-2xl px-4 py-3 text-left transition-all duration-300 ${
                       isActive
                         ? "bg-[var(--color-brand)] text-white shadow-[0_12px_28px_rgba(52,78,65,0.24)]"
-                        : "bg-[var(--color-bg)] text-[var(--color-brand)] hover:-translate-y-0.5 hover:bg-[var(--color-secondary)]/12"
+                        : "bg-[var(--color-bg)] text-[var(--color-brand)] hover:-translate-y-0.5 hover:bg-[rgb(var(--ss-secondary-rgb)/0.12)]"
                     } ${isLoading ? "cursor-not-allowed opacity-70" : ""}`}
                   >
                     <span className="block text-sm font-semibold">{language.nativeLabel}</span>
-                    <span className={`block text-xs ${isActive ? "text-white/80" : "text-[var(--color-text)]/70"}`}>
+                    <span className={`block text-xs ${isActive ? "text-white/80" : "text-[rgb(var(--ss-text-rgb)/0.7)]"}`}>
                       {language.label}
                     </span>
                   </button>
@@ -143,7 +143,7 @@ function FloatingTranslateButton(props: {
               })}
             </div>
 
-            <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[var(--color-bg)]/90 px-3 py-2 text-xs text-[var(--color-text)]/75">
+            <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[rgb(var(--ss-bg-rgb)/0.9)] px-3 py-2 text-xs text-[rgb(var(--ss-text-rgb)/0.75)]">
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin text-[var(--color-brand)]" />
               ) : (
@@ -166,7 +166,7 @@ function FloatingTranslateButton(props: {
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
         </span>
         <span className="text-left">
-          <span className="block text-xs uppercase tracking-[0.12em] text-[var(--color-brand)]/70">{copy.floatingTitle}</span>
+          <span className="block text-xs uppercase tracking-[0.12em] text-[rgb(var(--ss-brand-rgb)/0.7)]">{copy.floatingTitle}</span>
           <span className="block text-sm font-semibold">
             {activeLanguage === "hi" ? "\u0939\u093f\u0902\u0926\u0940" : "English"}
           </span>
@@ -302,7 +302,7 @@ export default function ArticleLanguageExperience({ article, contentHtml }: Arti
         onSelectLanguage={switchLanguage}
       />
 
-      <nav className="mb-6 text-sm text-[var(--color-text)]/75">
+      <nav className="mb-6 text-sm text-[rgb(var(--ss-text-rgb)/0.75)]">
         <Link href="/plant-care" className="transition-colors hover:text-[var(--color-brand)]">
           {copy.section}
         </Link>
@@ -325,18 +325,18 @@ export default function ArticleLanguageExperience({ article, contentHtml }: Arti
             <h1 className="font-serif text-4xl leading-tight text-[var(--color-brand)] md:text-6xl">
               {activeVariant.title || article.title}
             </h1>
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-secondary)]/30 bg-white/80 px-4 py-2 text-sm text-[var(--color-text)] shadow-[0_10px_30px_rgba(52,78,65,0.08)]">
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[rgb(var(--ss-secondary-rgb)/0.3)] bg-white/80 px-4 py-2 text-sm text-[var(--color-text)] shadow-[0_10px_30px_rgba(52,78,65,0.08)]">
               <Sparkles className="h-4 w-4 text-[var(--color-brand)]" />
               <span>{activeLanguage === "hi" ? copy.translatedLanguage : copy.currentLanguage}</span>
             </div>
             {activeVariant.excerpt ? (
-              <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--color-text)]/80 md:text-lg">
+              <p className="mt-4 max-w-3xl text-base leading-8 text-[rgb(var(--ss-text-rgb)/0.8)] md:text-lg">
                 {activeVariant.excerpt}
               </p>
             ) : null}
           </header>
 
-          <div className="overflow-hidden rounded-2xl border border-[var(--color-secondary)]/30 bg-white shadow-[0_18px_50px_rgba(52,78,65,0.12)]">
+          <div className="overflow-hidden rounded-2xl border border-[rgb(var(--ss-secondary-rgb)/0.3)] bg-white shadow-[0_18px_50px_rgba(52,78,65,0.12)]">
             <div className="relative aspect-[16/9] w-full">
               {article.image?.url ? (
                 <Image
@@ -348,7 +348,7 @@ export default function ArticleLanguageExperience({ article, contentHtml }: Arti
                   sizes="100vw"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-[var(--color-secondary)]/20 text-[var(--color-brand)]/70">
+                <div className="flex h-full w-full items-center justify-center bg-[rgb(var(--ss-secondary-rgb)/0.2)] text-[rgb(var(--ss-brand-rgb)/0.7)]">
                   Plant care article
                 </div>
               )}
@@ -360,7 +360,7 @@ export default function ArticleLanguageExperience({ article, contentHtml }: Arti
                   title="Article content"
                   sandbox="allow-same-origin"
                   srcDoc={activeVariant.contentHtml || contentHtml}
-                  className="h-[70vh] w-full rounded-xl border border-[var(--color-secondary)]/25 bg-white"
+                  className="h-[70vh] w-full rounded-xl border border-[rgb(var(--ss-secondary-rgb)/0.25)] bg-white"
                 />
               ) : (
                 <div
@@ -369,7 +369,7 @@ export default function ArticleLanguageExperience({ article, contentHtml }: Arti
                   dangerouslySetInnerHTML={{ __html: activeVariant.contentHtml || contentHtml }}
                 />
               )}
-              <p className="mt-8 rounded-xl border border-[var(--color-secondary)]/35 bg-[var(--color-secondary)]/8 px-4 py-3 text-sm text-[var(--color-text)]">
+              <p className="mt-8 rounded-xl border border-[rgb(var(--ss-secondary-rgb)/0.35)] bg-[rgb(var(--ss-secondary-rgb)/0.08)] px-4 py-3 text-sm text-[var(--color-text)]">
                 <span className="font-semibold text-[var(--color-brand)]">{copy.byline}</span> {article.authorName}
               </p>
             </article>

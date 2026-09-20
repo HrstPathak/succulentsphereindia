@@ -119,7 +119,7 @@ export default function ResetPasswordForm({ oobCode }: ResetPasswordFormProps) {
           {[0, 1, 2, 3].map((index) => (
             <div
               key={index}
-              className={`h-1.5 rounded-full ${index < strength.score ? strength.color : "bg-[var(--color-secondary)]/25"}`}
+              className={`h-1.5 rounded-full ${index < strength.score ? strength.color : "bg-[rgb(var(--ss-secondary-rgb)/0.25)]"}`}
             />
           ))}
         </div>

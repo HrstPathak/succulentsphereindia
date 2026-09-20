@@ -153,7 +153,7 @@ export default function ProductReviewsSection({
                 <div className="flex items-center gap-1.5">
                   <Stars rating={review.rating} />
                   {review.verifiedPurchase ? (
-                    <span className="rounded-full bg-[var(--color-secondary)]/20 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--color-brand)]">
+                    <span className="rounded-full bg-[rgb(var(--ss-secondary-rgb)/0.2)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--color-brand)]">
                       Verified
                     </span>
                   ) : null}

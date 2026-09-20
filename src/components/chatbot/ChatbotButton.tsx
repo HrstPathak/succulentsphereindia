@@ -66,7 +66,7 @@ export function ChatbotButton({ onClick, isOpen }: ChatbotButtonProps) {
           <button
             type="button"
             onClick={dismissIntro}
-            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text)]/70 transition hover:bg-black/5 hover:text-[var(--color-text)]"
+            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md text-[rgb(var(--ss-text-rgb)/0.7)] transition hover:bg-black/5 hover:text-[var(--color-text)]"
             aria-label="Dismiss assistant intro"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

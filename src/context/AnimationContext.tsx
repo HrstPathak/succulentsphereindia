@@ -5,21 +5,21 @@ export default function TrustBar({ embedded = false }: { embedded?: boolean }) {
     <div className={`border-t border-b border-neutral-200 py-4 ${embedded ? "mt-0" : "mt-4"}`}>
       <div className={embedded ? "" : "container mx-auto px-4"}>
         <div className="grid grid-cols-3 text-center text-sm font-medium gap-2">
-          <Link href="/shipping-returns" className="group flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-lg px-2 py-1 transition hover:bg-[var(--color-brand)]/10">
+          <Link href="/shipping-returns" className="group flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-lg px-2 py-1 transition hover:bg-[rgb(var(--ss-brand-rgb)/0.1)]">
             <span className="text-[var(--color-brand)]">
               <ShippingIcon />
             </span>
             <span className="group-hover:text-[var(--color-brand)]">Safe Shipping</span>
           </Link>
 
-          <Link href="/privacy-policy" className="group flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-lg px-2 py-1 transition hover:bg-[var(--color-brand)]/10">
+          <Link href="/privacy-policy" className="group flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-lg px-2 py-1 transition hover:bg-[rgb(var(--ss-brand-rgb)/0.1)]">
             <span className="text-[var(--color-brand)]">
               <ShieldIcon />
             </span>
             <span className="group-hover:text-[var(--color-brand)]">Privacy Protected</span>
           </Link>
 
-          <Link href="/terms-and-conditions" className="group flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-lg px-2 py-1 transition hover:bg-[var(--color-brand)]/10">
+          <Link href="/terms-and-conditions" className="group flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-lg px-2 py-1 transition hover:bg-[rgb(var(--ss-brand-rgb)/0.1)]">
             <span className="text-[var(--color-brand)]">
               <TermsIcon />
             </span>

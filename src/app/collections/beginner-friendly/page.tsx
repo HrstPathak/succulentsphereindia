@@ -173,7 +173,7 @@ export default async function BeginnerFriendlyPage({
                   description: "Best fit for new plant parents building confidence with easy-care plants.",
                 },
               ].map((item) => (
-                <details key={item.title} className="group overflow-hidden rounded-xl border border-[var(--auth-border)] bg-white/82">
+                <details key={item.title} className="group overflow-hidden rounded-xl border border-[var(--auth-border)] bg-white/[0.82]">
                   <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-semibold text-[var(--color-text)]">
                     {item.title}
                     <ChevronDown size={16} className="text-[var(--auth-muted)] transition-transform group-open:rotate-180" />

@@ -435,7 +435,7 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
                     setQuery("");
                     setSelected([]);
                   }}
-                  className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm transition ${tab === id ? "bg-white text-[#1e4c36] shadow-[0_12px_20px_rgba(0,0,0,.16)]" : "text-white/72 hover:bg-white/10 hover:text-white"}`}
+                  className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm transition ${tab === id ? "bg-white text-[#1e4c36] shadow-[0_12px_20px_rgba(0,0,0,.16)]" : "text-white/[0.72] hover:bg-white/10 hover:text-white"}`}
                 >
                   <Icon size={17} />
                   {label}
