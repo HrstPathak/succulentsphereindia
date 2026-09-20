@@ -16,6 +16,7 @@ import {
 } from "@/lib/pricing";
 import { COD_DEPOSIT_AMOUNT, COD_FEE_AMOUNT, COD_ORDER_LIMIT } from "@/lib/checkoutConfig";
 import { checkPincodeServiceability, normalizePincode } from "@/lib/pincodeServiceability";
+import WalletCashbackBadge from "./WalletCashbackBadge";
 
 type CheckoutStep = 1 | 2 | 3;
 
@@ -150,6 +151,9 @@ export default function CheckoutClient() {
   const [walletAmountInput, setWalletAmountInput] = useState("");
   const requestedWalletAmount = applyWallet && walletEligible ? Math.min(Math.max(0, Number(walletAmountInput || maxWalletRedeem)), maxWalletRedeem) : 0;
   const totalAfterWallet = Number(Math.max(0, totalWithCod - requestedWalletAmount).toFixed(2));
+  // Mirrors the server cashback basis (src/lib/razorpayCheckout.ts):
+  // pricing total minus wallet redemption — COD fees excluded.
+  const cashbackBasisAmount = Math.max(0, Number((total - requestedWalletAmount).toFixed(2)));
   const shippingDisplay = pricing.shippingDiscount > 0 ? pricing.baseShipping : shipping;
   const freeShippingLabel =
     pricing.freeShippingSource === "tag" ? FREE_SHIPPING_TAG_DISCOUNT_TITLE : FREE_SHIPPING_DISCOUNT_TITLE;
@@ -1065,6 +1069,9 @@ export default function CheckoutClient() {
             <div className="flex items-center justify-between font-semibold text-base">
               <span>Total</span>
               <span>{formatINR(paymentMethod === "cod_deposit" ? totalWithCod : total)}</span>
+            </div>
+            <div className="pt-1">
+              <WalletCashbackBadge basisAmount={cashbackBasisAmount} isLoggedIn={isLoggedInCustomer} />
             </div>
           </div>
         </aside>
