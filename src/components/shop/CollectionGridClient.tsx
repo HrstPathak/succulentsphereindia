@@ -98,6 +98,12 @@ export default function CollectionGridClient({
   const selectedCollectionsKey = useMemo(() => filters.collections.join(","), [filters.collections]);
   const scopedCollection = collectionHandle ? resolveCollectionHandle(collectionHandle) : "";
   const hideCollections = Boolean(scopedCollection);
+  // showSkeleton = delayed skeleton: only true if loading persists past threshold.
+  // This keeps instant renders flash-free (high perf) while still showing a
+  // shimmer grid when filter/sort/page fetch is genuinely slow.
+  const SKELETON_DELAY_MS = 350;
+  const SKELETON_COUNT = 8;
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const hideComboTag = productBasePath === "products" && !collectionHandle && !requiredTag;
 
   const normalizedEnforcedPriceRange = useMemo(() => {
@@ -412,6 +418,37 @@ export default function CollectionGridClient({
     },
     [filters, syncUrlState]
   );
+
+  // Delayed skeleton trigger: only show shimmer if loading persists.
+  // Fast (<350ms) filter/sort/page changes render instantly with no flash;
+  // slow fetches flip showSkeleton=true so user sees placeholders.
+  useEffect(() => {
+    if (!loading) {
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+        loadingTimerRef.current = null;
+      }
+      setShowSkeleton(false);
+      return;
+    }
+    if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
+    setShowSkeleton(false);
+    loadingTimerRef.current = setTimeout(() => {
+      setShowSkeleton(true);
+      loadingTimerRef.current = null;
+    }, SKELETON_DELAY_MS);
+    return () => {
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+        loadingTimerRef.current = null;
+      }
+    };
+  }, [loading, SKELETON_DELAY_MS]);
+
+  const skeletonCards = useMemo(
+    () => Array.from({ length: SKELETON_COUNT }, (_, i) => i),
+    [SKELETON_COUNT]
+  );
   return (
     <>
       <div
@@ -434,12 +471,32 @@ export default function CollectionGridClient({
         </div>
       </div>
 
-      {loading && (
-        <div className="px-4 pt-2 text-xs text-gray-500 dark:text-gray-400" aria-live="polite">
-          Loading products...
+      {/* Delayed skeleton grid: only when fetch is genuinely slow (>350ms).
+          Fast renders keep showing current products -> zero flash, max perf. */}
+      {showSkeleton ? (
+        <div
+          className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 pb-12 items-stretch auto-rows-fr"
+          aria-hidden="true"
+        >
+          {skeletonCards.map((key) => (
+            <div
+              key={key}
+              className="overflow-hidden rounded-xl border border-[var(--auth-border)] bg-white shadow-[0_10px_25px_rgba(0,0,0,0.06)] animate-pulse"
+            >
+              <div className="aspect-square w-full bg-gradient-to-br from-stone-200 via-stone-100 to-emerald-50" />
+              <div className="p-4 space-y-2.5">
+                <div className="h-3.5 rounded-md bg-stone-200 w-11/12" />
+                <div className="h-3.5 rounded-md bg-stone-200 w-2/3" />
+                <div className="flex items-center justify-between pt-1">
+                  <div className="h-4 rounded-md bg-emerald-100 w-16" />
+                  <div className="h-6 rounded-full bg-stone-200 w-16" />
+                </div>
+                <div className="h-9 rounded-lg bg-stone-200 w-full" />
+              </div>
+            </div>
+          ))}
         </div>
-      )}
-
+      ) : (
       <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 pb-12 items-stretch auto-rows-fr">
         {displayProducts.map((product) => (
           <div key={product.id} className="h-full">
@@ -447,6 +504,7 @@ export default function CollectionGridClient({
           </div>
         ))}
       </div>
+      )}
 
       <Pagination page={currentPage} total={Math.max(1, resolvedTotalPages)} queryString={paginationQueryString} />
     </>
