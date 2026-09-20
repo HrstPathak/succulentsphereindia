@@ -46,7 +46,7 @@ function fallbackCustomerFromToken(decoded: DecodedIdToken): FirebaseAuthenticat
   };
 }
 
-export async function getAuthenticatedCustomer(): Promise<{ customer: FirebaseAuthenticatedCustomer | null; uid: string | null; error?: string }> {
+export async function getAuthenticatedCustomer(options?: { orderLimit?: number }): Promise<{ customer: FirebaseAuthenticatedCustomer | null; uid: string | null; error?: string }> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(AUTH_COOKIE_NAME)?.value;
   if (!sessionCookie) return { customer: null, uid: null };
@@ -59,7 +59,7 @@ export async function getAuthenticatedCustomer(): Promise<{ customer: FirebaseAu
   }
 
   try {
-    return { customer: (await fetchCustomerByUid(decoded.uid)) || fallbackCustomerFromToken(decoded), uid: decoded.uid };
+    return { customer: (await fetchCustomerByUid(decoded.uid, options?.orderLimit != null ? { orderLimit: options.orderLimit } : undefined)) || fallbackCustomerFromToken(decoded), uid: decoded.uid };
   } catch (error) {
     console.info(`[firebase auth] profile lookup failed; using token claims: ${String((error as Error)?.message || error)}`);
     return { customer: fallbackCustomerFromToken(decoded), uid: decoded.uid };

@@ -11,8 +11,8 @@ function configuredAdminEmails() {
   );
 }
 
-export async function getAdminSession() {
-  const session = await getAuthenticatedCustomer();
+export async function getAdminSession(options?: { orderLimit?: number }) {
+  const session = await getAuthenticatedCustomer(options);
   const email = String(session.customer?.email || "").trim().toLowerCase();
   return {
     ...session,

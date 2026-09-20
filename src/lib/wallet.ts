@@ -128,7 +128,11 @@ export async function getWalletSummary(uid: string): Promise<WalletSummary> {
   const heldBalance = Number(holdsSnapshot.docs.reduce((sum, doc) => sum + activeHoldAmount(doc.data(), now), 0).toFixed(2));
   const availableBalance = Number(Math.max(0, balance - heldBalance).toFixed(2));
 
-  await userRef.set({ walletBalance: balance, walletAvailableBalance: availableBalance, walletUpdatedAt: now.toISOString() }, { merge: true });
+  // Fire-and-forget snapshot write: previously awaited, so EVERY /account view
+  // paid a full Firestore write round-trip before first byte. Balance is always
+  // recomputed from the ledger at read-time (lazy expiry), so a slightly stale
+  // cached field is harmless — never block TTFB on it.
+  userRef.set({ walletBalance: balance, walletAvailableBalance: availableBalance, walletUpdatedAt: now.toISOString() }, { merge: true }).catch(() => {});
 
   return { balance, availableBalance, heldBalance, activeCredits, transactions };
 }

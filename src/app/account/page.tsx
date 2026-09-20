@@ -17,11 +17,16 @@ export const metadata: Metadata = {
 };
 
 export default async function AccountPage() {
-  const session = await getAdminSession();
+  // Fetch only the 3 orders this page renders (dashboard shows maxItems={3}).
+  // Previously the full order history (every doc, full lineItems) was pulled
+  // on every /account view; full history lives on /account/orders.
+  const session = await getAdminSession({ orderLimit: 3 });
   if (!session.customer) {
     redirect("/login");
   }
 
+  // enrichCustomerOrders is currently a pass-through, kept for when tracking
+  // enrichment returns.
   let customer = session.customer;
   if (customer.email) {
     const orders = await enrichCustomerOrders({ email: customer.email, orders: customer.orders });

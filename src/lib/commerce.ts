@@ -259,28 +259,39 @@ function mapOrder(id: string, raw: Record<string, any>): FirebaseCustomerOrder {
   return { id, orderNumber: numeric(raw.orderNumber), processedAt: string(raw.processedAt || raw.createdAt), fulfillmentStatus: string(raw.fulfillmentStatus, "UNFULFILLED"), financialStatus: string(raw.financialStatus, "PENDING"), tags: list(raw.tags), fulfillmentOrderStatuses: list(raw.fulfillmentOrderStatuses), tracking: Array.isArray(raw.tracking) ? raw.tracking.map((x: any) => ({ number: string(x.number), url: string(x.url), company: string(x.company) })) : [], fulfillmentEvents: list(raw.fulfillmentEvents), lineItems: lineItems.map((item: any, index: number) => ({ id: string(item.id, `${id}-${index}`), title: string(item.title), quantity: numeric(item.quantity, 1), variantTitle: string(item.variantTitle), productHandle: string(item.productHandle), image: string(item.image), imageAlt: string(item.imageAlt), customAttributes: Array.isArray(item.customAttributes) ? item.customAttributes : [], originalTotalPrice: item.originalTotalPrice ? money(item.originalTotalPrice) : undefined, discountedTotalPrice: item.discountedTotalPrice ? money(item.discountedTotalPrice) : undefined, price: money(item.price ?? { amount: item.unitPrice, currencyCode: raw.currency || "INR" }) })), currentSubtotalPrice: raw.currentSubtotalPrice ? money(raw.currentSubtotalPrice) : money({ amount: raw.subtotal, currencyCode: raw.currency || "INR" }), currentTotalShippingPrice: raw.currentTotalShippingPrice ? money(raw.currentTotalShippingPrice) : money({ amount: raw.shipping, currencyCode: raw.currency || "INR" }), currentTotalTax: raw.currentTotalTax ? money(raw.currentTotalTax) : undefined, currentTotalPrice: raw.currentTotalPrice ? money(raw.currentTotalPrice) : money({ amount: raw.total, currencyCode: raw.currency || "INR" }), totalPrice: money(raw.totalPrice ?? { amount: raw.total, currencyCode: raw.currency || "INR" }) };
 }
 export async function fetchOrderByEmailAndNumber(email: string, orderNumber: string) { const snapshot = await getFirebaseDb().collection("orders").where("emailLower", "==", email.toLowerCase()).where("orderNumber", "==", Number(orderNumber.replace(/^#/, ""))).limit(1).get(); return snapshot.empty ? null : mapOrder(snapshot.docs[0]!.id, snapshot.docs[0]!.data()); }
-export async function fetchCustomerOrdersByUid(uid: string) {
-  const snapshot = await getFirebaseDb().collection("orders").where("userId", "==", uid).get();
+export async function fetchCustomerOrdersByUid(uid: string, limitCount = 50) {
+  // Capped: /account only renders 3 recent orders, /account/orders paginates
+  // client-side. Unbounded .get() made repeat buyers fetch every order doc
+  // (with full lineItems) on every account view. 50 covers ~all real users
+  // while bounding read cost + TTFB. No orderBy here on purpose: where(userId)
+  // + orderBy(processedAt) needs a composite index; we sort in memory instead.
+  const snapshot = await getFirebaseDb().collection("orders").where("userId", "==", uid).limit(limitCount).get();
   return snapshot.docs
     .map((doc) => mapOrder(doc.id, doc.data()))
     .sort((a, b) => b.processedAt.localeCompare(a.processedAt));
 }
-export async function fetchCustomerByUid(uid: string): Promise<FirebaseAuthenticatedCustomer | null> {
+export async function fetchCustomerByUid(uid: string, options?: { includeOrders?: boolean; orderLimit?: number }): Promise<FirebaseAuthenticatedCustomer | null> {
   try {
     const db = getFirebaseDb();
-    const userDoc = await db.collection("users").doc(uid).get();
+    const userRef = db.collection("users").doc(uid);
+    // Fire profile + addresses + wallet reads in parallel: previously these
+    // were 3 serial round-trips (user -> addresses -> orders -> wallet),
+    // each adding its full latency to /account TTFB.
+    const [userDoc, addressesSnapshot] = await Promise.all([
+      userRef.get(),
+      userRef.collection("addresses").get(),
+    ]);
     if (!userDoc.exists) return null;
 
     const data = userDoc.data() || {};
-    const addressesSnapshot = await userDoc.ref.collection("addresses").get();
-    const orders = await fetchCustomerOrdersByUid(uid);
-
-    let wallet: WalletSummary | undefined;
-    try {
-      wallet = await getWalletSummary(uid);
-    } catch (error) {
-      console.info(`[fetchCustomerByUid] Wallet lookup failed; continuing without wallet: ${String((error as Error)?.message || error)}`);
-    }
+    const includeOrders = options?.includeOrders !== false;
+    const [orders, wallet] = await Promise.all([
+      includeOrders ? fetchCustomerOrdersByUid(uid, options?.orderLimit ?? 50) : Promise.resolve([]),
+      getWalletSummary(uid).catch((error) => {
+        console.info(`[fetchCustomerByUid] Wallet lookup failed; continuing without wallet: ${String((error as Error)?.message || error)}`);
+        return undefined;
+      }),
+    ]);
 
     return {
       id: uid,
