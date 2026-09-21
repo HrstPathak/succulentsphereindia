@@ -170,10 +170,26 @@ export async function fetchProductByHandle(handleInput: unknown) {
 export async function fetchProductsByIds(ids: string[]) {
   const uniqueIds = [...new Set(ids.map((id) => string(id).trim()).filter(Boolean))].slice(0, 30);
   if (!uniqueIds.length) return [];
-  const chunks: string[][] = []; for (let i = 0; i < uniqueIds.length; i += 30) chunks.push(uniqueIds.slice(i, i + 30));
-  const snapshots = await Promise.all(chunks.map((chunk) => getFirebaseDb().collection("products").where(FieldPath.documentId(), "in", chunk).get()));
+
+  // The wishlist hydrates through this function on every page load. When the
+  // in-memory catalog cache is already warm (any storefront catalog page warms
+  // it) serve the hits straight from memory and only round-trip Firestore for
+  // ids that are not in it — no reads, no added latency for the common case.
   const byId = new Map<string, any>();
-  for (const doc of snapshots.flatMap((snapshot) => snapshot.docs)) byId.set(doc.id, mapProduct(doc.id, doc.data()));
+  if (catalogCache && Date.now() - catalogCache.at < CATALOG_CACHE_TTL_MS) {
+    const wanted = new Set(uniqueIds);
+    for (const item of catalogCache.items) {
+      if (wanted.has(item.id)) byId.set(item.id, item);
+    }
+  }
+
+  const missingIds = uniqueIds.filter((id) => !byId.has(id));
+  if (missingIds.length) {
+    const chunks: string[][] = []; for (let i = 0; i < missingIds.length; i += 30) chunks.push(missingIds.slice(i, i + 30));
+    const snapshots = await Promise.all(chunks.map((chunk) => getFirebaseDb().collection("products").where(FieldPath.documentId(), "in", chunk).get()));
+    for (const doc of snapshots.flatMap((snapshot) => snapshot.docs)) byId.set(doc.id, mapProduct(doc.id, doc.data()));
+  }
+
   return uniqueIds.map((id) => byId.get(id)).filter(Boolean);
 }
 export async function fetchRecommendationCandidates(handleInput: unknown, maxCandidates = 30) {

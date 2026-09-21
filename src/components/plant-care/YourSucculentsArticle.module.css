@@ -1,5 +1,5 @@
 .wrap{max-width:880px;margin:0 auto;padding:28px 20px;position:relative;z-index:1;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#282316}
-.topbar{position:sticky;top:0;z-index:60;background:linear-gradient(180deg,rgba(250,247,241,0.9),rgba(234,224,196,0.92));backdrop-filter:blur(6px);border-bottom:1px solid rgba(40,35,22,0.06);box-shadow:0 6px 20px rgba(27,24,20,0.04)}
+.topbar{position:static;z-index:1;background:linear-gradient(180deg,rgba(250,247,241,0.9),rgba(234,224,196,0.92));backdrop-filter:blur(6px);border-bottom:1px solid rgba(40,35,22,0.06);box-shadow:0 6px 20px rgba(27,24,20,0.04)}
 .topbarInner{max-width:880px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:'Space Grotesk',sans-serif}
 .brand{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:0.02em;font-size:15px;color:#823823}
 .brandDot{width:10px;height:10px;border-radius:50%;background:#5C7245;display:inline-block;box-shadow:0 1px 0 rgba(0,0,0,0.05)}

@@ -8,6 +8,7 @@ import { startTransition, useEffect, useMemo, useState } from "react";
 import { useUrlQueryParams } from "@/hooks/useUrlQueryParams";
 import { showErrorToast } from "@/lib/toast";
 
+
 type SupportedLanguage = "en" | "hi";
 
 interface ArticleVariant {
@@ -355,20 +356,11 @@ export default function ArticleLanguageExperience({ article, contentHtml }: Arti
             </div>
 
             <article className="px-5 py-8 md:px-10 md:py-12">
-              {isFullHtmlDoc(activeVariant.contentHtml || contentHtml) ? (
-                <iframe
-                  title="Article content"
-                  sandbox="allow-same-origin"
-                  srcDoc={activeVariant.contentHtml || contentHtml}
-                  className="h-[70vh] w-full rounded-xl border border-[rgb(var(--ss-secondary-rgb)/0.25)] bg-white"
-                />
-              ) : (
-                <div
-                  lang={activeLanguage === "hi" ? "hi" : "en"}
-                  className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-[var(--color-brand)] prose-p:text-[var(--color-text)] prose-p:leading-8 prose-a:text-[var(--color-accent)] prose-strong:text-[var(--color-brand)]"
-                  dangerouslySetInnerHTML={{ __html: activeVariant.contentHtml || contentHtml }}
-                />
-              )}
+              <div
+                lang={activeLanguage === "hi" ? "hi" : "en"}
+                className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-[var(--color-brand)] prose-p:text-[var(--color-text)] prose-p:leading-8 prose-a:text-[var(--color-accent)] prose-strong:text-[var(--color-brand)]"
+                dangerouslySetInnerHTML={{ __html: activeVariant.contentHtml || contentHtml }}
+              />
               <p className="mt-8 rounded-xl border border-[rgb(var(--ss-secondary-rgb)/0.35)] bg-[rgb(var(--ss-secondary-rgb)/0.08)] px-4 py-3 text-sm text-[var(--color-text)]">
                 <span className="font-semibold text-[var(--color-brand)]">{copy.byline}</span> {article.authorName}
               </p>

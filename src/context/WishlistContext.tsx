@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import {
@@ -9,6 +9,7 @@ import {
   readGuestWishlist,
   removeWishlistId,
   toggleWishlistId,
+  toWishlistProducts,
   type WishlistProduct,
   writeGuestWishlist,
 } from "@/lib/wishlist";
@@ -73,22 +74,83 @@ async function getApiErrorMessage(response: Response, fallback: string) {
   }
 }
 
-async function fetchProductsByIds(ids: string[]) {
+/**
+ * Guest wishlist hydration cache.
+ *
+ * Signed-out shoppers keep their wishlist in localStorage, so their products
+ * are re-fetched by this provider on every full page load. Remembering the last
+ * response lets /wishlist paint the saved items immediately and turns the
+ * network call into a silent refresh.
+ */
+const GUEST_PRODUCTS_CACHE_KEY = "ss_wishlist_products_v1";
+const GUEST_PRODUCTS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+type GuestProductsCache = { signature: string; savedAt: number; products: WishlistProduct[] };
+
+function readGuestProductsCache(signature: string): WishlistProduct[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(GUEST_PRODUCTS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as GuestProductsCache;
+    if (parsed?.signature !== signature || !Array.isArray(parsed.products) || !parsed.products.length) return null;
+    if (Date.now() - Number(parsed.savedAt || 0) > GUEST_PRODUCTS_CACHE_TTL_MS) return null;
+    return parsed.products;
+  } catch {
+    return null;
+  }
+}
+
+function writeGuestProductsCache(signature: string, products: WishlistProduct[]) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(GUEST_PRODUCTS_CACHE_KEY, JSON.stringify({ signature, savedAt: Date.now(), products }));
+  } catch {
+    // Storage disabled / quota exceeded — the in-memory copy still works.
+  }
+}
+
+/** In-flight hydration requests, so a remount never duplicates a network call. */
+const inFlightHydrations = new Map<string, Promise<WishlistProduct[]>>();
+
+async function requestProductsByIds(ids: string[]): Promise<WishlistProduct[]> {
   if (!ids.length) return [];
-  const response = await fetch("/api/wishlist", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "products", ids }),
-  });
-  if (!response.ok) return [];
-  const payload = await response.json();
-  return Array.isArray(payload?.products) ? (payload.products as WishlistProduct[]) : [];
+
+  const signature = ids.join(",");
+  const pending = inFlightHydrations.get(signature);
+  if (pending) return pending;
+
+  const request = (async () => {
+    try {
+      const response = await fetch("/api/wishlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "products", ids }),
+      });
+      if (!response.ok) return [];
+      const payload = await response.json();
+      return toWishlistProducts(payload?.products);
+    } catch {
+      return [];
+    } finally {
+      inFlightHydrations.delete(signature);
+    }
+  })();
+
+  inFlightHydrations.set(signature, request);
+  return request;
 }
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [guestIds, setGuestIds] = useState<string[]>([]);
   const [guestProducts, setGuestProducts] = useState<WishlistProduct[]>([]);
+  const [guestHydrating, setGuestHydrating] = useState(false);
   const [mergedGuest, setMergedGuest] = useState(false);
+  // Guest products are mirrored in a ref: it is the synchronous source of truth
+  // for "do we already hold this product?", so hearting or removing an item
+  // never triggers a redundant hydration request.
+  const guestProductsRef = useRef<WishlistProduct[]>([]);
+  const hydratedGuestIdsRef = useRef<string[]>([]);
 
   const { data, mutate, isLoading } = useSWR<WishlistApiResponse>("/api/wishlist", jsonFetcher, {
     revalidateOnFocus: false,
@@ -96,6 +158,15 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   });
 
   const isAuthenticated = Boolean(data?.authenticated);
+
+  const applyGuestProducts = useCallback(
+    (updater: WishlistProduct[] | ((current: WishlistProduct[]) => WishlistProduct[])) => {
+      const next = typeof updater === "function" ? updater(guestProductsRef.current) : updater;
+      guestProductsRef.current = next;
+      setGuestProducts(next);
+    },
+    []
+  );
 
   useEffect(() => {
     const ids = readGuestWishlist();
@@ -118,11 +189,54 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!guestIds.length) {
-      setGuestProducts([]);
+      hydratedGuestIdsRef.current = [];
+      applyGuestProducts([]);
+      setGuestHydrating(false);
       return;
     }
-    fetchProductsByIds(guestIds).then((products) => setGuestProducts(products));
-  }, [guestIds]);
+
+    // Every id is already in memory (a guest just hearted or removed an item):
+    // align the order locally instead of re-fetching the whole grid.
+    if (guestIds.every((id) => hydratedGuestIdsRef.current.includes(id))) {
+      applyGuestProducts((current) => {
+        const byId = new Map(current.map((item) => [item.id, item]));
+        return guestIds.map((id) => byId.get(id)).filter((item): item is WishlistProduct => Boolean(item));
+      });
+      return;
+    }
+
+    const signature = guestIds.join(",");
+    const cached = readGuestProductsCache(signature);
+    if (cached) {
+      applyGuestProducts(cached);
+      hydratedGuestIdsRef.current = cached.map((item) => item.id);
+      setGuestHydrating(false);
+    } else {
+      setGuestHydrating(true);
+    }
+
+    const missingIds = guestIds.filter(
+      (id) => !hydratedGuestIdsRef.current.includes(id) && !guestProductsRef.current.some((item) => item.id === id)
+    );
+    let active = true;
+
+    void requestProductsByIds(missingIds)
+      .then((products) => {
+        if (!active || !products.length) return;
+        const byId = new Map([...guestProductsRef.current, ...products].map((item) => [item.id, item]));
+        const next = guestIds.map((id) => byId.get(id)).filter((item): item is WishlistProduct => Boolean(item));
+        applyGuestProducts(next);
+        hydratedGuestIdsRef.current = normalizeWishlistIds([...hydratedGuestIdsRef.current, ...products.map((item) => item.id)]);
+        writeGuestProductsCache(signature, next);
+      })
+      .finally(() => {
+        if (active) setGuestHydrating(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [applyGuestProducts, guestIds]);
 
   useEffect(() => {
     if (!isAuthenticated || mergedGuest || !guestIds.length) return;
@@ -151,10 +265,14 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     () => (isAuthenticated ? (Array.isArray(data?.products) ? data!.products : []) : guestProducts),
     [data, guestProducts, isAuthenticated]
   );
+  const idSet = useMemo(() => new Set(ids), [ids]);
 
-  const isInWishlist = (productId: string) => ids.includes(String(productId || "").trim());
+  // Called by every product card on the page: a Set keeps membership O(1) (it
+  // was an Array.includes scan per card) and a stable identity keeps memoized
+  // cards from re-rendering on unrelated provider updates.
+  const isInWishlist = useCallback((productId: string) => idSet.has(String(productId || "").trim()), [idSet]);
 
-  async function toggle(product: WishlistInputProduct) {
+  const toggle = useCallback(async (product: WishlistInputProduct): Promise<{ added: boolean }> => {
     if (isAuthenticated) {
       const result = toggleWishlistId(ids, product.id);
       const optimisticProducts = result.added
@@ -193,24 +311,28 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
     const result = toggleWishlistId(guestIds, product.id);
     const nextIds = result.nextIds;
-    const nextProducts = result.added
-      ? [product, ...guestProducts.filter((item) => item.id !== product.id)]
-      : guestProducts.filter((item) => item.id !== product.id);
+
+    applyGuestProducts((current) =>
+      result.added ? [product, ...current.filter((item) => item.id !== product.id)] : current.filter((item) => item.id !== product.id)
+    );
+    // The product is now in memory, so the hydration effect must not fetch it.
+    hydratedGuestIdsRef.current = result.added
+      ? normalizeWishlistIds([product.id, ...hydratedGuestIdsRef.current])
+      : hydratedGuestIdsRef.current.filter((id) => id !== product.id);
 
     setGuestIds(nextIds);
-    setGuestProducts(nextProducts);
     writeGuestWishlist(nextIds);
     if (result.added) showSuccessToast("Added to your Wishlist");
     window.dispatchEvent(new Event("wishlist:changed"));
     return { added: result.added };
-  }
+  }, [applyGuestProducts, guestIds, ids, isAuthenticated, mutate, products]);
 
-  async function add(product: WishlistInputProduct) {
+  const add = useCallback(async (product: WishlistInputProduct) => {
     if (isInWishlist(product.id)) return;
     await toggle(product);
-  }
+  }, [isInWishlist, toggle]);
 
-  async function remove(productId: string) {
+  const remove = useCallback(async (productId: string) => {
     const id = String(productId || "").trim();
     if (!id) return;
 
@@ -245,24 +367,19 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     }
 
     const nextIds = removeWishlistId(guestIds, id);
-    const nextProducts = guestProducts.filter((item) => item.id !== id);
+    applyGuestProducts((current) => current.filter((item) => item.id !== id));
+    hydratedGuestIdsRef.current = hydratedGuestIdsRef.current.filter((guestId) => guestId !== id);
     setGuestIds(nextIds);
-    setGuestProducts(nextProducts);
     writeGuestWishlist(nextIds);
     window.dispatchEvent(new Event("wishlist:changed"));
-  }
+  }, [applyGuestProducts, guestIds, ids, isAuthenticated, mutate, products]);
 
-  const value: WishlistContextValue = {
-    ids,
-    products,
-    count: ids.length,
-    loading: isLoading,
-    isAuthenticated,
-    isInWishlist,
-    toggle,
-    add,
-    remove,
-  };
+  const loading = isLoading || guestHydrating;
+
+  const value = useMemo<WishlistContextValue>(
+    () => ({ ids, products, count: ids.length, loading, isAuthenticated, isInWishlist, toggle, add, remove }),
+    [add, ids, isAuthenticated, isInWishlist, loading, products, remove, toggle]
+  );
 
   return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>;
 }

@@ -366,6 +366,42 @@ button:focus-visible, a:focus-visible {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Full-document blog articles (plant-care): the CMS stores some posts as a
+   complete standalone HTML page (own <html>/<body>/paper styling). Those
+   render inline through FullHtmlArticle and must participate in the normal
+   page scroll — the site header stays fixed, the article body scrolls with
+   the window, and no inner scrollbar is ever created.
+--------------------------------------------------------------------------- */
+
+.ss-article-doc {
+  width: 100%;
+  border: 1px solid rgb(var(--ss-secondary-rgb) / 0.25);
+  border-radius: 0.75rem;
+  background: #fff;
+  overflow: hidden;
+}
+
+/* Scope the standalone document's own classes under .ss-article-doc so its
+   paper background / fonts apply to the embedded node (not <body>) while its
+   own sticky topbar can never cover the fixed site header. */
+.ss-article-doc .ss-doc-topbar {
+  position: static !important;
+  top: auto !important;
+}
+
+.ss-article-doc .ss-doc-body {
+  margin: 0;
+  width: 100%;
+}
+
+/* The CMS paper texture uses position:fixed for its grain overlay — fixed
+   inside a transformed framer-motion wrapper would paint relative to that
+   wrapper; keep it harmless and non-interactive. */
+.ss-article-doc .ss-doc-grain {
+  pointer-events: none;
+}
+
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

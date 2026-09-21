@@ -66,6 +66,28 @@ export async function getAuthenticatedCustomer(options?: { orderLimit?: number }
   }
 }
 
+/**
+ * Session-cookie check for routes that only need the uid.
+ *
+ * `getAuthenticatedCustomer()` hydrates the whole profile — the user document,
+ * every address, up to 50 orders with their line items, and the wallet — which
+ * is right for /account but made lightweight endpoints pay for dozens of
+ * Firestore reads they never use. `/api/wishlist` runs on every storefront page
+ * load and only needs to know *who* is signed in.
+ */
+export async function getAuthenticatedUid(): Promise<{ uid: string | null; error?: string }> {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+  if (!sessionCookie) return { uid: null };
+
+  try {
+    const decoded = await getFirebaseAdminAuth().verifySessionCookie(sessionCookie, true);
+    return { uid: decoded.uid };
+  } catch {
+    return { uid: null, error: "Your session has expired. Please sign in again." };
+  }
+}
+
 export async function requireAuthenticatedUid() {
   const session = await getAuthenticatedCustomer();
   if (!session.uid) throw new Error(session.error || "Unauthorized.");
