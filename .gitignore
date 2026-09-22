@@ -16,3 +16,4 @@ tmp/product-recovery/
 
 *.tsbuildinfo
 apikey.txt
+hostinger/upload.local.php

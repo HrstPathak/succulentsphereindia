@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Check, Loader2, Upload, X } from "lucide-react"
+import { Check, Link2, Loader2, Upload, X } from "lucide-react"
 
 type MediaItem = {
   id: string
@@ -23,6 +23,8 @@ export default function MediaLibrary({
   const [items, setItems] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [urlInput, setUrlInput] = useState("")
+  const [addingUrl, setAddingUrl] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   async function loadItems() {
@@ -102,6 +104,39 @@ export default function MediaLibrary({
     }
   }
 
+  // Adds an externally-hosted image (any public URL) to the library. The URL
+  // is validated and persisted server-side (a browser-side probe would be
+  // blocked by CORS), then auto-selected as the current target (cover/inline).
+  async function handleAddUrl() {
+    const url = urlInput.trim()
+    if (!url) return
+    if (!/^https?:\/\//i.test(url)) {
+      window.alert("Please enter a full image URL starting with http:// or https://")
+      return
+    }
+    setAddingUrl(true)
+    try {
+      const res = await fetch("/api/admin/media", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      })
+      const data = await res.json()
+      if (data.ok && data.media) {
+        setItems((prev) => [data.media, ...prev])
+        setUrlInput("")
+        onSelect(data.media.url, data.media.altText || data.media.filename)
+        onClose()
+      } else {
+        window.alert(data.error || "Could not add that URL")
+      }
+    } catch {
+      window.alert("Could not reach the server. Please try again.")
+    } finally {
+      setAddingUrl(false)
+    }
+  }
+
   if (!isOpen) return null
 
   return (
@@ -134,6 +169,30 @@ export default function MediaLibrary({
             {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
             {uploading ? "Uploading…" : "Upload new image"}
           </button>
+
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <input
+              type="url"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  void handleAddUrl()
+                }
+              }}
+              placeholder="Paste image URL (https://…)"
+              className="flex-1 rounded-full border border-black/10 bg-[#fafbf9] px-4 py-2 text-sm text-[#173c2d] outline-none placeholder:text-black/30 focus:border-[#24563e]"
+            />
+            <button
+              onClick={() => void handleAddUrl()}
+              disabled={addingUrl || !urlInput.trim()}
+              className="flex items-center justify-center gap-2 rounded-full border border-[#173c2d] px-4 py-2 text-sm font-semibold text-[#173c2d] transition hover:bg-[#173c2d] hover:text-white disabled:opacity-50"
+            >
+              {addingUrl ? <Loader2 size={16} className="animate-spin" /> : <Link2 size={16} />}
+              {addingUrl ? "Checking…" : "Add via URL"}
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
