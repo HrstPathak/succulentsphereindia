@@ -1,0 +1,3 @@
+{
+  "/api/wallet/release-hold/route": "app/api/wallet/release-hold/route.js"
+}

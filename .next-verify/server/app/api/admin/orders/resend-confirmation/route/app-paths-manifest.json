@@ -1,0 +1,3 @@
+{
+  "/api/admin/orders/resend-confirmation/route": "app/api/admin/orders/resend-confirmation/route.js"
+}

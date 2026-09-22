@@ -1,0 +1,10 @@
+var R=require("../../../../../chunks/[turbopack]_runtime.js")("server/app/api/admin/orders/resend-confirmation/route.js")
+R.c("server/chunks/[root-of-the-server]__e9a808e4._.js")
+R.c("server/chunks/_f15003fe._.js")
+R.c("server/chunks/[root-of-the-server]__9ac84da2._.js")
+R.c("server/chunks/[root-of-the-server]__b3b04900._.js")
+R.c("server/chunks/node_modules_next_1402a1da._.js")
+R.c("server/chunks/[root-of-the-server]__e48e7fd3._.js")
+R.c("server/chunks/ce889_server_app_api_admin_orders_resend-confirmation_route_actions_499cd450.js")
+R.m(45142)
+module.exports=R.m(45142).exports

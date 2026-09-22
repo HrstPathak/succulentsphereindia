@@ -1,0 +1,3 @@
+module.exports=[67417,t=>t.a(async(e,i)=>{try{t.i(23502);var r=t.i(66663),n=t.i(76680),a=e([r,n]);async function o(t){let e=await (0,n.getAuthenticatedCustomer)(t),i=String(e.customer?.email||"").trim().toLowerCase();return{...e,email:i,isAdmin:!!(i&&new Set(String(process.env.ADMIN_EMAILS||"").split(",").map(t=>t.trim().toLowerCase()).filter(Boolean)).has(i))}}async function s(){let t=await o();if(!t.uid)throw Error("UNAUTHENTICATED");if(!t.isAdmin)throw Error("ADMIN_REQUIRED");return t}[r,n]=a.then?(await a)():a,t.s(["getAdminSession",()=>o,"requireAdmin",()=>s]),i()}catch(t){i(t)}},!1)];
+
+//# sourceMappingURL=src_lib_admin-auth_ts_0446f202._.js.map

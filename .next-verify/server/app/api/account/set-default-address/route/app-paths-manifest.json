@@ -1,0 +1,3 @@
+{
+  "/api/account/set-default-address/route": "app/api/account/set-default-address/route.js"
+}

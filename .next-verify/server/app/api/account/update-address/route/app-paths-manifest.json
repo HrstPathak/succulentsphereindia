@@ -1,0 +1,3 @@
+{
+  "/api/account/update-address/route": "app/api/account/update-address/route.js"
+}

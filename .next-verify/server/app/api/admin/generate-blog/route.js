@@ -1,0 +1,10 @@
+var R=require("../../../../chunks/[turbopack]_runtime.js")("server/app/api/admin/generate-blog/route.js")
+R.c("server/chunks/[root-of-the-server]__ae9d33fb._.js")
+R.c("server/chunks/_f15003fe._.js")
+R.c("server/chunks/[root-of-the-server]__e9a808e4._.js")
+R.c("server/chunks/[root-of-the-server]__e7b17d7b._.js")
+R.c("server/chunks/node_modules_next_1402a1da._.js")
+R.c("server/chunks/[root-of-the-server]__e48e7fd3._.js")
+R.c("server/chunks/_next-internal_server_app_api_admin_generate-blog_route_actions_4e8fd3cb.js")
+R.m(25386)
+module.exports=R.m(25386).exports
