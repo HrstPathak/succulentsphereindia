@@ -10,6 +10,8 @@ function revalidateBlogPages() {
   try {
     revalidatePath("/plant-care");
     revalidatePath("/plant-care/[handle]", "page");
+    // Pinned articles also appear on the home page plant-care rail
+    revalidatePath("/");
   } catch {
     // revalidation is best-effort; never fail the API call because of it
   }
@@ -83,6 +85,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       status: nextStatus,
       tags: Array.isArray(body.tags) ? body.tags.map(String) : existing.tags,
       updatedAt: now,
+    }
+
+    // Pin/unpin support — pinned articles surface in the home page
+    // "Plant Care" rail and float to the top of /plant-care.
+    if (body.pinned !== undefined) {
+      update.pinned = body.pinned === true
+      if (update.pinned && !existing.pinnedAt) {
+        update.pinnedAt = now
+      }
     }
 
     if (body.image !== undefined) {

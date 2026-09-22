@@ -10,6 +10,8 @@ import {
   FileText,
   Loader2,
   Pencil,
+  Pin,
+  PinOff,
   Plus,
   Trash2,
 } from "lucide-react"
@@ -21,6 +23,7 @@ type Article = {
   handle: string
   status: string
   updatedAt: string
+  pinned?: boolean
   image?: { url: string; altText?: string } | null
 }
 
@@ -153,6 +156,30 @@ function BlogList({
     }
   }
 
+  async function handleTogglePin(item: Article) {
+    const nextPinned = !item.pinned
+    // Optimistic update — feels instant
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, pinned: nextPinned } : i)))
+    try {
+      const res = await fetch(`/api/admin/articles/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pinned: nextPinned }),
+      })
+      const json = await res.json()
+      if (json.ok) {
+        toast.success(nextPinned ? "Pinned — appears on home page" : "Unpinned")
+      } else {
+        // Roll back on failure
+        setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, pinned: item.pinned } : i)))
+        toast.error(json.error || "Could not update pin")
+      }
+    } catch {
+      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, pinned: item.pinned } : i)))
+      toast.error("Could not update pin")
+    }
+  }
+
 return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -230,6 +257,7 @@ return (
                           <img
                             src={item.image.url}
                             alt={item.image.altText || item.title}
+                            loading="lazy"
                             className="h-12 w-14 rounded-xl object-cover ring-1 ring-[#d7e0d9]"
                           />
                         ) : (
@@ -239,7 +267,14 @@ return (
                         )}
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-[#243129]">{item.title || "Untitled article"}</p>
-                          <p className="truncate font-mono text-xs text-[#718076]">/plant-care/{item.handle}</p>
+                          <p className="flex items-center gap-2 truncate font-mono text-xs text-[#718076]">
+                            /plant-care/{item.handle}
+                            {item.pinned ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-[#e6f4e8] px-1.5 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wide text-[#256b3a]">
+                                <Pin size={8} className="rotate-45" /> Pinned
+                              </span>
+                            ) : null}
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -253,6 +288,19 @@ return (
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => void handleTogglePin(item)}
+                          disabled={item.status !== "published"}
+                          title={item.status !== "published" ? "Publish the article to pin it" : item.pinned ? "Unpin from home page" : "Pin to home page + top of Plant Care"}
+                          className={`inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                            item.pinned
+                              ? "border-[#24563e] bg-[#e6f4e8] text-[#24563e]"
+                              : "border-[#d7e0d9] bg-white text-[#44584c] hover:border-[#24563e] hover:text-[#24563e]"
+                          }`}
+                        >
+                          {item.pinned ? <PinOff size={12} /> : <Pin size={12} className="rotate-45" />}
+                          {item.pinned ? "Unpin" : "Pin"}
+                        </button>
                         <button
                           onClick={() => onEdit(item.id)}
                           className="inline-flex items-center gap-1 rounded-xl border border-[#d7e0d9] bg-white px-3 py-2 text-xs font-bold text-[#44584c] transition hover:border-[#24563e] hover:text-[#24563e]"

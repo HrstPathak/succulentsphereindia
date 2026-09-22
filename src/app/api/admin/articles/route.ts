@@ -10,6 +10,8 @@ function revalidateBlogPages() {
   try {
     revalidatePath("/plant-care");
     revalidatePath("/plant-care/[handle]", "page");
+    // Pinned articles also appear on the home page plant-care rail
+    revalidatePath("/");
   } catch {
     // revalidation is best-effort; never fail the API call because of it
   }
@@ -46,6 +48,7 @@ export async function GET() {
         handle: String(data.handle || ""),
         status: String(data.status || "published"),
         updatedAt: String(data.updatedAt || data.publishedAt || ""),
+        pinned: data.pinned === true,
         image: data.image || null,
       }
     })

@@ -14,6 +14,9 @@ import {
   LazyOnTheFeedSection,
   LazyRecentlyViewedSection,
 } from "../components/home/LazySections";
+import PinnedArticlesRail from "../components/home/PinnedArticlesRail";
+import { fetchPinnedPlantCareArticles } from "@/lib/commerce";
+import type { PinnedArticleCard } from "../components/home/PinnedArticlesRail";
 
 const BrandStory = dynamic(() => import("../components/home/BrandStory"), {
   loading: () => <div className="h-[320px] w-full animate-pulse rounded-3xl bg-gradient-to-r from-gray-100 via-white to-gray-100 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800" />,
@@ -143,6 +146,22 @@ export default async function Home() {
   const bestSellerProducts = await getHomeBestSellerProducts();
   const sectionSpacingClass = "py-10 md:py-14 lg:py-16";
 
+  // Pinned plant-care articles for the home page rail (fails soft → empty rail)
+  let pinnedArticleCards: PinnedArticleCard[] = [];
+  try {
+    const pinned = await fetchPinnedPlantCareArticles(8);
+    pinnedArticleCards = pinned.map((a) => ({
+      id: a.id,
+      handle: a.handle,
+      title: a.title,
+      excerpt: a.excerpt,
+      publishedAt: a.publishedAt,
+      image: a.image ? { url: a.image.url, altText: a.image.altText } : null,
+    }));
+  } catch (error) {
+    console.error("Failed to load pinned plant care articles:", error);
+  }
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(websiteJsonLd) }} />
@@ -202,7 +221,13 @@ export default async function Home() {
         </div>
       </section>
 
+            {/* Pinned plant-care articles — premium horizontal rail */}
       <section className={sectionSpacingClass}>
+        <div className="container mx-auto px-4">
+          <PinnedArticlesRail articles={pinnedArticleCards} />
+        </div>
+      </section>
+<section className={sectionSpacingClass}>
         <LazyOnTheFeedSection />
       </section>
 

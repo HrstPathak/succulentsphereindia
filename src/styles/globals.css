@@ -567,3 +567,12 @@ button:focus-visible, a:focus-visible {
   }
 }
 
+
+/* Utility: hide scrollbar but keep scrollability (used by horizontal rails) */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

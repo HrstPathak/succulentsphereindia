@@ -149,6 +149,8 @@ export default async function PlantCarePage() {
                           src={article.image.url}
                           alt={article.image.altText || article.title}
                           fill
+                          loading={article.pinned ? "eager" : "lazy"}
+                          priority={Boolean(article.pinned)}
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                         />
@@ -157,6 +159,12 @@ export default async function PlantCarePage() {
                           Plant care article
                         </div>
                       )}
+                      {article.pinned ? (
+                        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--color-brand)] shadow-sm backdrop-blur-sm">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="rotate-45"><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                          Pinned
+                        </span>
+                      ) : null}
                     </div>
                     <div className="space-y-4 p-6">
                       <p className="text-xs uppercase tracking-[0.12em] text-[var(--color-secondary)]">{formatDate(article.publishedAt)}</p>

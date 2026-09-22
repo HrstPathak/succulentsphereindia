@@ -24,9 +24,29 @@ function formatDate(value: string): string {
 
 function sanitizeHtml(value: string): string {
   return value
+    // Strip whole-document wrappers — an article must never inject <head>/<body>.
+    .replace(/<!doctype[^>]*>/gi, "")
+    .replace(/<html\b[^>]*>/gi, "")
+    .replace(/<\/html>/gi, "")
+    .replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, "")
+    .replace(/<body\b[^>]*>/gi, '<div class="ss-article-body">')
+    .replace(/<\/body>/gi, "</div>")
+    .replace(/<meta\b[^>]*>/gi, "")
+    .replace(/<title\b[^>]*>[\s\S]*?<\/title>/gi, "")
+    // <link rel=stylesheet> from generated articles loads external CSS (fonts,
+    // resets) that restyles the global header/footer. Strip them entirely.
+    .replace(/<link\b[^>]*>/gi, "")
+    // <style> blocks carry CSS resets (body { ... }, * { ... }) that LEAK out of
+    // the article container and restyle the whole site — this was breaking the
+    // global theme. Strip them; article styling is handled by the prose wrapper.
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<style\b[^>]*\/>/gi, "")
     .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
     .replace(/\son\w+="[^"]*"/gi, "")
     .replace(/\son\w+='[^']*'/gi, "")
+    // Inline styles that take over the viewport (fixed/absolute positioning)
+    // inside article HTML can overlay the header/footer — neutralise those.
+    .replace(/\sstyle="[^"]*(position\s*:\s*fixed|position\s*:\s*absolute)[^"]*"/gi, "")
     // Article body HTML renders below the header via dangerouslySetInnerHTML;
     // force native lazy-loading on its images (older stored articles predate
     // generation-time lazy attributes).

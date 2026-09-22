@@ -25,6 +25,7 @@ export interface FirebaseArticle {
   contentHtml: string; publishedAt: string; image: { url: string; altText: string; width: number; height: number } | null;
   blogHandle: string; blogTitle: string;
   status?: string;
+  pinned?: boolean;
 }
 
 export interface FirebaseCustomerOrder {
@@ -198,7 +199,7 @@ export async function fetchRecommendationCandidates(handleInput: unknown, maxCan
 
 function mapArticle(id: string, data: Record<string, unknown>): FirebaseArticle {
   const image = data.image && typeof data.image === "object" ? data.image as Record<string, unknown> : null;
-  return { id, handle: string(data.handle), title: string(data.title), excerpt: string(data.excerpt) || cleanHtml(data.contentHtml).slice(0, 160), seoDescription: string(data.seoDescription) || cleanHtml(data.contentHtml).slice(0, 220), authorName: string(data.authorName, "Succulent Sphere Editorial Team"), contentHtml: string(data.contentHtml), publishedAt: string(data.publishedAt), status: string(data.status, "published"), image: image ? { url: string(image.url), altText: string(image.altText, string(data.title)), width: numeric(image.width, 1600), height: numeric(image.height, 900) } : null, blogHandle: string(data.blogHandle, "plant-care"), blogTitle: string(data.blogTitle, "Plant Care") };
+  return { id, handle: string(data.handle), title: string(data.title), excerpt: string(data.excerpt) || cleanHtml(data.contentHtml).slice(0, 160), seoDescription: string(data.seoDescription) || cleanHtml(data.contentHtml).slice(0, 220), authorName: string(data.authorName, "Succulent Sphere Editorial Team"), contentHtml: string(data.contentHtml), publishedAt: string(data.publishedAt), status: string(data.status, "published"), pinned: data.pinned === true, image: image ? { url: string(image.url), altText: string(image.altText, string(data.title)), width: numeric(image.width, 1600), height: numeric(image.height, 900) } : null, blogHandle: string(data.blogHandle, "plant-care"), blogTitle: string(data.blogTitle, "Plant Care") };
 }
 export async function fetchPlantCareArticles(limit = 24): Promise<FirebaseArticle[]> {
   // Note: deliberately NOT using .where("status","==","published") here —
@@ -207,11 +208,34 @@ export async function fetchPlantCareArticles(limit = 24): Promise<FirebaseArticl
   // We fetch by publishedAt (single-field, auto-indexed) and filter drafts
   // in memory instead — same result, no index needed.
   const snapshot = await getFirebaseDb().collection("articles").orderBy("publishedAt", "desc").limit(limit).get();
+  const published = snapshot.docs
+    .map((doc) => mapArticle(doc.id, doc.data()))
+    .filter((a) => a.status === "published");
+  // Pinned articles float to the top, then by publish date
+  return published
+    .sort((a, b) => {
+      const pa = a.pinned ? 1 : 0;
+      const pb = b.pinned ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      return String(b.publishedAt).localeCompare(String(a.publishedAt));
+    })
+    .slice(0, limit);
+}
+export async function fetchPinnedPlantCareArticles(limit = 8): Promise<FirebaseArticle[]> {
+  // Single-field where() on "pinned" (auto-indexed) + in-memory sort/filter —
+  // no composite index required. Drafts are excluded.
+  const snapshot = await getFirebaseDb()
+    .collection("articles")
+    .where("pinned", "==", true)
+    .limit(limit * 3)
+    .get();
   return snapshot.docs
     .map((doc) => mapArticle(doc.id, doc.data()))
     .filter((a) => a.status === "published")
+    .sort((a, b) => String(b.publishedAt).localeCompare(String(a.publishedAt)))
     .slice(0, limit);
 }
+
 export async function fetchPlantCareArticleByHandle(handleInput: unknown): Promise<FirebaseArticle | null> {
   const handle = normaliseHandle(handleInput);
   const snapshot = await getFirebaseDb().collection("articles").where("handle", "==", handle).limit(1).get();
