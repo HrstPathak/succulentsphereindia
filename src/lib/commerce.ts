@@ -1,6 +1,4 @@
 import "server-only";
-import fs from "fs";
-import path from "path";
 
 import { FieldPath } from "firebase-admin/firestore";
 import { getFirebaseDb } from "@/lib/firebase-admin";
@@ -202,74 +200,26 @@ function mapArticle(id: string, data: Record<string, unknown>): FirebaseArticle 
   const image = data.image && typeof data.image === "object" ? data.image as Record<string, unknown> : null;
   return { id, handle: string(data.handle), title: string(data.title), excerpt: string(data.excerpt) || cleanHtml(data.contentHtml).slice(0, 160), seoDescription: string(data.seoDescription) || cleanHtml(data.contentHtml).slice(0, 220), authorName: string(data.authorName, "Succulent Sphere Editorial Team"), contentHtml: string(data.contentHtml), publishedAt: string(data.publishedAt), status: string(data.status, "published"), image: image ? { url: string(image.url), altText: string(image.altText, string(data.title)), width: numeric(image.width, 1600), height: numeric(image.height, 900) } : null, blogHandle: string(data.blogHandle, "plant-care"), blogTitle: string(data.blogTitle, "Plant Care") };
 }
-// Load fallback article HTML from public/articles to keep large markup out of TypeScript source
-const FALLBACK_ARTICLE_HTML = (() => {
-  try {
-    const p = path.join(process.cwd(), "public", "articles", "your-succulents-arrived.html");
-    const raw = fs.readFileSync(p, "utf8");
-    const m = raw.match(/<div class=\"wrap\">([\s\S]*?)<\/div>/i);
-    return m ? m[0] : raw;
-  } catch (err) {
-    return `<div><h2>Your succulents just landed — quick steps</h2><p>Open the box in shade, unpack gently, pot within 24–48 hours in a well-draining mix, and avoid watering on day one. Full article content unavailable.</p></div>`;
-  }
-})();
-
-const LOCAL_PLANT_CARE_ARTICLES: FirebaseArticle[] = [
-  {
-    id: "local-your-succulents-arrived",
-    handle: "your-succulents-just-arrived",
-    title: "Your Succulents Just Arrived From Succulent Sphere — Here's What To Do Next",
-    excerpt: "How to unbox, pot and care for bare-root succulents after delivery in India — quick practical steps and region-aware tips.",
-    seoDescription: "A concise guide to succulent care right after delivery — unboxing, potting, watering and region specific advice for India.",
-    authorName: "Succulent Sphere",
-    contentHtml: FALLBACK_ARTICLE_HTML,
-    publishedAt: "2026-08-16T00:00:00.000Z",
-    image: null,
-    blogHandle: "plant-care",
-    blogTitle: "Plant Care",
-  },
-];
-
 export async function fetchPlantCareArticles(limit = 24): Promise<FirebaseArticle[]> {
-  try {
-    // Note: deliberately NOT using .where("status","==","published") here —
-    // combining a where() equality filter with orderBy() on a different field
-    // requires a composite Firestore index, which we'd rather not depend on.
-    // We fetch by publishedAt (single-field, auto-indexed) and filter drafts
-    // in memory instead — same result, no index needed.
-    const snapshot = await getFirebaseDb().collection("articles").orderBy("publishedAt", "desc").limit(limit).get();
-    const remote = snapshot.docs
-      .map((doc) => mapArticle(doc.id, doc.data()))
-      .filter((a) => a.status === "published");
-    // Merge local static articles, prefer remote articles by handle to avoid duplicates
-    const remoteHandles = new Set(remote.map((a) => a.handle));
-    const combined = [...remote];
-    for (const local of LOCAL_PLANT_CARE_ARTICLES) {
-      if (!remoteHandles.has(local.handle)) combined.push(local);
-    }
-    return combined.slice(0, limit);
-  } catch (error) {
-    // If Firestore is unavailable, fall back to local articles
-    return LOCAL_PLANT_CARE_ARTICLES.slice(0, limit);
-  }
+  // Note: deliberately NOT using .where("status","==","published") here —
+  // combining a where() equality filter with orderBy() on a different field
+  // requires a composite Firestore index, which we'd rather not depend on.
+  // We fetch by publishedAt (single-field, auto-indexed) and filter drafts
+  // in memory instead — same result, no index needed.
+  const snapshot = await getFirebaseDb().collection("articles").orderBy("publishedAt", "desc").limit(limit).get();
+  return snapshot.docs
+    .map((doc) => mapArticle(doc.id, doc.data()))
+    .filter((a) => a.status === "published")
+    .slice(0, limit);
 }
 export async function fetchPlantCareArticleByHandle(handleInput: unknown): Promise<FirebaseArticle | null> {
   const handle = normaliseHandle(handleInput);
-  try {
-    const snapshot = await getFirebaseDb().collection("articles").where("handle", "==", handle).limit(1).get();
-    if (!snapshot.empty) {
-      const article = mapArticle(snapshot.docs[0]!.id, snapshot.docs[0]!.data());
-      // Drafts stay hidden from direct URLs until they are published
-      if (article.status === "published") return article;
-    }
-  } catch (error) {
-    // ignore and try local fallback below
-  }
-
-  const local = LOCAL_PLANT_CARE_ARTICLES.find((a) => a.handle === handle);
-  return local || null;
+  const snapshot = await getFirebaseDb().collection("articles").where("handle", "==", handle).limit(1).get();
+  if (snapshot.empty) return null;
+  const article = mapArticle(snapshot.docs[0]!.id, snapshot.docs[0]!.data());
+  // Drafts stay hidden from direct URLs until they are published
+  return article.status === "published" ? article : null;
 }
-
 function mapOrder(id: string, raw: Record<string, any>): FirebaseCustomerOrder {
   const lineItems = Array.isArray(raw.lineItems) ? raw.lineItems : [];
   return { id, orderNumber: numeric(raw.orderNumber), processedAt: string(raw.processedAt || raw.createdAt), fulfillmentStatus: string(raw.fulfillmentStatus, "UNFULFILLED"), financialStatus: string(raw.financialStatus, "PENDING"), tags: list(raw.tags), fulfillmentOrderStatuses: list(raw.fulfillmentOrderStatuses), tracking: Array.isArray(raw.tracking) ? raw.tracking.map((x: any) => ({ number: string(x.number), url: string(x.url), company: string(x.company) })) : [], fulfillmentEvents: list(raw.fulfillmentEvents), lineItems: lineItems.map((item: any, index: number) => ({ id: string(item.id, `${id}-${index}`), title: string(item.title), quantity: numeric(item.quantity, 1), variantTitle: string(item.variantTitle), productHandle: string(item.productHandle), image: string(item.image), imageAlt: string(item.imageAlt), customAttributes: Array.isArray(item.customAttributes) ? item.customAttributes : [], originalTotalPrice: item.originalTotalPrice ? money(item.originalTotalPrice) : undefined, discountedTotalPrice: item.discountedTotalPrice ? money(item.discountedTotalPrice) : undefined, price: money(item.price ?? { amount: item.unitPrice, currencyCode: raw.currency || "INR" }) })), currentSubtotalPrice: raw.currentSubtotalPrice ? money(raw.currentSubtotalPrice) : money({ amount: raw.subtotal, currencyCode: raw.currency || "INR" }), currentTotalShippingPrice: raw.currentTotalShippingPrice ? money(raw.currentTotalShippingPrice) : money({ amount: raw.shipping, currencyCode: raw.currency || "INR" }), currentTotalTax: raw.currentTotalTax ? money(raw.currentTotalTax) : undefined, currentTotalPrice: raw.currentTotalPrice ? money(raw.currentTotalPrice) : money({ amount: raw.total, currencyCode: raw.currency || "INR" }), totalPrice: money(raw.totalPrice ?? { amount: raw.total, currencyCode: raw.currency || "INR" }) };
