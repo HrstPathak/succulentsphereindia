@@ -146,10 +146,11 @@ export default async function Home() {
   const bestSellerProducts = await getHomeBestSellerProducts();
   const sectionSpacingClass = "py-10 md:py-14 lg:py-16";
 
-  // Pinned plant-care articles for the home page rail (fails soft → empty rail)
+  // Only the single pinned plant-care article shows on the home page rail
+  // (fails soft → empty rail).
   let pinnedArticleCards: PinnedArticleCard[] = [];
   try {
-    const pinned = await fetchPinnedPlantCareArticles(8);
+    const pinned = await fetchPinnedPlantCareArticles(1);
     pinnedArticleCards = pinned.map((a) => ({
       id: a.id,
       handle: a.handle,

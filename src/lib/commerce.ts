@@ -26,6 +26,7 @@ export interface FirebaseArticle {
   blogHandle: string; blogTitle: string;
   status?: string;
   pinned?: boolean;
+  pinnedAt?: string;
 }
 
 export interface FirebaseCustomerOrder {
@@ -199,7 +200,7 @@ export async function fetchRecommendationCandidates(handleInput: unknown, maxCan
 
 function mapArticle(id: string, data: Record<string, unknown>): FirebaseArticle {
   const image = data.image && typeof data.image === "object" ? data.image as Record<string, unknown> : null;
-  return { id, handle: string(data.handle), title: string(data.title), excerpt: string(data.excerpt) || cleanHtml(data.contentHtml).slice(0, 160), seoDescription: string(data.seoDescription) || cleanHtml(data.contentHtml).slice(0, 220), authorName: string(data.authorName, "Succulent Sphere Editorial Team"), contentHtml: string(data.contentHtml), publishedAt: string(data.publishedAt), status: string(data.status, "published"), pinned: data.pinned === true, image: image ? { url: string(image.url), altText: string(image.altText, string(data.title)), width: numeric(image.width, 1600), height: numeric(image.height, 900) } : null, blogHandle: string(data.blogHandle, "plant-care"), blogTitle: string(data.blogTitle, "Plant Care") };
+  return { id, handle: string(data.handle), title: string(data.title), excerpt: string(data.excerpt) || cleanHtml(data.contentHtml).slice(0, 160), seoDescription: string(data.seoDescription) || cleanHtml(data.contentHtml).slice(0, 220), authorName: string(data.authorName, "Succulent Sphere Editorial Team"), contentHtml: string(data.contentHtml), publishedAt: string(data.publishedAt), status: string(data.status, "published"), pinned: data.pinned === true, pinnedAt: string(data.pinnedAt), image: image ? { url: string(image.url), altText: string(image.altText, string(data.title)), width: numeric(image.width, 1600), height: numeric(image.height, 900) } : null, blogHandle: string(data.blogHandle, "plant-care"), blogTitle: string(data.blogTitle, "Plant Care") };
 }
 export async function fetchPlantCareArticles(limit = 24): Promise<FirebaseArticle[]> {
   // Note: deliberately NOT using .where("status","==","published") here —
@@ -232,7 +233,9 @@ export async function fetchPinnedPlantCareArticles(limit = 8): Promise<FirebaseA
   return snapshot.docs
     .map((doc) => mapArticle(doc.id, doc.data()))
     .filter((a) => a.status === "published")
-    .sort((a, b) => String(b.publishedAt).localeCompare(String(a.publishedAt)))
+    // Most recently pinned first — single-pin enforcement means there is
+    // only ever one, but legacy data may still hold a few.
+    .sort((a, b) => String(b.pinnedAt || b.publishedAt).localeCompare(String(a.pinnedAt || a.publishedAt)))
     .slice(0, limit);
 }
 

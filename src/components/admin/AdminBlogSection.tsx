@@ -158,8 +158,14 @@ function BlogList({
 
   async function handleTogglePin(item: Article) {
     const nextPinned = !item.pinned
-    // Optimistic update — feels instant
-    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, pinned: nextPinned } : i)))
+    // Optimistic update — only ONE article can be pinned at a time, so
+    // pinning this row also clears the pin badge on every other row.
+    const snapshot = items
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === item.id ? { ...i, pinned: nextPinned } : nextPinned ? { ...i, pinned: false } : i,
+      ),
+    )
     try {
       const res = await fetch(`/api/admin/articles/${item.id}`, {
         method: "PATCH",
@@ -168,14 +174,14 @@ function BlogList({
       })
       const json = await res.json()
       if (json.ok) {
-        toast.success(nextPinned ? "Pinned — appears on home page" : "Unpinned")
+        toast.success(nextPinned ? "Pinned — the only blog shown on the home page" : "Unpinned")
       } else {
         // Roll back on failure
-        setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, pinned: item.pinned } : i)))
+        setItems(snapshot)
         toast.error(json.error || "Could not update pin")
       }
     } catch {
-      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, pinned: item.pinned } : i)))
+      setItems(snapshot)
       toast.error("Could not update pin")
     }
   }
@@ -291,7 +297,7 @@ return (
                         <button
                           onClick={() => void handleTogglePin(item)}
                           disabled={item.status !== "published"}
-                          title={item.status !== "published" ? "Publish the article to pin it" : item.pinned ? "Unpin from home page" : "Pin to home page + top of Plant Care"}
+                          title={item.status !== "published" ? "Publish the article to pin it" : item.pinned ? "Unpin from home page" : "Pin to home page (replaces the current pin) + top of Plant Care"}
                           className={`inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${
                             item.pinned
                               ? "border-[#24563e] bg-[#e6f4e8] text-[#24563e]"

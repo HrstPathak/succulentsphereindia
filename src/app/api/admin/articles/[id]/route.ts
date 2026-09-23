@@ -87,11 +87,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       updatedAt: now,
     }
 
-    // Pin/unpin support — pinned articles surface in the home page
-    // "Plant Care" rail and float to the top of /plant-care.
+    // Pin/unpin support — EXACTLY ONE article may be pinned at a time:
+    // the home page rail shows only the pinned blog, so pinning this
+    // article also unpins every other article (atomic batch below).
+    // Pinned articles also float to the top of /plant-care.
     if (body.pinned !== undefined) {
       update.pinned = body.pinned === true
-      if (update.pinned && !existing.pinnedAt) {
+      if (update.pinned) {
+        // Refresh pinnedAt so the most recently pinned article always wins.
         update.pinnedAt = now
       }
     }
@@ -109,7 +112,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       update.publishedAt = now
     }
 
-    await ref.update(update);
+    if (update.pinned === true) {
+      // Single-pin enforcement: clear the pin on every other article in the
+      // same atomic batch as this update, so the home page can never show
+      // more than one pinned blog.
+      const others = await db.collection("articles").where("pinned", "==", true).limit(100).get()
+      const batch = db.batch()
+      batch.update(ref, update)
+      for (const doc of others.docs) {
+        if (doc.id !== id) batch.update(doc.ref, { pinned: false, pinnedAt: null })
+      }
+      await batch.commit()
+    } else {
+      await ref.update(update)
+    }
     revalidateBlogPages();
     const updated = await ref.get();
     return NextResponse.json({ ok: true, article: { id: updated.id, ...updated.data() } })
