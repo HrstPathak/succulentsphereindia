@@ -1,0 +1,22 @@
+files scanned: 295
+distinct hex utilities: 268
+
+[bg] 78 distinct
+
+[text] 120 distinct
+
+[border] 62 distinct
+
+[from] 1 distinct
+
+[ring] 3 distinct
+
+[fill] 1 distinct
+
+rgb() arbitrary: 51
+var() arbitrary: 22
+white/black slash: 61
+gray scale utils: 58
+hex+alpha utils: 35
+arbitrary gradient bgs: 102
+variant-prefixed literals: 48

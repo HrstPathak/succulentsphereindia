@@ -1,0 +1,226 @@
+==============================================================================
+DISTINCT bg-[#hex] IN COMPONENTS vs PATCH-LAYER COVERAGE
+==============================================================================
+>> MISSING  bg-[#24563e]  x 24  (src/components/admin/AdminArticleEditor.tsx, src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogSection.tsx, ...)
+>> MISSING  bg-[#1f4a35]  x 11  (src/components/admin/AdminArticleEditor.tsx, src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogAutomation.tsx, ...)
+>> MISSING  bg-[#fafbf9]  x 10  (src/components/admin/AdminArticleEditor.tsx, src/components/admin/AdminAutomationSection.tsx, src/components/admin/MediaLibrary.tsx)
+>> MISSING  bg-[#f8fbf7]  x  9  (src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogAutomation.tsx, src/components/admin/AdminBlogSection.tsx, ...)
+>> MISSING  bg-[#f5f8f4]  x  8  (src/components/admin/AdminArticleEditor.tsx, src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogSection.tsx, ...)
+>> MISSING  bg-[#0a1420]  x  8  (src/components/home/BestSellerGrid.tsx, src/components/shop/FilterDrawer.tsx, src/components/ui/Dropdown.tsx, ...)
+>> MISSING  bg-[#dbe8d7]  x  7  (src/app/account/orders/[order]/page.tsx, src/app/order-placed/page.tsx, src/app/privacy-policy/page.tsx, ...)
+>> MISSING  bg-[#e6f4e8]  x  7  (src/components/admin/AdminArticleEditor.tsx, src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogAutomation.tsx, ...)
+>> MISSING  bg-[#f0f4f0]  x  7  (src/components/admin/AdminArticleEditor.tsx, src/components/admin/AdminBlogAutomation.tsx)
+>> MISSING  bg-[#0b1722]  x  6  (src/app/collections/page.tsx, src/components/collections/CollectionCards.tsx, src/components/home/CategoryGrid.tsx, ...)
+  covered  bg-[#ebe5da]  x  6  (src/components/product/RecommendedProducts.tsx)
+  covered  bg-[#cfd7ca]  x  5  (src/app/account/orders/[order]/page.tsx, src/components/auth/OrdersListClient.tsx, src/components/order-tracker/OrderTrackerClient.tsx)
+  covered  bg-[#e7ece2]  x  5  (src/app/account/orders/[order]/page.tsx, src/components/auth/OrdersListClient.tsx, src/components/order-tracker/OrderTrackerClient.tsx)
+>> MISSING  bg-[#eef6ed]  x  5  (src/components/admin/AdminArticleEditor.tsx, src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogSection.tsx, ...)
+>> MISSING  bg-[#243129]  x  5  (src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogAutomation.tsx, src/components/admin/AdminBlogSection.tsx, ...)
+>> MISSING  bg-[#071018]  x  5  (src/components/auth/SucculentAuthLoader.tsx, src/components/layout/Header.tsx, src/components/layout/MobileDrawer.tsx, ...)
+>> MISSING  bg-[#2b4a3d]  x  4  (src/app/account/orders/[order]/page.tsx, src/components/order-tracker/OrderTrackerClient.tsx)
+>> MISSING  bg-[#143227]  x  4  (src/app/account/orders/[order]/page.tsx, src/components/order-tracker/OrderTrackerClient.tsx)
+>> MISSING  bg-[#f2dbc2]  x  4  (src/app/privacy-policy/page.tsx, src/app/refund-policy/page.tsx, src/app/shipping-returns/page.tsx, ...)
+>> MISSING  bg-[#0f1f2e]  x  4  (src/components/ui/Dropdown.tsx, src/components/ui/SearchBar.tsx)
+>> MISSING  bg-[#f0dac3]  x  3  (src/app/account/orders/[order]/page.tsx, src/app/order-placed/page.tsx, src/components/order-tracker/OrderTrackerClient.tsx)
+>> MISSING  bg-[#faf0e0]  x  3  (src/components/admin/AdminArticleEditor.tsx, src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogSection.tsx)
+>> MISSING  bg-[#256b3a]  x  3  (src/components/admin/AdminArticleEditor.tsx, src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogAutomation.tsx, ...)
+>> MISSING  bg-[#96691f]  x  3  (src/components/admin/AdminArticleEditor.tsx, src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogAutomation.tsx, ...)
+>> MISSING  bg-[#fdf4f3]  x  3  (src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogAutomation.tsx, src/components/admin/AdminBlogSection.tsx)
+>> MISSING  bg-[#182420]  x  3  (src/components/admin/AdminBlogAutomation.tsx)
+>> MISSING  bg-[#2a5f45]  x  3  (src/components/admin/AdminBlogAutomation.tsx)
+>> MISSING  bg-[#173c2d]  x  3  (src/components/admin/AdminArticleEditor.tsx, src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogSection.tsx, ...)
+  covered  bg-[#f3ede3]  x  3  (src/components/combo/ComboBuilder.tsx, src/components/product/ProductInfo.tsx, src/components/reviews/ProductReviewsSection.tsx)
+>> MISSING  bg-[#1d3a2c]  x  2  (src/app/account/orders/[order]/page.tsx, src/components/order-tracker/OrderTrackerClient.tsx)
+>> MISSING  bg-[#173144]  x  2  (src/app/account/orders/[order]/page.tsx, src/components/order-tracker/OrderTrackerClient.tsx)
+>> MISSING  bg-[#e5ece6]  x  2  (src/components/admin/AdminArticleEditor.tsx)
+>> MISSING  bg-[#bcd9c2]  x  2  (src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogSection.tsx)
+>> MISSING  bg-[#fdf7f5]  x  2  (src/components/admin/AdminAutomationSection.tsx, src/components/admin/ErrorBoundary.tsx)
+>> MISSING  bg-[#1e2b25]  x  2  (src/components/admin/AdminBlogAutomation.tsx)
+>> MISSING  bg-[#25402f]  x  2  (src/components/admin/AdminBlogAutomation.tsx)
+>> MISSING  bg-[#121a16]  x  2  (src/components/admin/AdminBlogAutomation.tsx)
+>> MISSING  bg-[#c9dfc9]  x  2  (src/components/admin/AdminBlogSection.tsx, src/components/admin/AdminDashboard.tsx)
+>> MISSING  bg-[#e8bf92]  x  2  (src/components/admin/AdminBlogSection.tsx, src/components/admin/AdminDashboard.tsx)
+>> MISSING  bg-[#e8ece6]  x  2  (src/components/admin/AdminDashboard.tsx)
+>> MISSING  bg-[#102419]  x  2  (src/components/admin/AdminDashboard.tsx, src/components/admin/AdminTestOrderModal.tsx)
+>> MISSING  bg-[#f7f9f5]  x  2  (src/components/admin/AdminDashboard.tsx, src/components/admin/AdminTestOrderModal.tsx)
+  covered  bg-[#f3ebdf]  x  2  (src/components/auth/OrderLineItemsClient.tsx)
+>> MISSING  bg-[#f6d7b5]  x  2  (src/components/home/CashbackStrip.tsx, src/components/product/ProductInfo.tsx)
+>> MISSING  bg-[#132a37]  x  2  (src/components/order-tracker/OrderTrackerClient.tsx)
+  covered  bg-[#f0eadd]  x  2  (src/components/product/RecommendedProducts.tsx)
+>> MISSING  bg-[#0a1721]  x  2  (src/components/product/UnifiedProductDetail.tsx)
+>> MISSING  bg-[#132129]  x  2  (src/components/ui/DarkModeToggle.tsx)
+>> MISSING  bg-[#dde7d8]  x  1  (src/app/about/page.tsx)
+>> MISSING  bg-[#f4e7d6]  x  1  (src/app/about/page.tsx)
+>> MISSING  bg-[#21352b]  x  1  (src/app/about/page.tsx)
+  covered  bg-[#faf7f1]  x  1  (src/app/account/orders/[order]/page.tsx)
+>> MISSING  bg-[#101412]  x  1  (src/app/combo/page.tsx)
+>> MISSING  bg-[#f7f1e8]  x  1  (src/app/shipping-returns/page.tsx)
+>> MISSING  bg-[#f0f7f1]  x  1  (src/components/admin/AdminArticleEditor.tsx)
+>> MISSING  bg-[#fbe9e7]  x  1  (src/components/admin/AdminAutomationSection.tsx)
+>> MISSING  bg-[#b3574e]  x  1  (src/components/admin/AdminArticleEditor.tsx, src/components/admin/AdminAutomationSection.tsx, src/components/admin/AdminBlogAutomation.tsx, ...)
+>> MISSING  bg-[#f5e3c0]  x  1  (src/components/admin/AdminAutomationSection.tsx)
+>> MISSING  bg-[#f3cfc8]  x  1  (src/components/admin/AdminAutomationSection.tsx)
+>> MISSING  bg-[#f4f6f3]  x  1  (src/components/admin/AdminBlogAutomation.tsx)
+>> MISSING  bg-[#2a1f1d]  x  1  (src/components/admin/AdminBlogAutomation.tsx)
+>> MISSING  bg-[#d9a871]  x  1  (src/components/admin/AdminDashboard.tsx)
+>> MISSING  bg-[#eff9ef]  x  1  (src/components/admin/AdminDashboard.tsx)
+>> MISSING  bg-[#f7faf6]  x  1  (src/components/admin/AdminDashboard.tsx)
+>> MISSING  bg-[#d8ead8]  x  1  (src/components/admin/AdminDashboard.tsx)
+>> MISSING  bg-[#fbeceb]  x  1  (src/components/admin/ErrorBoundary.tsx)
+>> MISSING  bg-[#f5f3ef]  x  1  (src/components/auth/SucculentAuthLoader.tsx)
+>> MISSING  bg-[#f7faf5]  x  1  (src/components/auth/SucculentAuthLoader.tsx)
+  covered  bg-[#d8d8cb]  x  1  (src/components/cart/CartClient.tsx)
+  covered  bg-[#fff1d5]  x  1  (src/components/cart/CartClient.tsx)
+  covered  bg-[#efefe7]  x  1  (src/components/cart/CartClient.tsx)
+>> MISSING  bg-[#f08a24]  x  1  (src/components/cart/CartClient.tsx)
+>> MISSING  bg-[#b8beb3]  x  1  (src/components/cart/CartClient.tsx)
+  covered  bg-[#fff8e8]  x  1  (src/components/cart/CartClient.tsx)
+  covered  bg-[#fff3dd]  x  1  (src/components/cart/CartClient.tsx)
+>> MISSING  bg-[#102733]  x  1  (src/components/chatbot/ChatInput.tsx)
+>> MISSING  bg-[#25d366]  x  1  (src/app/contact/page.tsx, src/components/chatbot/ChatMessage.tsx)
+>> MISSING  bg-[#ff6b6b]  x  1  (src/components/chatbot/ChatMessage.tsx)
+>> MISSING  bg-[#0a1a24]  x  1  (src/components/chatbot/ChatWindow.tsx)
+>> MISSING  bg-[#0f2531]  x  1  (src/components/chatbot/ChatWindow.tsx)
+>> MISSING  bg-[#102732]  x  1  (src/components/chatbot/ChatWindow.tsx)
+>> MISSING  bg-[#0f2430]  x  1  (src/components/chatbot/ChatWindow.tsx)
+>> MISSING  bg-[#24362d]  x  1  (src/components/checkout/CheckoutClient.tsx)
+>> MISSING  bg-[#101613]  x  1  (src/components/combo/ComboBuilder.tsx)
+>> MISSING  bg-[#2f4a3a]  x  1  (src/components/home/HeroSection.tsx)
+>> MISSING  bg-[#263d30]  x  1  (src/components/home/HeroSection.tsx)
+>> MISSING  bg-[#d8cab7]  x  1  (src/components/layout/NewsletterSignup.tsx)
+>> MISSING  bg-[#dee9d7]  x  1  (src/components/layout/NewsletterSignup.tsx)
+>> MISSING  bg-[#f0dfcc]  x  1  (src/components/layout/NewsletterSignup.tsx)
+>> MISSING  bg-[#355949]  x  1  (src/components/layout/NewsletterSignup.tsx)
+>> MISSING  bg-[#0c1c26]  x  1  (src/components/order-tracker/OrderTrackerClient.tsx)
+>> MISSING  bg-[#0f2130]  x  1  (src/components/order-tracker/OrderTrackerClient.tsx)
+>> MISSING  bg-[#102637]  x  1  (src/components/order-tracker/OrderTrackerClient.tsx)
+>> MISSING  bg-[#111827]  x  1  (src/components/product/ProductFaqs.tsx)
+  covered  bg-[#f2ede5]  x  1  (src/components/product/RecommendedProducts.tsx)
+  covered  bg-[#e9e2d6]  x  1  (src/components/product/RecommendedProducts.tsx)
+>> MISSING  bg-[#2b4136]  x  1  (src/components/product/RecommendedProducts.tsx)
+>> MISSING  bg-[#0c1d27]  x  1  (src/components/product/UnifiedProductDetail.tsx)
+  covered  bg-[#f6f2eb]  x  1  (src/components/reviews/OrderProductReviewBox.tsx)
+>> MISSING  bg-[#8a3a32]  x  1  (src/components/reviews/ProductReviewsSection.tsx)
+>> MISSING  bg-[#7a0019]  x  1  (src/components/wishlist/WishlistButton.tsx, src/components/wishlist/WishlistCounter.tsx, src/components/wishlist/WishlistItem.tsx)
+
+bg-[#hex] distinct: 101, MISSING from .dark layer: 86
+
+==============================================================================
+DISTINCT text-[#hex] : count of uncovered
+==============================================================================
+text-[#hex] distinct: 120, MISSING: 87
+top uncovered: #718076(x33) #68776d(x17) #8fa396(x11) #24563e(x10) #44584c(x10) #78887d(x10) #b3574e(x9) #243129(x9) #256b3a(x8) #173c2d(x8) #526257(x6) #1c3328(x6) #617366(x6) #6a7c70(x5) #9fd0ac(x5) #8fbf94(x4) #26382f(x4) #96691f(x4) #1f4a35(x4) #6e826f(x4) #a7b3aa(x4) #c9d6cd(x4) #3f5247(x4) #d7e4da(x3) #5c6b61(x3)
+
+==============================================================================
+DISTINCT border-[#hex] : count of uncovered
+==============================================================================
+border-[#hex] distinct: 64, MISSING: 53
+#e8dece(x33) #d7e0d9(x18)* #e3d9ca(x13) #2b3a30(x12)* #edf0ed(x11)* #ccbba4(x8) #e2d8c8(x8) #24563e(x6)* #e2e8e2(x6)* #cfd7ca(x5)* #d2c6b6(x5) #f0e2e2(x5)* #2b4a3d(x4)* #d9ccb9(x4)* #e6ddcf(x4) #ddd2c2(x4)* #eef2ee(x4)* #d6ddd8(x4)* #e9dece(x3) #e4ddd2(x3) #6f9878(x2)* #d5dfd5(x2)* #dce5dc(x2)* #bdc9c2(x2)* #ddd2c1(x2)* #2f4a3a(x2)* #cdbba2(x2)* #cdbca7(x2) #d8cbb9(x1)* #e2d8c9(x1)* #ded2c1(x1)* #e8ddce(x1)* #ebe2d4(x1)* #e6dccd(x1)* #eadfce(x1)* #d9dcca(x1)* #c9d6cc(x1)* #f3e2e0(x1)* #1f4a35(x1)* #9fd0ac(x1)* #3d2a28(x1)* #d5e4d7(x1)* #c9d5cb(x1)* #173c2d(x1)* #ac4b2c(x1)* #e2d7c8(x1)* #ebe1d2(x1)* #d2c5b4(x1) #d7e3d6(x1)* #eadfcf(x1)* #ffe5b8(x1)* #d4d7cc(x1)* #ffd6c7(x1)* #ffd8ac(x1)* #d7cdbf(x1)* #cad6c5(x1)* #d8d1c4(x1)* #d8c8b2(x1)* #d6c5ae(x1)* #d7c8b6(x1) #2f4a3f(x1)* #d7c8b4(x1)* #e8ddd0(x1)* #e4dbcd(x1)*
+
+==============================================================================
+FILES BY HARDCODED-COLOUR VOLUME  (* = has NO dark: variants at all)
+==============================================================================
+TOTAL	bg#	txt#	bdr#	gray	white	dark:	blur	file
+136	33	42	13	3	45	0*	3	src/components/admin/AdminDashboard.tsx
+127	35	59	28	2	3	62	1	src/components/admin/AdminBlogAutomation.tsx
+83	23	30	14	0	16	0*	0	src/components/admin/AdminArticleEditor.tsx
+65	24	28	8	0	5	0*	0	src/components/admin/AdminAutomationSection.tsx
+59	13	22	13	0	11	10	4	src/app/account/orders/[order]/page.tsx
+56	17	25	8	0	6	0*	0	src/components/admin/AdminBlogSection.tsx
+47	3	23	12	0	9	0*	0	src/app/shipping-returns/page.tsx
+43	2	16	13	0	12	0*	0	src/app/terms-and-conditions/page.tsx
+40	2	15	12	0	11	0*	0	src/app/privacy-policy/page.tsx
+39	2	0	3	30	4	27	2	src/components/layout/MobileDrawer.tsx
+38	2	18	8	0	10	0*	0	src/components/auth/OrderLineItemsClient.tsx
+37	17	9	5	0	6	18	3	src/components/order-tracker/OrderTrackerClient.tsx
+34	2	13	10	0	9	0*	0	src/app/refund-policy/page.tsx
+34	1	4	3	8	18	32	0	src/components/product/RevampedProductDetail.tsx
+32	1	4	3	16	8	0*	0	src/components/checkout/CheckoutClient.tsx
+31	5	0	0	24	2	23	0	src/components/ui/SearchBar.tsx
+30	3	0	0	15	12	0*	3	src/app/about/page.tsx
+30	4	0	0	24	2	17	1	src/components/shop/FilterDrawer.tsx
+25	2	5	3	5	10	22	1	src/components/product/ProductInfo.tsx
+24	7	9	5	1	2	0*	0	src/components/cart/CartClient.tsx
+23	4	8	5	0	6	1	1	src/components/layout/NewsletterSignup.tsx
+22	1	11	0	0	10	25	1	src/components/product/ProductFaqs.tsx
+22	0	0	0	22	0	15	0	src/components/shop/Pagination.tsx
+20	11	2	4	0	3	0*	0	src/components/product/RecommendedProducts.tsx
+19	0	1	0	13	5	0*	0	src/app/admin/orders/[id]/page.tsx
+19	0	8	6	0	5	0*	0	src/app/order-placed/OrderPlacedStatusCard.tsx
+19	2	9	5	0	3	0*	0	src/components/auth/OrdersListClient.tsx
+19	1	2	0	9	7	4	2	src/components/layout/Header.tsx
+18	0	0	0	17	1	0*	0	src/app/admin/products/page.tsx
+18	2	0	0	12	4	9	0	src/components/ui/DarkModeToggle.tsx
+16	0	0	0	15	1	0*	0	src/components/BulkEditModal.tsx
+15	0	6	4	0	5	0*	0	src/components/order-tracker/TrackingEntriesClient.tsx
+14	2	4	2	3	3	0*	0	src/components/reviews/ProductReviewsSection.tsx
+13	0	5	1	0	7	0*	0	src/app/contact/page.tsx
+12	0	0	0	0	12	0*	6	src/components/auth/AccountDashboard.tsx
+12	3	0	0	7	2	10	0	src/components/ui/Dropdown.tsx
+11	0	4	3	0	4	0*	0	src/app/collections/succulents/[handle]/page.tsx
+11	0	4	3	0	4	0*	0	src/app/collections/[collectionHandle]/[plantHandle]/page.tsx
+11	4	0	0	2	5	10	4	src/components/chatbot/ChatWindow.tsx
+11	2	0	0	6	3	15	1	src/components/home/CategoryGrid.tsx
+11	3	0	0	3	5	9	2	src/components/product/UnifiedProductDetail.tsx
+11	1	3	2	2	3	0*	0	src/components/reviews/OrderProductReviewBox.tsx
+10	3	3	3	0	1	0*	0	src/components/admin/MediaLibrary.tsx
+10	2	4	2	0	2	0*	1	src/components/home/HeroSection.tsx
+9	0	0	0	7	2	2	1	src/components/shop/CollectionGridClient.tsx
+9	0	0	0	4	5	11	4	src/components/shop/ProductCard.tsx
+8	0	0	0	7	1	0*	0	src/components/admin/AdminOrderDetailModal.tsx
+8	0	0	0	8	0	5	0	src/components/home/BrandStory.tsx
+7	3	1	1	0	2	0*	1	src/components/admin/AdminTestOrderModal.tsx
+7	2	3	2	0	0	0*	0	src/components/admin/ErrorBoundary.tsx
+7	2	2	1	1	1	0*	1	src/components/combo/ComboBuilder.tsx
+6	3	0	1	0	2	2	1	src/components/auth/SucculentAuthLoader.tsx
+6	0	0	0	2	4	0*	0	src/components/auth/WalletSection.tsx
+6	0	0	0	6	0	5	0	src/components/home/Testimonials.tsx
+5	1	1	0	0	3	0*	0	src/app/combo/page.tsx
+5	0	0	0	4	1	11	0	src/app/page.tsx
+5	0	1	3	0	1	0*	0	src/components/auth/LoginForm.tsx
+5	0	1	3	0	1	0*	0	src/components/auth/SignupForm.tsx
+5	2	0	0	0	3	1	1	src/components/chatbot/ChatMessage.tsx
+5	1	0	0	3	1	5	0	src/components/home/BestSellerGrid.tsx
+5	0	2	0	0	3	0*	1	src/components/home/ComboTeaserBanner.tsx
+5	0	0	0	2	3	6	0	src/components/shop/QuickAddButton.tsx
+4	1	0	0	2	1	11	1	src/app/collections/page.tsx
+4	0	0	0	4	0	0*	0	src/components/admin/AdminWhatsAppMessage.tsx
+4	0	0	0	3	1	0*	0	src/components/cart/CartItem.tsx
+4	0	0	0	3	1	0*	0	src/components/cart/CartSummary.tsx
+4	1	0	0	2	1	3	1	src/components/chatbot/ChatInput.tsx
+4	1	1	0	0	2	0*	1	src/components/home/CashbackStrip.tsx
+4	0	0	0	0	4	0*	1	src/components/home/PinnedArticlesRailArrows.tsx
+4	0	2	0	0	2	2	2	src/components/product/ImageGallery.tsx
+4	0	0	0	4	0	0*	0	src/components/product/QuantitySelector.tsx
+4	1	0	0	0	3	9	0	src/components/shop/RecentlyViewedProducts.tsx
+3	0	0	0	0	3	0*	0	src/app/account/loading.tsx
+3	0	0	0	0	3	0*	0	src/app/account/orders/page.tsx
+3	0	0	0	0	3	0*	1	src/app/plant-care/page.tsx
+3	1	0	0	1	1	3	2	src/components/collections/CollectionCards.tsx
+3	0	2	0	0	1	0*	0	src/components/wishlist/WishlistButton.tsx
+2	0	0	0	1	1	0*	0	src/app/cart/page.tsx
+2	0	0	0	0	2	0*	0	src/app/combo-builder/page.tsx
+2	2	0	0	0	0	0*	0	src/app/order-placed/page.tsx
+2	0	0	0	0	2	0*	0	src/app/policies/page.tsx
+2	1	0	0	1	0	0*	0	src/components/admin/AdminResendEmailButton.tsx
+2	0	0	0	0	2	0*	1	src/components/chatbot/ChatbotButton.tsx
+2	0	0	0	1	1	0*	0	src/components/contact/ContactFormClient.tsx
+2	0	1	0	0	1	0*	0	src/components/home/InstagramFeed.tsx
+2	0	0	0	0	2	0*	1	src/components/plant-care/ArticleLanguageExperience.tsx
+2	0	0	0	0	2	0*	0	src/components/shared/PincodeServiceabilityCard.tsx
+2	0	0	0	2	0	4	0	src/components/ui/LazyClientSection.tsx
+2	0	1	0	0	1	0*	0	src/components/wishlist/WishlistItem.tsx
+2	0	0	0	0	2	0*	0	src/components/wishlist/WishlistPage.tsx
+1	0	0	0	0	1	0*	0	src/app/collections/beginner-friendly/page.tsx
+1	0	0	0	1	0	0*	0	src/app/products/[handle]/page.tsx
+1	0	0	0	0	1	0*	0	src/app/shop/page.tsx
+1	0	0	0	0	1	0*	0	src/app/wishlist/loading.tsx
+1	0	0	0	1	0	0*	0	src/components/admin/AdminOrderTrackingForm.tsx
+1	0	0	0	0	1	6	1	src/components/layout/Footer.tsx
+1	0	0	0	0	1	5	1	src/components/product/ProductTabs.tsx
+1	0	0	0	1	0	1	0	src/components/shared/PriceWithDiscount.tsx
+1	0	0	0	1	0	0*	0	src/components/TrustBar.tsx
+1	1	0	0	0	0	0*	0	src/components/wishlist/WishlistCounter.tsx
+
+files with hardcoded colours: 100 / 204 scanned
+files with ZERO dark: variants: 65

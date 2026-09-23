@@ -12,7 +12,7 @@ const heroImage = {
 
 export default function HeroSection() {
   return (
-    <section className="relative flex w-full min-h-[520px] items-center overflow-hidden sm:min-h-[560px] lg:min-h-[640px]">
+    <section className="ss-hero relative flex w-full min-h-[520px] items-center overflow-hidden sm:min-h-[560px] lg:min-h-[640px]">
       <Image
         src={heroImage.src}
         alt={heroImage.alt}

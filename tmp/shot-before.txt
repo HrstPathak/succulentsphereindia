@@ -1,0 +1,4 @@
+DARK /                            1440x7050 -> tmp/shot-dark-home.png (1469kb)
+DARK /shop                        1440x4189 -> tmp/shot-dark-shop.png (1026kb)
+DARK /collections                 1440x2188 -> tmp/shot-dark-collections.png (1028kb)
+DARK /cart                        1440x1458 -> tmp/shot-dark-cart.png (189kb)

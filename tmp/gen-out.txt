@@ -1,0 +1,6 @@
+groups (distinct target values) : 35
+remapped surface classes        : 46
+light gradients rewritten       : 45
+interactive states rewritten    : 20
+left untouched (already dark)   : 421
+output                          : 26128 bytes

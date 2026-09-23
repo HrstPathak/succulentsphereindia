@@ -1,0 +1,1 @@
+DARK /                            1440x7050 -> tmp/shot-dark-new-home.png (3584kb)
