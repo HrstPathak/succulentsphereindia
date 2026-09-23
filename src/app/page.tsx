@@ -221,12 +221,6 @@ export default async function Home() {
         </div>
       </section>
 
-            {/* Pinned plant-care articles — premium horizontal rail */}
-      <section className={sectionSpacingClass}>
-        <div className="container mx-auto px-4">
-          <PinnedArticlesRail articles={pinnedArticleCards} />
-        </div>
-      </section>
 <section className={sectionSpacingClass}>
         <LazyOnTheFeedSection />
       </section>
@@ -234,6 +228,13 @@ export default async function Home() {
       <section className={`${sectionSpacingClass} bg-gradient-to-b from-transparent to-[var(--color-bg)]`}>
         <div className="container mx-auto px-4">
           <Testimonials />
+        </div>
+      </section>
+
+      {/* Pinned plant-care articles — premium horizontal rail */}
+      <section className={sectionSpacingClass}>
+        <div className="container mx-auto px-4">
+          <PinnedArticlesRail articles={pinnedArticleCards} />
         </div>
       </section>
 
