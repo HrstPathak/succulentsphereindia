@@ -15,10 +15,12 @@ import {
   Pin,
   PinOff,
   Plus,
+  Sparkles,
   Trash2,
 } from "lucide-react"
 import { MAX_PINNED_ARTICLES, comparePinnedOrder } from "@/lib/article-pinning"
 import AdminArticleEditor from "./AdminArticleEditor"
+import BlogPromptModal from "./BlogPromptModal"
 
 type Article = {
   id: string
@@ -118,6 +120,7 @@ function BlogList({
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all")
   const [pinBusyId, setPinBusyId] = useState<string | null>(null)
+  const [promptOpen, setPromptOpen] = useState(false)
 
   async function load(options: { silent?: boolean } = {}) {
     if (!options.silent) setLoading(true)
@@ -296,6 +299,28 @@ return (
         <StatCard icon={FileText} label="Drafts" value={draftCount} tint="bg-[#e8bf92]" />
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[26px] border border-white bg-[linear-gradient(135deg,#f6fbf5,#e9f3e8)] p-5 shadow-[12px_14px_24px_rgba(65,84,70,.12)]">
+        <div className="flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#24563e] text-white">
+            <Sparkles size={18} />
+          </span>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[.28em] text-[#6e826f]">Prompt</p>
+            <p className="mt-0.5 font-serif text-lg text-[#173c2d]">Blog Post Generation Prompt</p>
+            <p className="mt-1 max-w-2xl text-xs text-[#68776d]">
+              Master template for every new post — open it to copy the whole prompt, or edit it and the new version is
+              saved for the whole team.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => setPromptOpen(true)}
+          className="inline-flex items-center gap-2 rounded-2xl border border-[#24563e] bg-white px-4 py-2.5 text-sm font-bold text-[#24563e] transition hover:bg-[#f0f7f1]"
+        >
+          <Sparkles size={14} /> Open prompt
+        </button>
+      </div>
+
       <div className="overflow-hidden rounded-[26px] border border-white bg-white shadow-[12px_14px_24px_rgba(65,84,70,.13)]">
         <div className="flex flex-wrap items-center gap-2 border-b border-[#eef2ee] bg-[#f5f8f4] px-4 py-3">
           {(["all", "published", "draft"] as const).map((filter) => (
@@ -464,6 +489,7 @@ return (
         </div>
       </div>
 
+      <BlogPromptModal open={promptOpen} onClose={() => setPromptOpen(false)} />
       <ToastContainer position="bottom-right" />
     </div>
   )
