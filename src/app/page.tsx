@@ -15,6 +15,7 @@ import {
   LazyRecentlyViewedSection,
 } from "../components/home/LazySections";
 import PinnedArticlesRail from "../components/home/PinnedArticlesRail";
+import CashbackStrip from "../components/home/CashbackStrip";
 import { fetchPinnedPlantCareArticles } from "@/lib/commerce";
 import type { PinnedArticleCard } from "../components/home/PinnedArticlesRail";
 
@@ -168,7 +169,10 @@ export default async function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(websiteJsonLd) }} />
       <header />
       <HeroSection />
-      
+
+      {/* Wallet cashback promo strip — sits directly under the hero */}
+      <CashbackStrip />
+
       <section className={`${sectionSpacingClass} bg-gradient-to-b from-transparent via-[var(--color-bg)] to-transparent`}>
         <div className="container mx-auto px-4">
           <CategoryGrid />
