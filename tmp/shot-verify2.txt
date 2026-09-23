@@ -1,7 +1,0 @@
-LIGHT /                            1440x1080 -> tmp/shot-verify-home.png (104kb)
-LIGHT /shop                        1440x1080 -> tmp/shot-verify-shop.png (104kb)
-LIGHT /collections                 1440x1080 -> tmp/shot-verify-collections.png (104kb)
-LIGHT /cart                        1440x1080 -> tmp/shot-verify-cart.png (104kb)
-page errors: Error: ./src/styles/globals.css
-Error evaluating Node.js code
-CssSyntaxError: D:\Succulent Sphere - Copy\SucculentSphere

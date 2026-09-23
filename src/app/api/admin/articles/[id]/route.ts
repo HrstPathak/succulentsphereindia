@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
+import { assertPinCapacity, compactPinnedOrder, PinLimitError, pinArticleToTop } from "@/lib/article-pin-store";
 
 const AUTH_ERROR = "ADMIN_REQUIRED";
 
@@ -87,15 +88,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       updatedAt: now,
     }
 
-    // Pin/unpin support — EXACTLY ONE article may be pinned at a time:
-    // the home page rail shows only the pinned blog, so pinning this
-    // article also unpins every other article (atomic batch below).
+    // Pin support — SEVERAL blogs can be pinned at once (capped by the rail
+    // capacity). A newly pinned blog takes the top slot of the home page rail
+    // and every other pin keeps its relative order; unpinning closes the gap.
     // Pinned articles also float to the top of /plant-care.
+    const wasPinned = existing.pinned === true
+    const isNowPinned = body.pinned === true
     if (body.pinned !== undefined) {
-      update.pinned = body.pinned === true
-      if (update.pinned) {
-        // Refresh pinnedAt so the most recently pinned article always wins.
-        update.pinnedAt = now
+      update.pinned = isNowPinned
+      if (isNowPinned) {
+        if (!wasPinned) {
+          await assertPinCapacity(db, id)
+          update.pinnedAt = now
+        }
+      } else {
+        update.pinnedAt = null
+        update.pinnedOrder = null
       }
     }
 
@@ -112,24 +120,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       update.publishedAt = now
     }
 
-    if (update.pinned === true) {
-      // Single-pin enforcement: clear the pin on every other article in the
-      // same atomic batch as this update, so the home page can never show
-      // more than one pinned blog.
-      const others = await db.collection("articles").where("pinned", "==", true).limit(100).get()
-      const batch = db.batch()
-      batch.update(ref, update)
-      for (const doc of others.docs) {
-        if (doc.id !== id) batch.update(doc.ref, { pinned: false, pinnedAt: null })
-      }
-      await batch.commit()
-    } else {
-      await ref.update(update)
+    await ref.update(update)
+
+    // Keep the rail order consistent after a pin/unpin (non-fatal to the save
+    // itself: the article fields above are already persisted).
+    if (body.pinned !== undefined) {
+      if (isNowPinned && !wasPinned) await pinArticleToTop(db, id)
+      else if (!isNowPinned && wasPinned) await compactPinnedOrder(db)
     }
+
     revalidateBlogPages();
     const updated = await ref.get();
     return NextResponse.json({ ok: true, article: { id: updated.id, ...updated.data() } })
   } catch (error) {
+    if (error instanceof PinLimitError) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ error: authMessage(error, "Unable to save article.") }, { status: authStatus(error) })
   }
 }

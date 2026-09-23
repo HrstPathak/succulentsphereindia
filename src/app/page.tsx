@@ -17,6 +17,7 @@ import {
 import PinnedArticlesRail from "../components/home/PinnedArticlesRail";
 import CashbackStrip from "../components/home/CashbackStrip";
 import { fetchPinnedPlantCareArticles } from "@/lib/commerce";
+import { MAX_PINNED_ARTICLES } from "@/lib/article-pinning";
 import type { PinnedArticleCard } from "../components/home/PinnedArticlesRail";
 
 const BrandStory = dynamic(() => import("../components/home/BrandStory"), {
@@ -147,11 +148,11 @@ export default async function Home() {
   const bestSellerProducts = await getHomeBestSellerProducts();
   const sectionSpacingClass = "py-10 md:py-14 lg:py-16";
 
-  // Only the single pinned plant-care article shows on the home page rail
-  // (fails soft → empty rail).
+  // Every pinned plant-care article shows on the home page rail, in the order
+  // the admin arranged them (fails soft → empty rail).
   let pinnedArticleCards: PinnedArticleCard[] = [];
   try {
-    const pinned = await fetchPinnedPlantCareArticles(1);
+    const pinned = await fetchPinnedPlantCareArticles(MAX_PINNED_ARTICLES);
     pinnedArticleCards = pinned.map((a) => ({
       id: a.id,
       handle: a.handle,

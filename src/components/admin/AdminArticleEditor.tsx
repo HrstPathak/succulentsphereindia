@@ -22,11 +22,14 @@ import {
   List,
   ListOrdered,
   Loader2,
+  RefreshCw,
   PenLine,
   Save,
   Search,
 } from "lucide-react"
 import MediaLibrary from "./MediaLibrary"
+import AutoFillBlogModal from "./AutoFillBlogModal"
+import type { ParsedBlogContent } from "@/lib/blog-content-parser"
 
 type ArticleForm = {
   title: string
@@ -191,6 +194,56 @@ async function loadArticle() {
     }
   }
 
+  // Auto-fill from pasted HTML metadata
+  const [autoFillOpen, setAutoFillOpen] = useState(false)
+  function handleAutoFill(parsed: ParsedBlogContent, applyHero: boolean) {
+    const contentHtml = parsed.contentHtml || "<p></p>"
+
+    // Pasted author HTML (divs, tables, custom classes…) does not survive a
+    // rich-text round-trip, so the body always loads in the raw HTML editor.
+    setHtmlMode(true)
+    setPreviewMode(false)
+
+    // Keep TipTap in sync as well: it owns its own document, so without this
+    // the rich-text view would keep the previous (empty) content and the very
+    // next keystroke would overwrite form.contentHtml with it.
+    if (!isFullHtmlDoc(contentHtml)) {
+      editor?.commands.setContent(contentHtml, { emitUpdate: false })
+    }
+
+    const heroUrl = (parsed.heroImage || "").trim()
+    const heroUsable = /^https?:\/\//i.test(heroUrl)
+
+    setForm((prev) => {
+      // Slug follows the parsed title for new articles — a slug the author
+      // typed by hand (or an existing article's URL) is never overwritten.
+      const nextTitle = parsed.title.trim() || prev.title
+      const next: ArticleForm = {
+        ...prev,
+        title: nextTitle,
+        handle: handleTouched && prev.handle ? prev.handle : slugify(nextTitle),
+        excerpt: parsed.excerpt || prev.excerpt,
+        seoTitle: parsed.seoTitle || prev.seoTitle,
+        seoDescription: parsed.seoDescription || prev.seoDescription,
+        tags: parsed.tags.length > 0 ? parsed.tags : prev.tags,
+        contentHtml,
+      }
+      if (applyHero && heroUsable) {
+        next.image = { url: heroUrl, altText: nextTitle || "Cover image" }
+      }
+      return next
+    })
+
+    if (applyHero && heroUrl && !heroUsable) {
+      toast.info("That cover image is not a public http(s) URL — upload it from the Media Library instead.")
+    }
+    toast.success(
+      applyHero && heroUsable
+        ? "Loaded from content — body HTML, slug, SEO, tags and cover image filled"
+        : "Loaded from content — body HTML, slug, SEO and tags filled",
+    )
+  }
+
   function insertImageIntoEditor(url: string, alt: string) {
     editor?.chain().focus().setImage({ src: url, alt }).run()
   }
@@ -230,6 +283,13 @@ return (
             className="flex items-center gap-2 rounded-2xl bg-[#24563e] px-4 py-2.5 text-sm font-bold text-white shadow-[0_5px_0_#173c2d] transition hover:bg-[#1f4a35] active:translate-y-1 active:shadow-none disabled:opacity-50"
           >
             <Save size={15} /> {saving ? "Publishing…" : "Publish"}
+          </button>
+          <button
+            onClick={() => setAutoFillOpen(true)}
+            className="rounded-2xl border border-[#d7e0d9] bg-white px-4 py-2.5 text-sm font-bold text-[#44584c] transition hover:border-[#24563e] hover:text-[#24563e] disabled:opacity-50"
+            title="Extract title, excerpt, SEO, tags and clean body from HTML comments"
+          >
+            <RefreshCw size={14} className="mr-1.5" /> Auto-fill from content
           </button>
         </div>
       </div>
@@ -399,6 +459,12 @@ return (
         </div>
       </div>
 
+      <AutoFillBlogModal
+        open={autoFillOpen}
+        onClose={() => setAutoFillOpen(false)}
+        initialHtml={form.contentHtml}
+        onAutoFill={handleAutoFill}
+      />
       <MediaLibrary
         isOpen={mediaOpen}
         onClose={() => setMediaOpen(false)}

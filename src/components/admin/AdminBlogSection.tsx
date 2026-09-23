@@ -4,6 +4,8 @@ import { ComponentType, useEffect, useMemo, useState } from "react"
 import { toast, ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import {
+  ArrowDown,
+  ArrowUp,
   BookOpenText,
   CalendarDays,
   CheckCircle2,
@@ -15,6 +17,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react"
+import { MAX_PINNED_ARTICLES, comparePinnedOrder } from "@/lib/article-pinning"
 import AdminArticleEditor from "./AdminArticleEditor"
 
 type Article = {
@@ -24,6 +27,8 @@ type Article = {
   status: string
   updatedAt: string
   pinned?: boolean
+  pinnedOrder?: number
+  pinnedAt?: string
   image?: { url: string; altText?: string } | null
 }
 
@@ -112,9 +117,10 @@ function BlogList({
   const [items, setItems] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all")
+  const [pinBusyId, setPinBusyId] = useState<string | null>(null)
 
-  async function load() {
-    setLoading(true)
+  async function load(options: { silent?: boolean } = {}) {
+    if (!options.silent) setLoading(true)
     try {
       const res = await fetch("/api/admin/articles")
       const json = await res.json()
@@ -122,7 +128,7 @@ function BlogList({
     } catch {
       toast.error("Failed to load articles")
     } finally {
-      setLoading(false)
+      if (!options.silent) setLoading(false)
     }
   }
 
@@ -130,12 +136,32 @@ function BlogList({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return items.filter((item) => {
+    const matches = items.filter((item) => {
       const matchesStatus = statusFilter === "all" || item.status === statusFilter
       const matchesQuery = !q || `${item.title} ${item.handle}`.toLowerCase().includes(q)
       return matchesStatus && matchesQuery
     })
+    // Pinned blogs always lead the table, in the exact order of the home page
+    // rail, so the ▲/▼ arrange buttons line up with what visitors see.
+    return [...matches].sort((a, b) => {
+      const pinnedA = a.pinned ? 1 : 0
+      const pinnedB = b.pinned ? 1 : 0
+      if (pinnedA !== pinnedB) return pinnedB - pinnedA
+      if (pinnedA === 1) return comparePinnedOrder(a, b)
+      return 0 // stable sort keeps the server order (most recently updated first)
+    })
   }, [items, query, statusFilter])
+
+  // Canonical rail order (unfiltered) used for the pin/unpin + reorder calls.
+  const pinnedItems = useMemo(
+    () => items.filter((item) => item.pinned).sort(comparePinnedOrder),
+    [items],
+  )
+  const pinnedCount = pinnedItems.length
+  const pinnedRank = useMemo(
+    () => new Map(pinnedItems.map((item, index) => [item.id, index + 1])),
+    [pinnedItems],
+  )
 
   const publishedCount = items.filter((i) => i.status === "published").length
   const draftCount = items.length - publishedCount
@@ -157,13 +183,29 @@ function BlogList({
   }
 
   async function handleTogglePin(item: Article) {
+    // Only published articles can be pinned (the home page rail only shows
+    // published content). Draft articles must be published first.
+    if (item.status !== "published") {
+      toast.info("Publish the article first, then pin it to the home page.")
+      return
+    }
+
     const nextPinned = !item.pinned
-    // Optimistic update — only ONE article can be pinned at a time, so
-    // pinning this row also clears the pin badge on every other row.
+    if (nextPinned && pinnedCount >= MAX_PINNED_ARTICLES) {
+      toast.info(`You can pin up to ${MAX_PINNED_ARTICLES} blogs. Unpin one to free a slot.`)
+      return
+    }
+
+    // Optimistic update — any number of blogs can be pinned together, so the
+    // other rows keep their pin. A new pin is dropped at the top of the rail
+    // (pinnedOrder -1) until the server replies with the authoritative order.
     const snapshot = items
+    setPinBusyId(item.id)
     setItems((prev) =>
       prev.map((i) =>
-        i.id === item.id ? { ...i, pinned: nextPinned } : nextPinned ? { ...i, pinned: false } : i,
+        i.id === item.id
+          ? { ...i, pinned: nextPinned, pinnedOrder: nextPinned ? -1 : undefined }
+          : i,
       ),
     )
     try {
@@ -174,15 +216,61 @@ function BlogList({
       })
       const json = await res.json()
       if (json.ok) {
-        toast.success(nextPinned ? "Pinned — the only blog shown on the home page" : "Unpinned")
+        toast.success(
+          nextPinned
+            ? "Pinned — now the first blog on the home page rail (arrange the order with the arrows)"
+            : "Unpinned from the home page",
+        )
+        // Refetch from the server so the list reflects the authoritative order
+        // (silent: keeps the table visible instead of flashing a loader).
+        await load({ silent: true })
       } else {
-        // Roll back on failure
         setItems(snapshot)
         toast.error(json.error || "Could not update pin")
       }
     } catch {
       setItems(snapshot)
       toast.error("Could not update pin")
+    } finally {
+      setPinBusyId(null)
+    }
+  }
+
+  async function handleMovePin(item: Article, direction: -1 | 1) {
+    const order = pinnedItems.map((entry) => entry.id)
+    const from = order.indexOf(item.id)
+    const to = from + direction
+    if (from < 0 || to < 0 || to >= order.length) return
+
+    const [moved] = order.splice(from, 1)
+    order.splice(to, 0, moved!)
+
+    const snapshot = items
+    setPinBusyId(item.id)
+    setItems((prev) =>
+      prev.map((i) => {
+        const index = order.indexOf(i.id)
+        return index >= 0 ? { ...i, pinnedOrder: index } : i
+      }),
+    )
+    try {
+      const res = await fetch("/api/admin/articles/pin-order", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: order }),
+      })
+      const json = await res.json()
+      if (json.ok) {
+        toast.success("Home page pin order updated")
+      } else {
+        setItems(snapshot)
+        toast.error(json.error || "Could not reorder pinned blogs")
+      }
+    } catch {
+      setItems(snapshot)
+      toast.error("Could not reorder pinned blogs")
+    } finally {
+      setPinBusyId(null)
     }
   }
 
@@ -223,6 +311,18 @@ return (
             {filtered.length} of {items.length}
           </span>
         </div>
+
+        {pinnedCount > 0 ? (
+          <p className="flex flex-wrap items-center gap-1.5 border-b border-[#eef2ee] bg-[#f9fcf8] px-4 py-2 text-[11px] font-semibold text-[#68776d]">
+            <Pin size={11} className="rotate-45 text-[#256b3a]" />
+            {pinnedCount} of {MAX_PINNED_ARTICLES} pin slots used — pinned blogs lead the list below and appear on the home page rail in this order. Use the arrows to arrange them.
+          </p>
+        ) : (
+          <p className="flex flex-wrap items-center gap-1.5 border-b border-[#eef2ee] bg-[#f9fcf8] px-4 py-2 text-[11px] font-semibold text-[#68776d]">
+            <Pin size={11} className="rotate-45 text-[#256b3a]" />
+            Pin up to {MAX_PINNED_ARTICLES} published blogs — they show on the home page rail in the order you arrange.
+          </p>
+        )}
 
 <div className="max-h-[600px] overflow-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
@@ -277,7 +377,7 @@ return (
                             /plant-care/{item.handle}
                             {item.pinned ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-[#e6f4e8] px-1.5 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wide text-[#256b3a]">
-                                <Pin size={8} className="rotate-45" /> Pinned
+                                <Pin size={8} className="rotate-45" /> Pinned #{pinnedRank.get(item.id) ?? 1}
                               </span>
                             ) : null}
                           </p>
@@ -294,10 +394,44 @@ return (
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        {item.pinned ? (
+                          <div className="flex items-center gap-0.5 rounded-xl border border-[#d7e0d9] bg-white p-0.5">
+                            <button
+                              onClick={() => void handleMovePin(item, -1)}
+                              disabled={pinBusyId !== null || (pinnedRank.get(item.id) ?? 1) <= 1}
+                              title="Move earlier on the home page rail"
+                              aria-label="Move earlier on the home page rail"
+                              className="flex h-6 w-6 items-center justify-center rounded-lg text-[#44584c] transition hover:bg-[#eef6ed] hover:text-[#24563e] disabled:cursor-not-allowed disabled:opacity-30"
+                            >
+                              <ArrowUp size={12} />
+                            </button>
+                            <button
+                              onClick={() => void handleMovePin(item, 1)}
+                              disabled={pinBusyId !== null || (pinnedRank.get(item.id) ?? 1) >= pinnedCount}
+                              title="Move later on the home page rail"
+                              aria-label="Move later on the home page rail"
+                              className="flex h-6 w-6 items-center justify-center rounded-lg text-[#44584c] transition hover:bg-[#eef6ed] hover:text-[#24563e] disabled:cursor-not-allowed disabled:opacity-30"
+                            >
+                              <ArrowDown size={12} />
+                            </button>
+                          </div>
+                        ) : null}
                         <button
                           onClick={() => void handleTogglePin(item)}
-                          disabled={item.status !== "published"}
-                          title={item.status !== "published" ? "Publish the article to pin it" : item.pinned ? "Unpin from home page" : "Pin to home page (replaces the current pin) + top of Plant Care"}
+                          disabled={
+                            item.status !== "published" ||
+                            pinBusyId !== null ||
+                            (!item.pinned && pinnedCount >= MAX_PINNED_ARTICLES)
+                          }
+                          title={
+                            item.status !== "published"
+                              ? "Publish the article to pin it to the home page"
+                              : item.pinned
+                                ? "Unpin from the home page"
+                                : pinnedCount >= MAX_PINNED_ARTICLES
+                                  ? `All ${MAX_PINNED_ARTICLES} pin slots are used — unpin a blog first`
+                                  : "Pin to the home page — multiple blogs can be pinned, newest first"
+                          }
                           className={`inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${
                             item.pinned
                               ? "border-[#24563e] bg-[#e6f4e8] text-[#24563e]"

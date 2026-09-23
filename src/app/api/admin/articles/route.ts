@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
+import { assertPinCapacity, PinLimitError, pinArticleToTop } from "@/lib/article-pin-store";
 
 const AUTH_ERROR = "ADMIN_REQUIRED";
 
@@ -49,6 +50,8 @@ export async function GET() {
         status: String(data.status || "published"),
         updatedAt: String(data.updatedAt || data.publishedAt || ""),
         pinned: data.pinned === true,
+        pinnedOrder: data.pinnedOrder === null || data.pinnedOrder === undefined || !Number.isFinite(Number(data.pinnedOrder)) ? undefined : Number(data.pinnedOrder),
+        pinnedAt: String(data.pinnedAt || ""),
         image: data.image || null,
       }
     })
@@ -75,6 +78,10 @@ export async function POST(request: Request) {
 
     const now = new Date().toISOString()
     const status = body.status === "published" ? "published" : "draft"
+    const wantsPin = body.pinned === true
+
+    // Multiple blogs can be pinned at once, but only up to the rail capacity.
+    if (wantsPin) await assertPinCapacity(db)
 
     const record = {
       title,
@@ -97,12 +104,22 @@ export async function POST(request: Request) {
       publishedAt: status === "published" ? now : "",
       createdAt: now,
       updatedAt: now,
+      pinned: wantsPin,
+      pinnedAt: wantsPin ? now : null,
+      pinnedOrder: null,
     }
 
-    const docRef = await db.collection("articles").add(record);
-    revalidateBlogPages();
-    return NextResponse.json({ ok: true, article: { id: docRef.id, ...record } })
+    const docRef = await db.collection("articles").add(record)
+
+    // A freshly pinned blog takes the first slot of the home page rail; the
+    // other pinned blogs keep their relative order underneath it.
+    if (record.pinned) await pinArticleToTop(db, docRef.id)
+
+    revalidateBlogPages()
+    const created = await docRef.get()
+    return NextResponse.json({ ok: true, article: { id: created.id, ...created.data() } })
   } catch (error) {
+    if (error instanceof PinLimitError) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ error: authMessage(error, "Unable to create article.") }, { status: authStatus(error) })
   }
 }

@@ -1,6 +1,0 @@
-DARK /                            1440x7050 -> tmp/shot-verify-home.png (3545kb)
-DARK /shop                        1440x4189 -> tmp/shot-verify-shop.png (2642kb)
-DARK /collections                 1440x2188 -> tmp/shot-verify-collections.png (1230kb)
-DARK /cart                        1440x1458 -> tmp/shot-verify-cart.png (222kb)
-DARK /wishlist                    1440x1928 -> tmp/shot-verify-wishlist.png (435kb)
-DARK /account                     1440x1928 -> tmp/shot-verify-account.png (533kb)
