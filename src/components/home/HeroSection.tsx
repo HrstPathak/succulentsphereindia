@@ -30,17 +30,21 @@ export default function HeroSection() {
 
       {/* Warm haze veil. The old flat `bg-black/20` scrim only greyed out a photo
           that is already sunlit; this keeps the left copy legible while leaving
-          the succulent and the light crisp. */}
+          the succulent and the light crisp. Kept deliberately light so the photo
+          still reads — legibility is carried by the text shadows below. */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,247,236,0.94)_0%,rgba(255,246,234,0.72)_34%,rgba(255,244,230,0.28)_58%,rgba(255,244,230,0)_82%)]"
+        className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,247,236,0.76)_0%,rgba(255,246,234,0.52)_32%,rgba(255,244,230,0.16)_56%,rgba(255,244,230,0)_78%)]"
       />
 
       <div className="container relative z-10 mx-auto flex h-full items-center px-4">
         <div className="max-w-xl text-[#1f2a1c]">
           <h1
             className="mb-5 font-serif text-[38px] leading-[1.06] tracking-tight text-[#1b2418] sm:text-[46px] md:text-[58px] lg:text-[66px]"
-            style={{ textShadow: "0 1px 2px rgba(255,255,255,0.4)" }}
+            style={{
+              textShadow:
+                "0 1px 2px rgba(255,255,255,0.55), 0 2px 16px rgba(255,255,255,0.40)",
+            }}
           >
             After Monsoon,
             <br />
@@ -49,7 +53,10 @@ export default function HeroSection() {
             for Succulents
           </h1>
 
-          <p className="mb-8 max-w-md text-base leading-relaxed text-[#33402d] sm:text-lg">
+          <p
+            className="mb-8 max-w-md text-base leading-relaxed text-[#33402d] sm:text-lg"
+            style={{ textShadow: "0 1px 2px rgba(255,255,255,0.65)" }}
+          >
             Cooler days, healthier plants, and the best time to grow your succulent
             collection.
           </p>
