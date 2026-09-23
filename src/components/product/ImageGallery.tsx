@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import type { TouchEvent } from "react";
+import type { ReactNode, TouchEvent } from "react";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
 import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
 
@@ -10,10 +10,13 @@ export default function ImageGallery({
   images,
   altPrefix,
   imageAlts = [],
+  topRightOverlay,
 }: {
   images: string[];
   altPrefix: string;
   imageAlts?: string[];
+  /** Rendered over the main image's top-right corner (e.g. wishlist heart). */
+  topRightOverlay?: ReactNode;
 }) {
   const normalizedImages = images.map((image) => normalizeImageUrl(image));
   const [index, setIndex] = useState(0);
@@ -101,6 +104,9 @@ export default function ImageGallery({
           />
         </div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/[0.12] via-black/0 to-transparent" />
+        {topRightOverlay ? (
+          <div className="absolute right-3 top-3 z-10">{topRightOverlay}</div>
+        ) : null}
         {normalizedImages.length > 1 ? (
           <>
             <button

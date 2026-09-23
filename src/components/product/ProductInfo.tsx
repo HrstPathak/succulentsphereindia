@@ -1,13 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { AlertTriangle, Droplets, ShoppingBag, Star, SunMedium } from "lucide-react";
 import QuantitySelector from "./QuantitySelector";
 import { useCart } from "../../context/CartContext";
 import { showSuccessToast } from "../../lib/toast";
-import WishlistButton from "../wishlist/WishlistButton";
 import { resolveProductImageAlt } from "@/lib/imageAlt";
 import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
 import PincodeServiceabilityCard from "@/components/shared/PincodeServiceabilityCard";
@@ -93,9 +92,6 @@ export default function ProductInfo({ product, tabsSlot }: { product: any; tabsS
   const productTags = Array.isArray(product?.tags) ? product.tags : [];
   const compareAtPrice = product?.compareAtPrice ?? null;
   const currency = String(product?.currency || "INR");
-  const ctaRef = useRef<HTMLDivElement | null>(null);
-  const [showStickyCta, setShowStickyCta] = useState(false);
-  const [hasScrolled, setHasScrolled] = useState(false);
   const wishlistProduct = {
     id: String(product?.id || ""),
     title: String(product?.title || "Untitled"),
@@ -108,39 +104,22 @@ export default function ProductInfo({ product, tabsSlot }: { product: any; tabsS
     available: !isOutOfStock,
   };
 
-  useEffect(() => {
-    const target = ctaRef.current;
-    if (!target) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setShowStickyCta(!entry.isIntersecting);
-      },
-      { threshold: 0.2 }
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setHasScrolled(window.scrollY > 120);
-    };
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
+  // The mobile sticky CTA is always visible now, so keep the floating
+  // widgets (chatbot / WhatsApp) lifted above it on small screens.
   useEffect(() => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
-    const offset = showStickyCta && hasScrolled ? "160px" : "0px";
-    root.style.setProperty("--sticky-cta-offset", offset);
+    const media = window.matchMedia("(max-width: 767px)");
+    const applyOffset = () => {
+      root.style.setProperty("--sticky-cta-offset", media.matches ? "160px" : "0px");
+    };
+    applyOffset();
+    media.addEventListener("change", applyOffset);
     return () => {
+      media.removeEventListener("change", applyOffset);
       root.style.removeProperty("--sticky-cta-offset");
     };
-  }, [showStickyCta, hasScrolled]);
+  }, []);
 
   return (
     <div>
@@ -190,7 +169,7 @@ export default function ProductInfo({ product, tabsSlot }: { product: any; tabsS
         </div>
       </div>
 
-      <div ref={ctaRef} className="mb-5 grid grid-cols-[auto,1fr,auto] items-center gap-3">
+      <div className="mb-5 grid grid-cols-[auto,1fr] items-center gap-3">
         <QuantitySelector value={qty} onChange={setQty} />
         <button
           className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition ${
@@ -219,11 +198,10 @@ export default function ProductInfo({ product, tabsSlot }: { product: any; tabsS
           {!isOutOfStock ? <ShoppingBag size={17} strokeWidth={2} aria-hidden="true" /> : null}
           {isOutOfStock ? "Sold Out" : "Add to Cart"}
         </button>
-        <WishlistButton product={wishlistProduct} />
       </div>
 
-      {showStickyCta && hasScrolled && (
-        <div className="fixed bottom-4 left-1/2 z-50 w-[min(92vw,420px)] -translate-x-1/2 md:hidden">
+      {/* Mobile sticky CTA — always visible so the buy action stays one tap away */}
+      <div className="fixed bottom-4 left-1/2 z-50 w-[min(92vw,420px)] -translate-x-1/2 md:hidden">
           <div className="relative overflow-hidden rounded-2xl border border-white/70 bg-[linear-gradient(135deg,#ffffff_0%,#f7f4ed_45%,#eef6f1_100%)] p-3 shadow-[0_28px_70px_rgba(7,20,14,0.45)] ring-1 ring-emerald-200/40 backdrop-blur-xl">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(140px_90px_at_12%_0%,rgba(10,143,106,0.22),transparent_60%),radial-gradient(180px_120px_at_100%_0%,rgba(247,231,205,0.55),transparent_60%)]" />
             <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-emerald-200/35 blur-2xl" />
@@ -294,7 +272,6 @@ export default function ProductInfo({ product, tabsSlot }: { product: any; tabsS
             </button>
           </div>
         </div>
-      )}
 
       {tabsSlot && (
         <div className="mb-5 border-t border-gray-100 pt-5 md:dark:border-[color:rgba(143,191,148,0.18)]">

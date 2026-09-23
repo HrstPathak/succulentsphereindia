@@ -3,6 +3,9 @@
 import { useEffect } from "react";
 import ImageGallery from "./ImageGallery";
 import ProductInfo from "./ProductInfo";
+import WishlistButton from "../wishlist/WishlistButton";
+import { resolveProductImageAlt } from "@/lib/imageAlt";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 import ProductTabs from "./ProductTabs";
 import TrustBar from "../TrustBar";
 import { useGtmViewItem } from "@/hooks/useGtmViewItem";
@@ -170,6 +173,17 @@ export default function UnifiedProductDetail({ product }: Props) {
 
   const images = getProductImages(product);
   const imageAlts = getProductImageAlts(product);
+  const wishlistProduct = {
+    id: String(product?.id || product?.handle || ""),
+    title: String(product?.title || "Untitled"),
+    handle: String(product?.handle || ""),
+    image: normalizeImageUrl(product?.image || images[0], "/images/succulent-collection.webp"),
+    imageAlt: resolveProductImageAlt(product?.imageAlt),
+    price: String(product?.price || "0.00"),
+    compareAtPrice: product?.compareAtPrice ?? null,
+    currency: String(product?.currency || "INR"),
+    available: product?.available !== false,
+  };
   const description = getTabDescription(product);
   const careTips = getCareTips(product);
   const shippingInfo = getShippingInfo(product);
@@ -199,7 +213,17 @@ export default function UnifiedProductDetail({ product }: Props) {
     <div className="p-0 md:rounded-3xl md:border md:border-white/40 md:bg-white/75 md:backdrop-blur-sm md:shadow-[0_10px_40px_rgba(15,23,42,0.08)] md:p-7 md:dark:border-[color:rgba(143,191,148,0.25)] md:dark:bg-[#0c1d27]/85">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
         <div className="p-0 md:rounded-2xl md:border md:border-gray-100 md:bg-white md:p-3 md:shadow-sm md:dark:border-[color:rgba(143,191,148,0.25)] md:dark:bg-[#0a1721]">
-          <ImageGallery images={images} altPrefix={product.title} imageAlts={imageAlts} />
+          <ImageGallery
+            images={images}
+            altPrefix={product.title}
+            imageAlts={imageAlts}
+            topRightOverlay={
+              <WishlistButton
+                product={wishlistProduct}
+                className="border-white/50 bg-white/75 shadow-[0_8px_20px_rgba(0,0,0,0.18)] backdrop-blur dark:border-white/20 dark:bg-white/15"
+              />
+            }
+          />
         </div>
         <div className="p-0 md:rounded-2xl md:border md:border-gray-100 md:bg-white md:p-6 md:shadow-sm md:dark:border-[color:rgba(143,191,148,0.25)] md:dark:bg-[#0a1721]">
           <ProductInfo
