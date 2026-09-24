@@ -113,13 +113,22 @@ async function callCarrierCreate(payload: Record<string, unknown>) {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
   try {
+    // Delhivery's create-order endpoint requires the classic form-encoded
+    // contract `format=json&data=<json>` (their docs: "format=json&data= this
+    // line is a must to have in the payload"). A raw JSON body is rejected with
+    // "format key missing in POST". URLSearchParams percent-encodes the data
+    // value, which also protects the `& # % ; \` characters Delhivery refuses
+    // to accept in raw payloads.
+    const form = new URLSearchParams();
+    form.set("format", "json");
+    form.set("data", JSON.stringify(payload));
     response = await fetch(DELHIVERY_CREATE_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
         Authorization: `Token ${DELHIVERY_API_TOKEN}`,
       },
-      body: JSON.stringify(payload),
+      body: form.toString(),
       cache: "no-store",
       signal: controller.signal,
     });
