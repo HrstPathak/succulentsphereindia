@@ -5,7 +5,7 @@ import { calculateOrderPricing, MIN_ORDER_AMOUNT } from "@/lib/pricing";
 import { COD_DEPOSIT_AMOUNT, COD_FEE_AMOUNT, COD_ORDER_LIMIT } from "@/lib/checkoutConfig";
 import type { OrderConfirmationEmail } from "@/lib/order-email";
 import { sendOrderConfirmationEmail } from "@/lib/order-email";
-import { enqueueShipment, processShipmentJob } from "@/lib/shipping";
+import { enqueueShipment } from "@/lib/shipping";
 import { consumeWalletHoldForOrder, creditWalletCashback } from "@/lib/wallet";
 
 export type CartItem = {
@@ -38,6 +38,7 @@ export type GatheringInfo = {
   deliverySlot?: string;
   giftWrap?: boolean;
   notes?: string;
+  deliveryVerificationStatus?: "verified" | "manual_review";
 };
 export type PaymentMode = "prepaid" | "cod_deposit";
 export type CheckoutSession = {
@@ -402,19 +403,14 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
     };
   });
 
-  // External calls must happen after the Firestore transaction has committed.
-  // The order id is now durable, and enqueueShipment is idempotent per order.
+  // External calls happen after the transaction. A paid order gets a durable
+  // shipment draft, but no AWB is allocated until an admin confirms the packed
+  // box details and explicitly chooses API creation or manual preparation.
   if (result.firebaseOrderId) {
     try {
-      const jobId = await enqueueShipment(result.firebaseOrderId, { orderNumber: result.orderNumber });
-      try {
-        await processShipmentJob(jobId);
-      } catch (error) {
-        // The durable pending job is retried by /api/shipments/process.
-        console.warn("Immediate shipment processing failed", String((error as Error).message || error));
-      }
+      await enqueueShipment(result.firebaseOrderId, { orderNumber: result.orderNumber });
     } catch (error) {
-      console.warn("Failed to enqueue shipment", String((error as Error).message || error));
+      console.warn("Failed to enqueue shipment draft", String((error as Error).message || error));
     }
   }
 

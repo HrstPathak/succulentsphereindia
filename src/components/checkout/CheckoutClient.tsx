@@ -130,6 +130,7 @@ export default function CheckoutClient() {
   const [pincodeStatus, setPincodeStatus] = useState<PincodeStatus>("idle");
   const [pincodeMessage, setPincodeMessage] = useState("");
   const [lastCheckedPincode, setLastCheckedPincode] = useState("");
+  const [lastCheckedPaymentMode, setLastCheckedPaymentMode] = useState<"prepaid" | "cod_deposit">("prepaid");
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const pendingVerificationRef = useRef<RazorpayVerificationPayload | null>(null);
   const backgroundVerificationTriggeredRef = useRef(false);
@@ -344,12 +345,16 @@ export default function CheckoutClient() {
     }));
   }
 
-  async function checkDeliveryPincode(value: string) {
+  async function checkDeliveryPincode(
+    value: string,
+    mode: "prepaid" | "cod_deposit" = paymentMethod,
+  ) {
     const pincode = normalizePincode(value);
     if (pincode.length !== 6) {
       setPincodeStatus("idle");
       setPincodeMessage("");
       setLastCheckedPincode("");
+      setLastCheckedPaymentMode("prepaid");
       return;
     }
 
@@ -357,9 +362,13 @@ export default function CheckoutClient() {
     setPincodeMessage("Checking delivery availability...");
 
     try {
-      const response = await checkPincodeServiceability(pincode);
+      const response = await checkPincodeServiceability(
+        pincode,
+        mode === "cod_deposit" ? "cod" : "prepaid",
+      );
       setLastCheckedPincode(pincode);
-      if (response.serviceable) {
+      setLastCheckedPaymentMode(mode);
+      if (response.serviceable && response.paymentServiceable !== false) {
         setPincodeStatus("serviceable");
         setInfo((prev) => ({
           ...prev,
@@ -372,6 +381,7 @@ export default function CheckoutClient() {
       setPincodeMessage(response.message);
     } catch (checkError) {
       setLastCheckedPincode(pincode);
+      setLastCheckedPaymentMode(mode);
       setPincodeStatus("error");
       setPincodeMessage((checkError as Error).message || "Unable to verify pincode right now.");
     }
@@ -385,17 +395,18 @@ export default function CheckoutClient() {
         setPincodeMessage("");
       }
       setLastCheckedPincode("");
+      setLastCheckedPaymentMode("prepaid");
       return;
     }
 
-    if (pincode === lastCheckedPincode) return;
+    if (pincode === lastCheckedPincode && paymentMethod === lastCheckedPaymentMode) return;
 
     const timer = setTimeout(() => {
-      void checkDeliveryPincode(pincode);
+      void checkDeliveryPincode(pincode, paymentMethod);
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [info.pincode, lastCheckedPincode, pincodeStatus]);
+  }, [info.pincode, lastCheckedPincode, lastCheckedPaymentMode, paymentMethod, pincodeStatus]);
 
   function validateInformation() {
     if (!info.fullName || !info.email || !info.phone || !info.address || !info.city || !info.state || !info.pincode) {
@@ -411,12 +422,18 @@ export default function CheckoutClient() {
       setError("Please wait while we verify pincode serviceability.");
       return false;
     }
-    if (lastCheckedPincode !== normalizedPincode) {
-      setError("Please verify pincode serviceability before continuing.");
+    if (lastCheckedPincode !== normalizedPincode || lastCheckedPaymentMode !== paymentMethod) {
+      setError(`Please verify ${paymentMethod === "cod_deposit" ? "COD" : "prepaid"} serviceability before continuing.`);
       return false;
     }
+    if (pincodeStatus === "error") {
+      setError(
+        "Delhivery verification is temporarily unavailable. You may continue; the order will stay pending manual serviceability review before dispatch.",
+      );
+      return true;
+    }
     if (pincodeStatus !== "serviceable") {
-      setError("This pincode is currently not serviceable for delivery.");
+      setError("This pincode is currently not serviceable for the selected payment mode.");
       return false;
     }
     setError(null);
@@ -431,6 +448,7 @@ export default function CheckoutClient() {
   }
 
   async function startPayment(mode: "prepaid" | "cod_deposit") {
+    if (!validateInformation()) return;
     if (!items.length) {
       setError("Your cart is empty.");
       return;
@@ -448,7 +466,7 @@ export default function CheckoutClient() {
     const orderTotal = mode === "cod_deposit" ? Number((total + COD_FEE_AMOUNT).toFixed(2)) : total;
 
     setLoading(true);
-    setError(null);
+    if (pincodeStatus !== "error") setError(null);
     setPaymentStatus("processing");
 
     try {
@@ -459,7 +477,11 @@ export default function CheckoutClient() {
         body: JSON.stringify({
           items,
           customer: customerPayload,
-          gathering,
+          gathering: {
+            ...gathering,
+            deliveryVerificationStatus:
+              pincodeStatus === "error" ? "manual_review" : "verified",
+          },
           paymentMode: mode,
           walletAmount: requestedWalletAmount,
         }),

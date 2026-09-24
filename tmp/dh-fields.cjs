@@ -1,0 +1,12 @@
+const fs = require('fs');
+const t = fs.readFileSync('tmp/dh-create.md', 'utf8');
+const start = t.indexOf('"shipments"');
+const end = t.indexOf('"responses"');
+const seg = t.slice(start, end > 0 ? end : start + 20000);
+const props = [...seg.matchAll(/"([a-z_0-9]+)"\s*:\s*\{\s*$/gm)].map((m) => m[1]);
+const uniq = [...new Set(props)];
+console.log('FIELD_COUNT=' + uniq.length);
+console.log(uniq.join('\n'));
+const requiredIdx = seg.indexOf('"required"');
+console.log('--- REQUIRED ---');
+console.log(seg.slice(requiredIdx, seg.indexOf(']', requiredIdx) + 1).replace(/\s+/g, ' '));

@@ -4,6 +4,22 @@ import { getFirebaseDb } from "@/lib/firebase-admin";
 import { sendTrackingEmail } from "@/lib/order-email";
 import { applyWalletOrderCancellationPolicy } from "@/lib/wallet";
 
+function cleanWaybills(values: unknown) {
+  const input = Array.isArray(values) ? values : [values];
+  return [
+    ...new Set(
+      input
+        .flatMap((value) =>
+          value && typeof value === "object"
+            ? [String((value as Record<string, unknown>).number || "")]
+            : String(value || "").split(/[\s,]+/),
+        )
+        .map((value) => value.trim())
+        .filter((value) => /^\d{10,}$/.test(value)),
+    ),
+  ];
+}
+
 export async function PATCH(request: Request) {
   try {
     await requireAdmin();
@@ -12,6 +28,7 @@ export async function PATCH(request: Request) {
       fulfillmentStatus,
       financialStatus,
       trackingNumber,
+      trackingNumbers,
       trackingUrl,
       carrier,
     } = await request.json();
@@ -29,7 +46,7 @@ export async function PATCH(request: Request) {
       updatedAt: new Date().toISOString(),
     };
     if (
-      ["UNFULFILLED", "FULFILLED", "DELIVERED", "CANCELLED"].includes(
+      ["UNFULFILLED", "READY", "FULFILLED", "SHIPPED", "DELIVERED", "CANCELLED"].includes(
         String(fulfillmentStatus || "").toUpperCase(),
       )
     )
@@ -40,31 +57,59 @@ export async function PATCH(request: Request) {
       )
     )
       update.financialStatus = String(financialStatus).toUpperCase();
-    const safeTrackingNumber = String(trackingNumber || "").trim();
-    const previousTrackingNumber = String(
-      existing.get("tracking")?.[0]?.number || "",
-    ).trim();
-    if (safeTrackingNumber)
-      update.tracking = [
-        {
-          number: safeTrackingNumber,
-          url: String(trackingUrl || "").trim(),
-          company: String(carrier || "Delhivery").trim() || "Delhivery",
-        },
-      ];
+    const previousWaybills = cleanWaybills(existing.get("tracking"));
+    const submittedWaybills = cleanWaybills(trackingNumbers || trackingNumber);
+    const waybills = [...new Set([...previousWaybills, ...submittedWaybills])];
+    const safeTrackingNumber = waybills[0] || "";
+    if (waybills.length) {
+      if (!update.fulfillmentStatus) update.fulfillmentStatus = "SHIPPED";
+      const safeUrl = String(trackingUrl || "").trim();
+      update.tracking = waybills.map((number, index) => ({
+        number,
+        url:
+          index === 0 && safeUrl
+            ? safeUrl
+            : `https://www.delhivery.com/track/package/${encodeURIComponent(number)}`,
+        company: String(carrier || "Delhivery").trim() || "Delhivery",
+      }));
+    }
     if (Object.keys(update).length === 1)
       return NextResponse.json(
         { error: "Choose an order update." },
         { status: 400 },
       );
     await orderRef.set(update, { merge: true });
+    if (safeTrackingNumber) {
+      const shipmentRef = db.collection("shipments").doc(String(id));
+      const shipmentSnap = await shipmentRef.get();
+      const shipment = shipmentSnap.exists ? shipmentSnap.data() || {} : {};
+      const existingWaybills = cleanWaybills(shipment.waybills);
+      const allWaybills = [...new Set([...existingWaybills, ...waybills])];
+      await shipmentRef.set(
+        {
+          orderId: String(id),
+          status: "done",
+          mode: shipment.mode || "manual",
+          waybills: allWaybills,
+          trackingNumbers: allWaybills,
+          trackingNumber: safeTrackingNumber,
+          trackingUrl: String(trackingUrl || "").trim(),
+          completedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true },
+      );
+    }
     const nextFulfillmentStatus = String(update.fulfillmentStatus || "").toUpperCase();
     const nextFinancialStatus = String(update.financialStatus || "").toUpperCase();
     if (nextFulfillmentStatus === "CANCELLED" || nextFinancialStatus === "REFUNDED") {
       await applyWalletOrderCancellationPolicy(String(id));
     }
     let trackingEmailSent = false;
-    if (safeTrackingNumber && safeTrackingNumber !== previousTrackingNumber) {
+    const hasNewWaybill = submittedWaybills.some(
+      (number) => !previousWaybills.includes(number),
+    );
+    if (safeTrackingNumber && hasNewWaybill) {
       const order = existing.data() || {};
       const customer = (order.customer || {}) as Record<string, unknown>;
       const recipient = String(order.emailLower || customer.email || "").trim();
@@ -94,7 +139,10 @@ export async function PATCH(request: Request) {
       },
       {
         status:
-          String((error as Error).message) === "ADMIN_REQUIRED" ? 404 : 500,
+          String((error as Error).message) === "ADMIN_REQUIRED" ||
+          String((error as Error).message) === "UNAUTHENTICATED"
+            ? 404
+            : 500,
       },
     );
   }

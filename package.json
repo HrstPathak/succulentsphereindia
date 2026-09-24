@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "firebase:auth:smoke": "node --env-file=.env.local scripts/firebase-auth-smoke.cjs",
-    "firebase:session:smoke": "node --env-file=.env.local scripts/firebase-session-handoff-smoke.cjs"
+    "firebase:session:smoke": "node --env-file=.env.local scripts/firebase-session-handoff-smoke.cjs",
+    "delhivery:shipment:test": "node scripts/delhivery-shipment-smoke.cjs"
   },
   "dependencies": {
     "@google/genai": "^2.23.0",
