@@ -7,6 +7,7 @@ import Link from "next/link";
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { useUrlQueryParams } from "@/hooks/useUrlQueryParams";
 import { showErrorToast } from "@/lib/toast";
+import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
 type SupportedLanguage = "en" | "hi";
 
@@ -341,6 +342,7 @@ export default function ArticleLanguageExperience({ article, contentHtml }: Arti
               <Image
                 src={article.image.url}
                 alt={article.image.altText || article.title}
+                unoptimized={shouldBypassImageOptimization(article.image.url)}
                 fill
                 priority
                 className="object-cover"

@@ -25,6 +25,7 @@ export default async function Page({ params }: Props) {
   const doc = await db.collection("orders").doc(id).get();
   if (!doc.exists) return <div className="p-6">Order not found.</div>;
   const order: any = doc.data();
+  const shipment = await db.collection("shipments").doc(id).get().then((s: any) => (s.exists ? s.data() : null));
 
   // compute COD metadata from line item custom attributes
   const codMeta = (() => {
@@ -95,7 +96,7 @@ export default async function Page({ params }: Props) {
                   <dd className="font-medium">{(order.tracking || []).map((t:any)=> t.number).join(', ') || '—'}</dd>
                 </div>
               </dl>
-              <AdminOrderTrackingForm id={doc.id} initialTracking={order.tracking || []} />
+              <AdminOrderTrackingForm id={doc.id} initialTracking={order.tracking || []} shipment={shipment} />
             </article>
           </div>
 

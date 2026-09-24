@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/currency";
 import { getDiscountPercent } from "@/lib/discount";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
+import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
 export type BestSellerProduct = {
   id: string;
@@ -72,6 +73,7 @@ export default function BestSellerGrid({ products }: { products: BestSellerProdu
                 loading="lazy"
                 placeholder="blur"
                 blurDataURL={SHIMMER_BLUR_DATA_URL}
+                unoptimized={shouldBypassImageOptimization(p.image)}
                 className="group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute top-3 right-3 bg-[var(--color-brand)] text-white px-3 py-1 rounded-full text-xs font-semibold ring-2 ring-white/80">

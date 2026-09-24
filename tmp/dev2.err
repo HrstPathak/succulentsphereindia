@@ -1,0 +1,270 @@
+⨯ Error: useFilters must be used within FilterProvider
+    at useFilters (src\context\FilterContext.tsx:49:11)
+    at CollectionGridClient (src\components\shop\CollectionGridClient.tsx:87:45)
+  47 |   const context = useContext(FilterContext);
+  48 |   if (!context) {
+> 49 |     throw new Error("useFilters must be used within FilterProvider");
+     |           ^
+  50 |   }
+  51 |   return context;
+  52 | } {
+  digest: '2652921704'
+}
+⨯ Error: useFilters must be used within FilterProvider
+    at useFilters (src\context\FilterContext.tsx:49:11)
+    at CollectionGridClient (src\components\shop\CollectionGridClient.tsx:87:45)
+  47 |   const context = useContext(FilterContext);
+  48 |   if (!context) {
+> 49 |     throw new Error("useFilters must be used within FilterProvider");
+     |           ^
+  50 |   }
+  51 |   return context;
+  52 | } {
+  digest: '2652921704'
+}
+⨯ ./src/components/home/BrandStory.tsx:7:10
+Ecmascript file had an error
+[0m [90m  5 |[39m
+ [90m  6 |[39m [36mconst[39m brandStoryImage [33m=[39m mediaAsset([32m"sites/images/128bdb7cd1-brand-lifestyle.png"[39m)[33m;[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [36mexport[39m [36mdefault[39m [36mfunction[39m [33mBrandStory[39m() {
+ [90m 10 |[39m   [36mreturn[39m ([0m
+
+the name `shouldBypassImageOptimization` is defined multiple times
+
+Import trace:
+  Server Component:
+    ./src/components/home/BrandStory.tsx
+    ./src/app/page.tsx
+
+
+
+./src/components/home/ComboTeaserBanner.tsx:8:10
+Ecmascript file had an error
+[0m [90m  6 |[39m
+ [90m  7 |[39m [36mconst[39m comboBannerImage [33m=[39m mediaAsset([32m"sites/images/271c9484fa-Combo_Builder.png"[39m)[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m
+ [90m 10 |[39m [36mconst[39m [33mCOMBO_BANNER_IMAGE[39m [33m=[39m mediaAsset([32m"sites/images/271c9484fa-Combo_Builder.png"[39m)[33m;[39m
+ [90m 11 |[39m[0m
+
+the name `shouldBypassImageOptimization` is defined multiple times
+
+Import trace:
+  Server Component:
+    ./src/components/home/ComboTeaserBanner.tsx
+    ./src/app/page.tsx
+
+
+
+./src/components/home/HeroSection.tsx:8:10
+Ecmascript file had an error
+[0m [90m  6 |[39m [36mimport[39m { mediaAsset } [36mfrom[39m [32m"@/lib/media"[39m[33m;[39m
+ [90m  7 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m
+ [90m 10 |[39m [36mconst[39m heroImage [33m=[39m {
+ [90m 11 |[39m   src[33m:[39m mediaAsset([32m"sites/images/HomePage/AfterMonsoonHero.webp"[39m)[33m,[39m[0m
+
+the name `shouldBypassImageOptimization` is defined multiple times
+
+Import trace:
+  Server Component:
+    ./src/components/home/HeroSection.tsx
+    ./src/app/page.tsx
+
+
+
+./src/components/home/InstagramFeed.tsx:6:7
+Ecmascript file had an error
+[0m [90m 4 |[39m [36mimport[39m { mediaAsset } [36mfrom[39m [32m"@/lib/media"[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+ [90m   |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 7 |[39m
+ [90m 8 |[39m [36mconst[39m posts [33m=[39m [[35m1[39m[33m,[39m [35m2[39m[33m,[39m [35m3[39m[33m,[39m [35m4[39m[33m,[39m [35m5[39m[33m,[39m [35m6[39m[33m,[39m [35m7[39m][33m.[39mmap((n) [33m=>[39m ({
+ [90m 9 |[39m   id[33m:[39m n[33m,[39m[0m
+
+the name `shouldBypassImageOptimization` is defined multiple times
+
+Import trace:
+  Server Component:
+    ./src/components/home/InstagramFeed.tsx
+    ./src/app/page.tsx
+
+
+
+./src/components/home/OnTheFeed.tsx:7:10
+Ecmascript file had an error
+[0m [90m  5 |[39m [36mimport[39m { mediaAsset } [36mfrom[39m [32m"@/lib/media"[39m[33m;[39m
+ [90m  6 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [90m// ─── Replace these with your hosted product/lifestyle video URLs ────────────[39m
+ [90m 10 |[39m [36mconst[39m [33mVIDEOS[39m [33m=[39m [[0m
+
+the name `shouldBypassImageOptimization` is defined multiple times
+
+Import trace:
+  Client Component Browser:
+    ./src/components/home/OnTheFeed.tsx [Client Component Browser]
+    ./src/components/home/LazySections.tsx [Client Component Browser]
+    ./src/components/home/LazySections.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+
+./src/components/home/PinnedArticlesRailArrows.tsx:9:10
+Ecmascript file had an error
+[0m [90m  7 |[39m [36mimport[39m type { [33mPinnedArticleCard[39m } [36mfrom[39m [32m"./PinnedArticlesRail"[39m[33m;[39m
+ [90m  8 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+[31m[1m>[22m[39m[90m  9 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 10 |[39m
+ [90m 11 |[39m [36mfunction[39m formatDateCard(value[33m:[39m string)[33m:[39m string {
+ [90m 12 |[39m   [36mif[39m ([33m![39mvalue) [36mreturn[39m [32m""[39m[33m;[39m[0m
+
+the name `shouldBypassImageOptimization` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/home/PinnedArticlesRailArrows.tsx [Client Component Browser]
+    ./src/components/home/PinnedArticlesRail.tsx [Client Component Browser]
+    ./src/components/home/PinnedArticlesRail.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/home/PinnedArticlesRailArrows.tsx [Client Component SSR]
+    ./src/components/home/PinnedArticlesRail.tsx [Client Component SSR]
+    ./src/components/home/PinnedArticlesRail.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+⨯ ./src/components/home/BrandStory.tsx:7:10
+Ecmascript file had an error
+[0m [90m  5 |[39m
+ [90m  6 |[39m [36mconst[39m brandStoryImage [33m=[39m mediaAsset([32m"sites/images/128bdb7cd1-brand-lifestyle.png"[39m)[33m;[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [36mexport[39m [36mdefault[39m [36mfunction[39m [33mBrandStory[39m() {
+ [90m 10 |[39m   [36mreturn[39m ([0m
+
+the name `shouldBypassImageOptimization` is defined multiple times
+
+Import trace:
+  Server Component:
+    ./src/components/home/BrandStory.tsx
+    ./src/app/page.tsx
+
+
+
+./src/components/home/ComboTeaserBanner.tsx:8:10
+Ecmascript file had an error
+[0m [90m  6 |[39m
+ [90m  7 |[39m [36mconst[39m comboBannerImage [33m=[39m mediaAsset([32m"sites/images/271c9484fa-Combo_Builder.png"[39m)[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m
+ [90m 10 |[39m [36mconst[39m [33mCOMBO_BANNER_IMAGE[39m [33m=[39m mediaAsset([32m"sites/images/271c9484fa-Combo_Builder.png"[39m)[33m;[39m
+ [90m 11 |[39m[0m
+
+the name `shouldBypassImageOptimization` is defined multiple times
+
+Import trace:
+  Server Component:
+    ./src/components/home/ComboTeaserBanner.tsx
+    ./src/app/page.tsx
+
+
+
+./src/components/home/HeroSection.tsx:8:10
+Ecmascript file had an error
+[0m [90m  6 |[39m [36mimport[39m { mediaAsset } [36mfrom[39m [32m"@/lib/media"[39m[33m;[39m
+ [90m  7 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m
+ [90m 10 |[39m [36mconst[39m heroImage [33m=[39m {
+ [90m 11 |[39m   src[33m:[39m mediaAsset([32m"sites/images/HomePage/AfterMonsoonHero.webp"[39m)[33m,[39m[0m
+
+the name `shouldBypassImageOptimization` is defined multiple times
+
+Import trace:
+  Server Component:
+    ./src/components/home/HeroSection.tsx
+    ./src/app/page.tsx
+
+
+
+./src/components/home/InstagramFeed.tsx:6:7
+Ecmascript file had an error
+[0m [90m 4 |[39m [36mimport[39m { mediaAsset } [36mfrom[39m [32m"@/lib/media"[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+ [90m   |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 7 |[39m
+ [90m 8 |[39m [36mconst[39m posts [33m=[39m [[35m1[39m[33m,[39m [35m2[39m[33m,[39m [35m3[39m[33m,[39m [35m4[39m[33m,[39m [35m5[39m[33m,[39m [35m6[39m[33m,[39m [35m7[39m][33m.[39mmap((n) [33m=>[39m ({
+ [90m 9 |[39m   id[33m:[39m n[33m,[39m[0m
+
+the name `shouldBypassImageOptimization` is defined multiple times
+
+Import trace:
+  Server Component:
+    ./src/components/home/InstagramFeed.tsx
+    ./src/app/page.tsx
+
+
+
+./src/components/home/OnTheFeed.tsx:7:10
+Ecmascript file had an error
+[0m [90m  5 |[39m [36mimport[39m { mediaAsset } [36mfrom[39m [32m"@/lib/media"[39m[33m;[39m
+ [90m  6 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [90m// ─── Replace these with your hosted product/lifestyle video URLs ────────────[39m
+ [90m 10 |[39m [36mconst[39m [33mVIDEOS[39m [33m=[39m [[0m
+
+the name `shouldBypassImageOptimization` is defined multiple times
+
+Import trace:
+  Client Component Browser:
+    ./src/components/home/OnTheFeed.tsx [Client Component Browser]
+    ./src/components/home/LazySections.tsx [Client Component Browser]
+    ./src/components/home/LazySections.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+
+./src/components/home/PinnedArticlesRailArrows.tsx:9:10
+Ecmascript file had an error
+[0m [90m  7 |[39m [36mimport[39m type { [33mPinnedArticleCard[39m } [36mfrom[39m [32m"./PinnedArticlesRail"[39m[33m;[39m
+ [90m  8 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+[31m[1m>[22m[39m[90m  9 |[39m [36mimport[39m { shouldBypassImageOptimization } [36mfrom[39m [32m"@/lib/imageUrl"[39m[33m;[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 10 |[39m
+ [90m 11 |[39m [36mfunction[39m formatDateCard(value[33m:[39m string)[33m:[39m string {
+ [90m 12 |[39m   [36mif[39m ([33m![39mvalue) [36mreturn[39m [32m""[39m[33m;[39m[0m
+
+the name `shouldBypassImageOptimization` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/home/PinnedArticlesRailArrows.tsx [Client Component Browser]
+    ./src/components/home/PinnedArticlesRail.tsx [Client Component Browser]
+    ./src/components/home/PinnedArticlesRail.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/home/PinnedArticlesRailArrows.tsx [Client Component SSR]
+    ./src/components/home/PinnedArticlesRail.tsx [Client Component SSR]
+    ./src/components/home/PinnedArticlesRail.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
 import { mediaAsset } from "@/lib/media";
+import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
 const posts = [1, 2, 3, 4, 5, 6, 7].map((n) => ({
   id: n,
@@ -29,6 +30,7 @@ export default function InstagramFeed() {
             <Image
               src={p.img}
               alt={p.alt}
+              unoptimized={shouldBypassImageOptimization(p.img)}
               width={144}
               height={144}
               style={{ objectFit: "cover" }}

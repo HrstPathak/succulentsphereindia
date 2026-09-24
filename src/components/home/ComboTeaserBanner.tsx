@@ -2,14 +2,20 @@ import Image from "next/image";
 import Link from "next/link";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
 import { mediaAsset } from "@/lib/media";
+import { shouldBypassImageOptimization } from "@/lib/imageUrl";
+
+
+
+const COMBO_BANNER_IMAGE = mediaAsset("sites/images/271c9484fa-Combo_Builder.png");
 
 export default function ComboTeaserBanner() {
   return (
     <div className="relative overflow-hidden rounded-[36px] border border-white/80 bg-[radial-gradient(120%_120%_at_10%_0%,#fff8ef_0%,#f6f1e6_42%,#e8efe8_100%)] px-6 py-12 text-[#2a2f2b] shadow-[0_30px_70px_rgba(35,40,34,0.18)] md:px-12 lg:px-16">
       <div className="pointer-events-none absolute inset-0 opacity-95">
         <Image
-          src={mediaAsset("sites/images/271c9484fa-Combo_Builder.png")}
+          src={COMBO_BANNER_IMAGE}
           alt=""
+          unoptimized={shouldBypassImageOptimization(COMBO_BANNER_IMAGE)}
           fill
           sizes="100vw"
           loading="lazy"

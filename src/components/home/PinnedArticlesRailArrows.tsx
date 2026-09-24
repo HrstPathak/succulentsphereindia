@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight, Pin } from "lucide-react";
 import type { RefObject } from "react";
 import type { PinnedArticleCard } from "./PinnedArticlesRail";
+import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
 function formatDateCard(value: string): string {
   if (!value) return "";
@@ -93,6 +94,7 @@ export function ArticleCard({ article, index }: { article: PinnedArticleCard; in
           {article.image?.url ? (
             <Image
               src={article.image.url}
+              unoptimized={shouldBypassImageOptimization(article.image.url)}
               alt={article.image.altText || article.title}
               fill
               loading={index < 2 ? "eager" : "lazy"}

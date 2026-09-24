@@ -1,7 +1,9 @@
 import Image from "next/image";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
 import { mediaAsset } from "@/lib/media";
+import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
+const brandStoryImage = mediaAsset("sites/images/128bdb7cd1-brand-lifestyle.png");
 export default function BrandStory() {
   return (
     <section aria-labelledby="our-story" className="bg-gradient-to-r from-[var(--color-bg)] dark:from-[#0a1420] to-transparent rounded-3xl p-8 md:p-12 border border-gray-100 dark:border-gray-700">
@@ -17,8 +19,9 @@ export default function BrandStory() {
         </div>
         <div className="relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-xl border border-gray-100 dark:border-gray-700">
           <Image
-            src={mediaAsset("sites/images/128bdb7cd1-brand-lifestyle.png")}
+            src={brandStoryImage}
             alt="Our story lifestyle"
+            unoptimized={shouldBypassImageOptimization(brandStoryImage)}
             fill
             style={{ objectFit: "cover" }}
             sizes="(max-width: 768px) 100vw, 50vw"

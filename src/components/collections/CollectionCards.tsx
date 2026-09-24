@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { showSuccessToast } from "../../lib/toast";
+import { shouldBypassImageOptimization } from "../../lib/imageUrl";
 
 type CollectionItem = {
   id: string;
@@ -38,6 +39,7 @@ export default function CollectionCards({ collections }: { collections: Collecti
               alt={collection.name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 20vw"
+              unoptimized={shouldBypassImageOptimization(collection.image)}
               className="object-cover transition-transform duration-700 group-hover:scale-110"
             />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,11,9,0.14)_0%,rgba(7,11,9,0.34)_48%,rgba(7,11,9,0.78)_100%)]" />

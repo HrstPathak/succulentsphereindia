@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { fetchPlantCareArticles } from "@/lib/commerce";
 import { SITE_URL } from "@/lib/seo";
+import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
 export const revalidate = 3600;
 
@@ -147,6 +148,7 @@ export default async function PlantCarePage() {
                       {article.image?.url ? (
                         <Image
                           src={article.image.url}
+                          unoptimized={shouldBypassImageOptimization(article.image.url)}
                           alt={article.image.altText || article.title}
                           fill
                           loading={article.pinned ? "eager" : "lazy"}

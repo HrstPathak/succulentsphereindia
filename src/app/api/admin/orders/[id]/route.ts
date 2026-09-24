@@ -12,7 +12,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const doc = await db.collection("orders").doc(id).get();
     if (!doc.exists) return NextResponse.json({ error: "Order not found" }, { status: 404 });
     const data = doc.data() || {};
-    return NextResponse.json({ order: data });
+    const shipmentSnap = await db.collection("shipments").doc(id).get();
+    const shipment = shipmentSnap.exists ? shipmentSnap.data() : null;
+    return NextResponse.json({ order: data, shipment });
   } catch (error) {
     return NextResponse.json({ error: String((error as Error).message || error) }, { status: 500 });
   }
