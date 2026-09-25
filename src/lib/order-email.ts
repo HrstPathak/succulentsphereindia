@@ -2,6 +2,7 @@ import "server-only";
 
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { configuredEmailProvider, sendEmail } from "@/lib/email-sender";
+import { buildDelhiveryTrackingUrl } from "@/lib/delhiveryTracking";
 
 type OrderEmailItem = { title?: string; quantity?: number; price?: string; image?: string; imageAlt?: string };
 
@@ -12,7 +13,7 @@ export type OrderConfirmationEmail = {
   customerEmail: string;
   items: OrderEmailItem[];
   total: number;
-  paymentMode: "prepaid" | "cod_deposit" | "admin_test";
+  paymentMode: "prepaid" | "cod_deposit" | "cod" | "admin_test";
   address?: string;
   city?: string;
   state?: string;
@@ -22,6 +23,8 @@ export type OrderConfirmationEmail = {
   discount?: number;
   codFee?: number;
   paymentReceived?: number;
+  codDepositAmount?: number;
+  codBalance?: number;
   walletAmountUsed?: number;
   cashbackEarned?: number;
   payableAmount?: number;
@@ -49,6 +52,10 @@ function formatInr(value: number) {
   }).format(value);
 }
 
+function isCodEmailMode(value: string) {
+  return value === "cod_deposit" || value === "cod";
+}
+
 function emailHtml(order: OrderConfirmationEmail) {
   const items = order.items
     .map((item) => `
@@ -68,12 +75,20 @@ function emailHtml(order: OrderConfirmationEmail) {
       </tr>`)
     .join("");
 
+  const isCod = isCodEmailMode(order.paymentMode);
+  const deposit = Number(order.codDepositAmount ?? (isCod ? order.paymentReceived ?? 0 : 0));
+  const balance = Number(
+    order.codBalance ??
+      (isCod ? Math.max(0, order.total - deposit - (order.walletAmountUsed || 0)) : 0),
+  );
   const paymentNote =
     order.paymentMode === "admin_test"
       ? "This is an administrator-created test order. No payment was collected and no shipment will be booked."
-      : order.paymentMode === "cod_deposit"
-        ? "Your COD security deposit was received. The remaining balance will be collected at delivery."
-        : "Your payment was received successfully.";
+      : isCod && deposit > 0
+        ? `Your COD security deposit of ${formatInr(deposit)} was received. The remaining ${formatInr(balance)} will be collected at delivery.`
+        : isCod
+          ? `This order is Cash on Delivery. The full amount of ${formatInr(balance)} will be collected at delivery.`
+          : "Your payment was received successfully.";
   const addressParts = [
     (order as any).address || order.address || (order as any).address1 || (order as any).address_line1,
     (order as any).address2 || (order as any).address_line2,
@@ -90,15 +105,17 @@ function emailHtml(order: OrderConfirmationEmail) {
   const paymentLabel =
     order.paymentMode === "admin_test"
       ? "Admin test order — no payment collected"
-      : order.paymentMode === "cod_deposit"
-        ? `Cash on Delivery — ${formatInr(order.paymentReceived ?? 0)} deposit paid; remaining balance at delivery`
+      : isCod
+        ? deposit > 0
+          ? `Cash on Delivery — ${formatInr(deposit)} deposit paid; ${formatInr(balance)} due at delivery`
+          : `Cash on Delivery — ${formatInr(balance)} due at delivery`
         : `Prepaid — ${formatInr(order.paymentReceived ?? order.total)} paid online`;
 
   const paymentSummary =
     order.paymentMode === "admin_test"
       ? "No payment was collected for this test order."
-      : order.paymentMode === "cod_deposit"
-        ? `Deposit received: ${formatInr(order.paymentReceived ?? 0)}. Remaining balance due at delivery.`
+      : isCod
+        ? `Deposit received: ${formatInr(deposit)}. Remaining balance due at delivery: ${formatInr(balance)}.`
         : `Amount paid online: ${formatInr(order.paymentReceived ?? order.total)}.`;
 
   const logoUrl = String(process.env.ORDER_EMAIL_LOGO_URL || process.env.NEXT_PUBLIC_MEDIA_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || "").trim();
@@ -158,7 +175,9 @@ function adminOrderHtml(order: OrderConfirmationEmail) {
   const codFee = Number(order.codFee || 0);
   const walletAmountUsed = Number(order.walletAmountUsed || 0);
   const cashbackEarned = Number(order.cashbackEarned || 0);
-  const amountPaid = Number(order.paymentReceived ?? order.payableAmount ?? order.total);
+  const amountPaid = isCodEmailMode(order.paymentMode)
+    ? Number(order.paymentReceived ?? 0)
+    : Number(order.paymentReceived ?? order.payableAmount ?? order.total);
   const subtotal = order.total + discount + shipping - codFee;
   const fullAddress = [
     (order as any).address || order.address || (order as any).address1 || (order as any).address_line1,
@@ -373,6 +392,120 @@ export async function sendOrderConfirmationEmail(
   }
 }
 
+export type OrderLifecycleStatus = "IN_TRANSIT" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED";
+
+const LIFECYCLE_COPY: Record<
+  OrderLifecycleStatus,
+  { subject: string; heading: string; intro: string; detail: string; accent: string; button?: string }
+> = {
+  IN_TRANSIT: {
+    subject: "is on its way",
+    heading: "Your plants have left our studio",
+    intro: "Good news — your plants are on the move.",
+    detail:
+      "We have packed your plants carefully and handed them to the courier. They are now travelling to you.",
+    accent: "#1d573b",
+  },
+  OUT_FOR_DELIVERY: {
+    subject: "is out for delivery",
+    heading: "Your plants are out for delivery today",
+    intro: "Your plants are with the delivery agent and should reach you today.",
+    detail:
+      "Please keep your phone nearby. The agent may call before arriving, and cash on delivery payments are collected at the door.",
+    accent: "#1d573b",
+  },
+  DELIVERED: {
+    subject: "was delivered",
+    heading: "Your plants have arrived",
+    intro: "Your order has been delivered. We hope the plants bring you a lot of joy.",
+    detail:
+      "A little care goes a long way — place succulents in bright, indirect light and water them only when the soil is fully dry.",
+    accent: "#1d4c38",
+  },
+  CANCELLED: {
+    subject: "has been cancelled",
+    heading: "Your order has been cancelled",
+    intro: "We are sorry — your order has been cancelled.",
+    detail:
+      "If you were charged online, the amount is released back to your original payment method and usually reflects in 5–7 business days. Any prepaid amount adjusted against cash on delivery is returned by refund.",
+    accent: "#a3402f",
+  },
+};
+
+/**
+ * Sends the lifecycle email for a manual status change made by an admin
+ * (in transit, out for delivery, delivered, cancelled). Returns the same shape
+ * as the other mail helpers so callers can report sent/skipped/failed.
+ */
+export async function sendOrderStatusEmail(input: {
+  orderId: string;
+  orderNumber: number;
+  customerName: string;
+  customerEmail: string;
+  status: OrderLifecycleStatus;
+  trackingNumber?: string;
+  trackingUrl?: string;
+  amountDue?: number;
+}) {
+  const copy = LIFECYCLE_COPY[input.status];
+  if (!configuredEmailProvider()) return { sent: false, skipped: true };
+
+  const trackingUrl =
+    input.trackingUrl || (input.trackingNumber ? buildDelhiveryTrackingUrl(input.trackingNumber) : "");
+  const dueNote =
+    input.amountDue && input.amountDue > 0
+      ? `<p style="margin:20px 0 0;padding:16px;border-radius:12px;background:#fdf6ec;border:1px solid #f0e0c4;font-size:14px;color:#7a5a1e">Please keep <strong style="color:#5c4212">${escapeHtml(
+          `₹${Number(input.amountDue).toFixed(2)}`,
+        )}</strong> ready for the delivery agent.</p>`
+      : "";
+
+  const html = `<!doctype html><html><body style="margin:0;background:#f4f6f2;font-family:Arial,sans-serif;color:#20352a"><main style="max-width:620px;margin:28px auto;background:#fff;border:1px solid #e2e8e1;border-radius:20px;overflow:hidden"><header style="padding:30px;background:linear-gradient(135deg,#173c2d,#356649);color:#fff"><p style="margin:0;font-size:11px;font-weight:bold;letter-spacing:2px">SUCCULENT SPHERE</p><h1 style="margin:12px 0 0;font-size:26px">${escapeHtml(copy.heading)}</h1></header><section style="padding:30px"><p style="font-size:16px">Hi ${escapeHtml(
+    input.customerName || "there",
+  )},</p><p>${escapeHtml(copy.intro)}</p><p>Order <strong>#${escapeHtml(input.orderNumber)}</strong> ${escapeHtml(copy.subject)}.</p><p style="color:#607267">${escapeHtml(copy.detail)}</p>${dueNote}${
+    trackingUrl
+      ? `<p style="margin:24px 0"><a href="${escapeHtml(trackingUrl)}" style="display:inline-block;background:${copy.accent};color:#fff;text-decoration:none;padding:13px 20px;border-radius:10px;font-weight:bold">Track your shipment</a></p>`
+      : ""
+  }</section><footer style="padding:18px 30px;background:#f7f9f6;color:#718076;font-size:12px">Questions? Reply to this email and our plant team will help.</footer></main></body></html>`;
+
+  try {
+    const delivery = await sendEmail({
+      to: input.customerEmail,
+      subject: `Your Succulent Sphere order #${input.orderNumber} ${copy.subject}`,
+      html,
+      idempotencyKey: `status-${input.orderId}-${input.status}`,
+    });
+    await getFirebaseDb()
+      .collection("orders")
+      .doc(input.orderId)
+      .set(
+        {
+          [`statusEmail_${input.status}`]: {
+            status: "sent",
+            provider: delivery.provider,
+            sentAt: new Date().toISOString(),
+          },
+        },
+        { merge: true },
+      );
+    return { sent: true, skipped: false };
+  } catch (error) {
+    await getFirebaseDb()
+      .collection("orders")
+      .doc(input.orderId)
+      .set(
+        {
+          [`statusEmail_${input.status}`]: {
+            status: "failed",
+            error: String((error as Error).message).slice(0, 300),
+            updatedAt: new Date().toISOString(),
+          },
+        },
+        { merge: true },
+      );
+    return { sent: false, skipped: false };
+  }
+}
+
 export async function sendTrackingEmail(input: {
   orderId: string;
   orderNumber: number;
@@ -384,9 +517,7 @@ export async function sendTrackingEmail(input: {
 }) {
   if (!configuredEmailProvider()) return { sent: false, skipped: true };
   const carrier = input.carrier || "Delhivery";
-  const trackingUrl =
-    input.trackingUrl ||
-    `https://www.delhivery.com/track/package/${encodeURIComponent(input.trackingNumber)}`;
+  const trackingUrl = input.trackingUrl || buildDelhiveryTrackingUrl(input.trackingNumber);
   const html = `<!doctype html><html><body style="margin:0;background:#f4f6f2;font-family:Arial,sans-serif;color:#20352a"><main style="max-width:620px;margin:28px auto;background:#fff;border:1px solid #e2e8e1;border-radius:20px;overflow:hidden"><header style="padding:30px;background:linear-gradient(135deg,#173c2d,#356649);color:#fff"><p style="margin:0;font-size:11px;font-weight:bold;letter-spacing:2px">SUCCULENT SPHERE</p><h1 style="margin:12px 0 0;font-size:28px">Your plants are on their way</h1></header><section style="padding:30px"><p style="font-size:16px">Hi ${escapeHtml(input.customerName || "there")},</p><p>Great news — order <strong>#${escapeHtml(input.orderNumber)}</strong> has been handed to ${escapeHtml(carrier)}.</p><div style="margin:24px 0;padding:20px;border-radius:14px;background:#edf6ee;border:1px solid #d7ead9"><p style="margin:0 0 8px;font-size:11px;font-weight:bold;letter-spacing:1px;color:#54705c">TRACKING NUMBER</p><p style="margin:0;font-size:22px;font-weight:bold;color:#1d4a35">${escapeHtml(input.trackingNumber)}</p></div><p style="margin:24px 0"><a href="${escapeHtml(trackingUrl)}" style="display:inline-block;background:#1d573b;color:#fff;text-decoration:none;padding:13px 20px;border-radius:10px;font-weight:bold">Track your shipment</a></p><p style="font-size:13px;line-height:1.6;color:#607267">The tracking page can take a little time to show its first scan after dispatch. Please keep this email for your reference.</p></section><footer style="padding:18px 30px;background:#f7f9f6;color:#718076;font-size:12px">Questions? Reply to this email and our plant team will help.</footer></main></body></html>`;
   try {
     const delivery = await sendEmail({

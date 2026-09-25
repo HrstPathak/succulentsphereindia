@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
+import { getOrderGrandTotal } from "@/lib/orderAmounts";
 
 const string = (value: unknown, fallback = "") => typeof value === "string" ? value : value == null ? fallback : String(value);
 const number = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -23,7 +24,7 @@ export async function handleAdminDashboard() {
     });
     const orders = ordersSnapshot.docs.map((doc) => {
       const data = doc.data(); const customer = data.customer || {};
-      return { id: doc.id, orderNumber: number(data.orderNumber), customerName: string(customer.fullName, string(data.customerName, "Customer")), email: string(data.emailLower, string(customer.email)), total: number(data.total), paymentMode: string(data.paymentMode), financialStatus: string(data.financialStatus, "PENDING"), fulfillmentStatus: string(data.fulfillmentStatus, "UNFULFILLED"), createdAt: string(data.createdAt || data.processedAt), emailStatus: string(data.emailStatus, "pending"), itemCount: Array.isArray(data.lineItems) ? data.lineItems.length : 0, tracking: Array.isArray(data.tracking) ? data.tracking : [] };
+      return { id: doc.id, orderNumber: number(data.orderNumber), customerName: string(customer.fullName, string(data.customerName, "Customer")), email: string(data.emailLower, string(customer.email)), total: getOrderGrandTotal(data), paymentMode: string(data.paymentMode), financialStatus: string(data.financialStatus, "PENDING"), fulfillmentStatus: string(data.fulfillmentStatus, "UNFULFILLED"), createdAt: string(data.createdAt || data.processedAt), emailStatus: string(data.emailStatus, "pending"), itemCount: Array.isArray(data.lineItems) ? data.lineItems.length : 0, tracking: Array.isArray(data.tracking) ? data.tracking : [] };
     });
     const customers = usersSnapshot.docs.map((doc) => { const data = doc.data(); return { id: doc.id, email: string(data.email), name: string(data.displayName, `${string(data.firstName)} ${string(data.lastName)}`.trim()), phone: string(data.phone), createdAt: string(data.createdAt), wishlistCount: Array.isArray(data.wishlistProductIds) ? data.wishlistProductIds.length : 0 }; });
     const reviews = reviewsSnapshot.docs.map((doc) => { const data = doc.data(); return { id: doc.id, productId: string(data.productId), authorName: string(data.authorName, "Customer"), title: string(data.title), content: string(data.content), rating: number(data.rating), status: string(data.status, "published"), createdAt: string(data.createdAt), verifiedPurchase: Boolean(data.verifiedPurchase) }; });

@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { buildDelhiveryManualHandoff } from "@/lib/delhivery-shipment";
+import { buildDelhiveryTrackingUrl } from "@/lib/delhiveryTracking";
 import {
   checkAndQuoteShipment,
+  createAdditionalDelhiveryShipment,
   getShipmentJob,
   getShipmentWorkspace,
   prepareManualShipment,
   processShipmentJob,
+  reconcileConfirmedShipment,
   retryShipment,
   saveShipmentDetails,
+  updateDelhiveryManifest,
 } from "@/lib/shipping";
 
 export const runtime = "nodejs";
@@ -17,7 +21,7 @@ export const dynamic = "force-dynamic";
 function errorStatus(error: unknown) {
   const code = String((error as Error & { code?: string })?.code || "");
   if (code === "INVALID_SHIPMENT_DETAILS") return 400;
-  if (code === "NOT_SERVICEABLE" || code === "SHIPMENT_ALREADY_CREATED") return 409;
+  if (code === "NOT_SERVICEABLE" || code === "SHIPMENT_ALREADY_CREATED" || code === "SHIPMENT_AWB_REQUIRED") return 409;
   if (code === "CARRIER_NOT_CONFIGURED") return 503;
   return 502;
 }
@@ -65,8 +69,10 @@ export async function POST(req: Request) {
     }
     if (action === "retry") {
       const result = await retryShipment(id);
+      if (!result.ok) console.error("Delhivery API Error:", result);
       return NextResponse.json({
         ok: Boolean(result.ok),
+        ...(!result.ok ? { error: result.error } : {}),
         result,
         waybills: result.waybills || [],
         job: await getShipmentJob(id),
@@ -74,21 +80,98 @@ export async function POST(req: Request) {
       }, { status: result.ok ? 200 : 502 });
     }
 
-    await saveShipmentDetails(id, body?.details);
-    await checkAndQuoteShipment(id, body?.details);
-    const result = await processShipmentJob(id);
-    const waybills = Array.isArray(result.waybills) ? result.waybills : [];
-    return NextResponse.json({
-      ok: Boolean(result.ok),
-      result,
-      waybills,
-      trackingNumber: waybills[0] || "",
-      trackingUrl: waybills[0]
-        ? `https://www.delhivery.com/track/package/${encodeURIComponent(waybills[0])}`
-        : "",
-      job: await getShipmentJob(id),
-      workspace: await getShipmentWorkspace(id),
-    }, { status: result.ok ? 200 : 502 });
+    if (action === "update_manifest") {
+      const result = await updateDelhiveryManifest(id);
+      return NextResponse.json({
+        ok: true,
+        waybill: result.waybill,
+        waybills: result.waybills,
+        trackingNumber: result.trackingNumber,
+        trackingUrl: result.trackingUrl,
+        result: result.result,
+        job: await getShipmentJob(id),
+        workspace: await getShipmentWorkspace(id),
+      });
+    }
+
+    if (action === "create-again" || action === "existing-awb") {
+      const waybills = await reconcileConfirmedShipment(id);
+      if (!waybills.length) {
+        return NextResponse.json(
+          { error: "No confirmed AWB exists. Use the normal create or retry action after verifying the order." },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json({
+        ok: true,
+        skipped: true,
+        result: { reason: "already_created", waybills },
+        waybills,
+        trackingNumber: waybills[0],
+        trackingUrl: buildDelhiveryTrackingUrl(waybills[0]),
+        job: await getShipmentJob(id),
+        workspace: await getShipmentWorkspace(id),
+      });
+    }
+
+    if (action === "ready_to_ship" || action === "create") {
+      // "additional": true is an explicit admin confirmation from the
+      // "create one more shipment?" modal, so it may bypass the single-AWB guard.
+      if (body?.additional === true) {
+        const result = await createAdditionalDelhiveryShipment(id);
+        return NextResponse.json({
+          ok: true,
+          additional: true,
+          destination: "ready_to_ship" as const,
+          orderReference: result.orderReference,
+          sequence: result.sequence,
+          waybills: result.waybills,
+          allWaybills: result.allWaybills,
+          trackingNumber: result.trackingNumber,
+          trackingUrl: result.trackingUrl,
+          result: result.result,
+          job: await getShipmentJob(id),
+          workspace: await getShipmentWorkspace(id),
+        });
+      }
+
+      const confirmedWaybills = await reconcileConfirmedShipment(id);
+      if (confirmedWaybills.length) {
+        return NextResponse.json({
+          ok: true,
+          skipped: true,
+          needsConfirmation: true,
+          destination: "ready_to_ship" as const,
+          result: { reason: "already_created", waybills: confirmedWaybills },
+          waybills: confirmedWaybills,
+          trackingNumber: confirmedWaybills[0],
+          trackingUrl: buildDelhiveryTrackingUrl(confirmedWaybills[0]),
+          job: await getShipmentJob(id),
+          workspace: await getShipmentWorkspace(id),
+        });
+      }
+
+      await saveShipmentDetails(id, body?.details);
+      const result = await processShipmentJob(id);
+      if (!result.ok) console.error("Delhivery API Error:", result);
+      const waybills = Array.isArray(result.waybills) ? result.waybills : [];
+      return NextResponse.json({
+        ok: Boolean(result.ok),
+        destination: "ready_to_ship" as const,
+        ...(!result.ok ? { error: result.error } : {}),
+        result,
+        waybills,
+        trackingNumber: waybills[0] || "",
+        trackingUrl: buildDelhiveryTrackingUrl(waybills[0]),
+        job: await getShipmentJob(id),
+        workspace: await getShipmentWorkspace(id),
+      }, { status: result.ok ? 200 : 502 });
+    }
+
+    return NextResponse.json(
+      { error: `Unsupported shipment action: ${action || "empty"}.` },
+      { status: 400 },
+    );
   } catch (error) {
     const message = String((error as Error).message || error);
     return NextResponse.json(

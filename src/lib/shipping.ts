@@ -5,6 +5,7 @@ import { getFirebaseDb } from "@/lib/firebase-admin";
 import {
   buildDelhiveryDetailsFromOrder,
   calculateDelhiveryPackageMetrics,
+  getConfirmedShipmentWaybills,
   normalizeDelhiveryDetails,
   normalizeDelhiveryPincode,
   validateDelhiveryDetails,
@@ -13,15 +14,20 @@ import {
   type DelhiveryShipmentDetails,
 } from "@/lib/delhivery-shipment";
 import {
-  allocateDelhiveryWaybills,
   checkDelhiveryServiceability,
   createDelhiveryShipment,
+  editDelhiveryShipment,
   getDelhiveryAdminConfig,
   getDelhiveryCompanyDetails,
   getDelhiveryRateQuote,
   isDelhiveryApiConfigured,
 } from "@/lib/delhivery-server";
 import { sendTrackingEmail } from "@/lib/order-email";
+import {
+  buildDelhiveryOrderReference,
+  buildDelhiveryTrackingUrl,
+  nextDelhiverySequence,
+} from "@/lib/delhiveryTracking";
 
 export type ShipmentJobStatus =
   | "awaiting_details"
@@ -46,6 +52,9 @@ type ShipmentJob = Record<string, unknown> & {
   serviceability?: DelhiveryServiceability | null;
   quotes?: DelhiveryRateQuote[];
   attempts?: number;
+  /** Distinct Delhivery `order` references already used, e.g. ["1009", "1009(2)"]. */
+  orderReferences?: string[];
+  additionalShipmentCount?: number;
 };
 
 const number = (value: unknown, fallback = 0) => {
@@ -53,9 +62,7 @@ const number = (value: unknown, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-function defaultTrackingUrl(waybill: string) {
-  return `https://www.delhivery.com/track/package/${encodeURIComponent(waybill)}`;
-}
+const defaultTrackingUrl = buildDelhiveryTrackingUrl;
 
 function customerDestinationPin(order: Record<string, unknown>) {
   const customer =
@@ -83,9 +90,10 @@ async function readOrderAndJob(orderId: string) {
 }
 
 function shipmentSnapshot(job: ShipmentJob | null, order: Record<string, unknown>) {
-  const details = job?.details
-    ? normalizeDelhiveryDetails(job.details)
-    : buildDelhiveryDetailsFromOrder(order);
+  const details = buildDelhiveryDetailsFromOrder(
+    order,
+    job?.details || job?.package || null,
+  );
   return {
     order,
     job,
@@ -155,7 +163,7 @@ function saveChecks(
 export async function checkAndQuoteShipment(orderId: string, input?: unknown) {
   if (!isDelhiveryApiConfigured()) {
     const error = new Error(
-      "Delhivery API is not configured. Add DELHIVERY_API_TOKEN, DELHIVERY_CREATE_URL, and DELHIVERY_CLIENT_NAME on the server.",
+      "Delhivery API is not configured. Add DELHIVERY_API_TOKEN on the server.",
     );
     (error as Error & { code?: string }).code = "CARRIER_NOT_CONFIGURED";
     throw error;
@@ -286,7 +294,7 @@ export async function prepareManualShipment(orderId: string, input?: unknown) {
   return getShipmentWorkspace(orderId);
 }
 
-/** Creates one durable shipment job per order. Paid orders wait for confirmed packing details. */
+/** Creates one durable shipment job per order and immediately attempts Delhivery creation. */
 export async function enqueueShipment(orderId: string, options: ShipmentOptions = {}) {
   const { order, job, jobRef } = await readOrderAndJob(orderId);
   const now = new Date().toISOString();
@@ -296,7 +304,7 @@ export async function enqueueShipment(orderId: string, options: ShipmentOptions 
       orderId,
       orderNumber: options.orderNumber || number(order.orderNumber) || null,
       carrier: "Delhivery",
-      status: "awaiting_details",
+      status: "pending",
       details,
       serviceability: null,
       quotes: [],
@@ -316,6 +324,55 @@ export async function enqueueShipment(orderId: string, options: ShipmentOptions 
     }, { merge: true });
   }
   return orderId;
+}
+
+export type ShipmentProcessResult = {
+  ok: boolean;
+  skipped?: boolean;
+  reason?: string;
+  error?: string;
+  waybills?: string[];
+};
+
+export type ShipmentCreationSummary = {
+  ok: boolean;
+  skipped: boolean;
+  status: string;
+  reason?: string;
+  error?: string;
+  waybills: string[];
+  trackingNumber: string;
+  trackingUrl: string;
+};
+
+/** Queues and immediately attempts the automatic Delhivery order for a new order. */
+export async function createAutomaticShipmentForOrder(
+  orderId: string,
+  options: ShipmentOptions = {},
+): Promise<ShipmentCreationSummary> {
+  await enqueueShipment(orderId, options);
+  const result = await processShipmentJob(orderId);
+  const waybills = Array.isArray(result.waybills) ? result.waybills : [];
+  return {
+    ok: Boolean(result.ok),
+    skipped: Boolean(result.skipped),
+    status: result.ok
+      ? "done"
+      : result.reason === "carrier_not_configured" || result.reason === "already_processing"
+        ? "pending"
+        : "failed",
+    ...(result.reason ? { reason: String(result.reason) } : {}),
+    ...(!result.ok
+      ? {
+          error: String(
+            result.error || result.reason || "Delhivery shipment creation did not complete.",
+          ),
+        }
+      : {}),
+    waybills,
+    trackingNumber: waybills[0] || "",
+    trackingUrl: buildDelhiveryTrackingUrl(waybills[0]),
+  };
 }
 
 async function notifyTracking(input: {
@@ -349,9 +406,59 @@ async function notifyTracking(input: {
   }
 }
 
+export async function reconcileConfirmedShipment(orderId: string) {
+  const { order, orderRef, job, jobRef } = await readOrderAndJob(orderId);
+  const waybills = getConfirmedShipmentWaybills(order, job);
+  if (!waybills.length) return [];
+
+  const tracking = waybills.map((waybillNumber) => ({
+    number: waybillNumber,
+    url: defaultTrackingUrl(waybillNumber),
+    company: "Delhivery",
+  }));
+  const now = new Date().toISOString();
+  await orderRef.set({
+    tracking,
+    awb: waybills[0],
+    fulfillmentStatus: "SHIPPED",
+    partialShipment: false,
+    updatedAt: now,
+  }, { merge: true });
+  await jobRef.set({
+    status: "done",
+    mode: "api",
+    tracking,
+    awb: waybills[0],
+    fulfillmentStatus: "SHIPPED",
+    waybills,
+    trackingNumber: waybills[0],
+    trackingUrl: defaultTrackingUrl(waybills[0]),
+    trackingNumbers: waybills,
+    lastError: null,
+    requiresManualVerification: false,
+    partialWaybills: [],
+    completedAt: job?.completedAt || now,
+    updatedAt: now,
+  }, { merge: true });
+  return waybills;
+}
+
 export async function retryShipment(orderId: string) {
-  const { job, jobRef } = await readOrderAndJob(orderId);
-  const details = normalizeDelhiveryDetails(job?.details || job?.package);
+  const existingWaybills = await reconcileConfirmedShipment(orderId);
+  if (existingWaybills.length) {
+    return {
+      ok: true,
+      skipped: true,
+      reason: "already_created",
+      waybills: existingWaybills,
+    };
+  }
+
+  const { order, job, jobRef } = await readOrderAndJob(orderId);
+  const details = buildDelhiveryDetailsFromOrder(
+    order,
+    job?.details || job?.package || null,
+  );
   if (!details.confirmed) {
     const error = new Error("Confirm the packed measurements before retrying API creation.");
     (error as Error & { code?: string }).code = "INVALID_SHIPMENT_DETAILS";
@@ -377,7 +484,16 @@ export async function retryShipment(orderId: string) {
 export async function processShipmentJob(
   jobId: string,
   options: { force?: boolean } = {},
-) {
+): Promise<ShipmentProcessResult> {
+  const existingWaybills = await reconcileConfirmedShipment(jobId);
+  if (existingWaybills.length) {
+    return {
+      ok: true,
+      skipped: true,
+      reason: "already_created",
+      waybills: existingWaybills,
+    };
+  }
   if (!isDelhiveryApiConfigured()) {
     return { ok: false, skipped: true, reason: "carrier_not_configured" };
   }
@@ -440,70 +556,67 @@ export async function processShipmentJob(
   }
 
   const job = lock.job;
-  const details = normalizeDelhiveryDetails(job.details);
   const attempts = number(job.attempts);
   let partialWaybills: string[] = [];
-  let createAttempted = false;
   try {
     const orderRef = db.collection("orders").doc(String(job.orderId));
     const orderSnap = await orderRef.get();
     if (!orderSnap.exists) throw new Error("Order not found for shipment job.");
     const order = orderSnap.data() || {};
+    const shipmentDetails = buildDelhiveryDetailsFromOrder(
+      order,
+      job.details || job.package || null,
+    );
+    await jobRef.set({
+      details: shipmentDetails,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
     const existingTracking = Array.isArray(order.tracking) ? order.tracking : [];
     if (existingTracking.some((item) => String(item?.number || "").trim())) {
+      const waybills = existingTracking.map((item) => String(item.number));
       await jobRef.set({
         status: "done",
-        trackingNumbers: existingTracking.map((item) => String(item.number)),
+        trackingNumbers: waybills,
+        awb: waybills[0],
+        fulfillmentStatus: "SHIPPED",
+        tracking: waybills.map((number) => ({
+          number,
+          url: defaultTrackingUrl(number),
+          company: "Delhivery",
+        })),
+        trackingUrl: defaultTrackingUrl(waybills[0]),
+        lastError: null,
         updatedAt: new Date().toISOString(),
       }, { merge: true });
       return {
         ok: true,
         skipped: true,
         reason: "order_already_has_tracking",
-        waybills: existingTracking.map((item) => String(item.number)),
+        waybills,
       };
     }
 
-    const company = getDelhiveryCompanyDetails();
     const errors = validateDelhiveryDetails({
       order,
-      company,
-      details,
-      requireCompanyDetails: true,
+      details: shipmentDetails,
     });
     if (errors.length) throw new Error(errors.join(" "));
-    const metrics = calculateDelhiveryPackageMetrics(details.boxes);
+    const metrics = calculateDelhiveryPackageMetrics(shipmentDetails.boxes);
     const serviceability = await checkDelhiveryServiceability({
       pincode: customerDestinationPin(order),
-      paymentMode: details.paymentMode,
+      paymentMode: shipmentDetails.paymentMode,
       chargeableWeightGrams: metrics.chargeableWeightGrams,
-      collectableAmount: details.collectableAmount,
+      collectableAmount: shipmentDetails.collectableAmount,
     });
     if (!serviceability.paymentServiceable) throw new Error(serviceability.message);
 
-    let allocatedWaybills = Array.isArray(job.allocatedWaybills)
-      ? job.allocatedWaybills.map(String)
-      : [];
-    if (details.boxes.length > 1 && allocatedWaybills.length !== details.boxes.length) {
-      allocatedWaybills = await allocateDelhiveryWaybills(details.boxes.length);
-      await jobRef.set(
-        {
-          allocatedWaybills,
-          waybillsAllocatedAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true },
-      );
-    }
-    createAttempted = true;
     const result = await createDelhiveryShipment({
       order,
-      company,
-      details,
-      waybills: allocatedWaybills,
+      orderId: String(job.orderId || jobId),
+      details: shipmentDetails,
     });
     partialWaybills = result.waybills;
-    const expected = details.boxes.length;
+    const expected = 1;
     if (result.waybills.length !== expected) {
       await orderRef.set({
         tracking: result.waybills.map((waybill) => ({
@@ -524,6 +637,15 @@ export async function processShipmentJob(
       company: "Delhivery",
     }));
     const now = new Date().toISOString();
+    const baseReference = String(
+      order.orderNumber ?? order.id ?? shipmentDetails.orderReference ?? jobId ?? "",
+    ).trim();
+    const existingReferences = Array.isArray(job.orderReferences)
+      ? (job.orderReferences as string[])
+      : [];
+    const orderReferences = [
+      ...new Set([...existingReferences, buildDelhiveryOrderReference(baseReference, 1)]),
+    ];
     await orderRef.set({
       tracking,
       awb: result.waybills[0],
@@ -535,8 +657,15 @@ export async function processShipmentJob(
       status: "done",
       mode: "api",
       serviceability,
+      tracking,
+      awb: result.waybills[0],
+      fulfillmentStatus: "SHIPPED",
+      trackingNumber: result.waybills[0],
+      trackingUrl: defaultTrackingUrl(result.waybills[0]),
       waybills: result.waybills,
       trackingNumbers: result.waybills,
+      orderReferences,
+      additionalShipmentCount: orderReferences.length,
       packageResults: result.packageResults,
       result: result.raw,
       completedAt: now,
@@ -550,12 +679,21 @@ export async function processShipmentJob(
     });
     return { ok: true, waybills: result.waybills };
   } catch (error) {
-    const message = String((error as Error).message || error).slice(0, 1000);
+    const confirmedWaybills = await reconcileConfirmedShipment(jobId);
+    if (confirmedWaybills.length) {
+      return {
+        ok: true,
+        skipped: true,
+        reason: "already_created_after_error",
+        waybills: confirmedWaybills,
+      };
+    }
+    const message = String((error as Error).message || error);
     await jobRef.set({
       status: "failed",
       attempts,
       lastError: message,
-      requiresManualVerification: createAttempted || partialWaybills.length > 0,
+      requiresManualVerification: partialWaybills.length > 0,
       partialWaybills,
       updatedAt: new Date().toISOString(),
     }, { merge: true });
@@ -563,15 +701,213 @@ export async function processShipmentJob(
   }
 }
 
+/**
+ * Creates an extra Delhivery shipment for a store order that already has an
+ * AWB. Unlike `processShipmentJob` this intentionally bypasses the
+ * "already created" guard: each repeat shipment is sent with a distinct
+ * order reference (1009, 1009(2), 1009(3), ...) because Delhivery treats the
+ * `order` reference as unique and rejects duplicates.
+ */
+export async function createAdditionalDelhiveryShipment(orderId: string) {
+  if (!isDelhiveryApiConfigured()) {
+    const error = new Error(
+      "Delhivery API is not configured. Add DELHIVERY_API_TOKEN on the server.",
+    );
+    (error as Error & { code?: string }).code = "CARRIER_NOT_CONFIGURED";
+    throw error;
+  }
+
+  const { order, orderRef, job, jobRef } = await readOrderAndJob(orderId);
+  const details = buildDelhiveryDetailsFromOrder(
+    order,
+    job?.details || job?.package || null,
+  );
+  const errors = validateDelhiveryDetails({ order, details });
+  if (errors.length) {
+    const error = new Error(errors.join(" "));
+    (error as Error & { code?: string }).code = "INVALID_SHIPMENT_DETAILS";
+    throw error;
+  }
+
+  const baseReference = String(
+    order.orderNumber ?? order.id ?? details.orderReference ?? orderId ?? "",
+  ).trim();
+  const usedReferences = Array.isArray(job?.orderReferences)
+    ? (job?.orderReferences as unknown[])
+    : [];
+  const sequence = nextDelhiverySequence(baseReference, usedReferences);
+  const orderReference = buildDelhiveryOrderReference(baseReference, sequence);
+
+  const metrics = calculateDelhiveryPackageMetrics(details.boxes);
+  const serviceability = await checkDelhiveryServiceability({
+    pincode: customerDestinationPin(order),
+    paymentMode: details.paymentMode,
+    chargeableWeightGrams: metrics.chargeableWeightGrams,
+    collectableAmount: details.collectableAmount,
+  });
+  if (!serviceability.paymentServiceable) {
+    const error = new Error(serviceability.message);
+    (error as Error & { code?: string }).code = "NOT_SERVICEABLE";
+    throw error;
+  }
+
+  const result = await createDelhiveryShipment({
+    order,
+    orderId,
+    details,
+    orderReference,
+  });
+
+  const now = new Date().toISOString();
+  const newTracking = result.waybills.map((waybillNumber) => ({
+    number: waybillNumber,
+    url: defaultTrackingUrl(waybillNumber),
+    company: "Delhivery",
+  }));
+  const existingWaybills = getConfirmedShipmentWaybills(order, job);
+  const allWaybills = [...new Set([...existingWaybills, ...result.waybills])];
+  const orderReferences = [...new Set([...usedReferences, orderReference])];
+
+  // Keep every AWB so the order shows all parcels; the newest leads.
+  await orderRef.set(
+    {
+      tracking: allWaybills.map((waybillNumber) => ({
+        number: waybillNumber,
+        url: defaultTrackingUrl(waybillNumber),
+        company: "Delhivery",
+      })),
+      awb: result.waybills[0],
+      fulfillmentStatus: "SHIPPED",
+      partialShipment: false,
+      updatedAt: now,
+    },
+    { merge: true },
+  );
+  await jobRef.set(
+    {
+      status: "done",
+      mode: "api",
+      serviceability,
+      tracking: allWaybills.map((waybillNumber) => ({
+        number: waybillNumber,
+        url: defaultTrackingUrl(waybillNumber),
+        company: "Delhivery",
+      })),
+      awb: result.waybills[0],
+      fulfillmentStatus: "SHIPPED",
+      trackingNumber: result.waybills[0],
+      trackingUrl: defaultTrackingUrl(result.waybills[0]),
+      waybills: allWaybills,
+      trackingNumbers: allWaybills,
+      orderReferences,
+      additionalShipmentCount: orderReferences.length,
+      packageResults: result.packageResults,
+      lastError: null,
+      requiresManualVerification: false,
+      partialWaybills: [],
+      completedAt: now,
+      updatedAt: now,
+    },
+    { merge: true },
+  );
+
+  await notifyTracking({
+    orderId,
+    order,
+    trackingNumber: result.waybills[0],
+    trackingUrl: defaultTrackingUrl(result.waybills[0]),
+  });
+
+  return {
+    ok: true,
+    additional: true,
+    orderReference,
+    sequence,
+    waybills: result.waybills,
+    allWaybills,
+    trackingNumber: result.waybills[0],
+    trackingUrl: defaultTrackingUrl(result.waybills[0]),
+    newTracking,
+    result: result.raw,
+  };
+}
+
+export async function updateDelhiveryManifest(orderId: string) {
+  if (!isDelhiveryApiConfigured()) {
+    const error = new Error(
+      "Delhivery API is not configured. Add DELHIVERY_API_TOKEN on the server.",
+    );
+    (error as Error & { code?: string }).code = "CARRIER_NOT_CONFIGURED";
+    throw error;
+  }
+  const { order, job, jobRef } = await readOrderAndJob(orderId);
+  const waybills = getConfirmedShipmentWaybills(order, job);
+  if (!waybills.length) {
+    const error = new Error(
+      "This order has no confirmed Delhivery AWB, so there is no manifest to update.",
+    );
+    (error as Error & { code?: string }).code = "SHIPMENT_AWB_REQUIRED";
+    throw error;
+  }
+  if (waybills.length !== 1) {
+    const error = new Error(
+      "This shipment contains multiple AWBs. Update each manifest separately after verifying the Delhivery dashboard.",
+    );
+    (error as Error & { code?: string }).code = "INVALID_SHIPMENT_DETAILS";
+    throw error;
+  }
+
+  const details = buildDelhiveryDetailsFromOrder(
+    order,
+    job?.details || job?.package || null,
+  );
+  const errors = validateDelhiveryDetails({ order, details });
+  if (errors.length) {
+    const error = new Error(errors.join(" "));
+    (error as Error & { code?: string }).code = "INVALID_SHIPMENT_DETAILS";
+    throw error;
+  }
+
+  const result = await editDelhiveryShipment({
+    order,
+    orderId,
+    awb: waybills[0],
+    details,
+  });
+  const now = new Date().toISOString();
+  await jobRef.set(
+    {
+      details,
+      manifestUpdatedAt: now,
+      manifestEditResult: result.raw,
+      manifestEditPayload: result.payload,
+      lastError: null,
+      updatedAt: now,
+    },
+    { merge: true },
+  );
+  return {
+    ok: true,
+    waybill: result.waybill,
+    waybills,
+    trackingNumber: result.waybill,
+    trackingUrl: buildDelhiveryTrackingUrl(result.waybill),
+    result: result.raw,
+    details,
+  };
+}
+
 export async function processPendingShipments(limit = 5) {
   const db = getFirebaseDb();
-  const [pending, processing] = await Promise.all([
+  const [pending, ready, processing] = await Promise.all([
     db.collection("shipments").where("status", "==", "pending").orderBy("createdAt").limit(limit).get(),
+    db.collection("shipments").where("status", "==", "ready").orderBy("createdAt").limit(limit).get(),
     db.collection("shipments").where("status", "==", "processing").limit(limit).get(),
   ]);
   const staleCutoff = Date.now() - 10 * 60 * 1000;
   const jobs = [
     ...pending.docs,
+    ...ready.docs,
     ...processing.docs.filter(
       (doc) => new Date(String(doc.get("updatedAt") || 0)).getTime() < staleCutoff,
     ),
@@ -593,4 +929,26 @@ export async function getShipmentJob(orderId: string): Promise<Record<string, un
   const snap = await db.collection("shipments").doc(orderId).get();
   if (!snap.exists) return null;
   return { ...(snap.data() || {}), id: snap.id };
+}
+
+/** Read and reconcile the durable shipment summary for payment/order status responses. */
+export async function getShipmentCreationSummary(
+  orderId: string,
+): Promise<ShipmentCreationSummary> {
+  const waybills = await reconcileConfirmedShipment(orderId);
+  const job = await getShipmentJob(orderId);
+  const trackingNumber = waybills[0] || "";
+  const jobStatus = String(job?.status || (trackingNumber ? "done" : "not_queued"));
+  const hasAwb = Boolean(trackingNumber);
+  return {
+    ok: hasAwb,
+    skipped: hasAwb,
+    status: hasAwb ? "done" : jobStatus,
+    ...(!hasAwb && job?.lastError
+      ? { error: String(job.lastError).slice(0, 1000) }
+      : {}),
+    waybills,
+    trackingNumber,
+    trackingUrl: buildDelhiveryTrackingUrl(trackingNumber),
+  };
 }

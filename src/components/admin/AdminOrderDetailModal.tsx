@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AdminOrderTrackingForm from "./AdminOrderTrackingForm";
+import { getOrderGrandTotal } from "@/lib/orderAmounts";
 
 type Props = { id: string; onClose: () => void };
 
@@ -42,6 +43,7 @@ export default function AdminOrderDetailModal({ id, onClose }: Props) {
   }, [id]);
 
   const tracking = Array.isArray(order?.tracking) ? order.tracking : [];
+  const orderTotal = getOrderGrandTotal(order);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-[#102419]/55 p-3 backdrop-blur-sm sm:p-6">
@@ -51,7 +53,7 @@ export default function AdminOrderDetailModal({ id, onClose }: Props) {
           <div>
             <p className="text-xs font-bold uppercase tracking-[.16em] text-[#708276]">Order shipment details</p>
             <h2 className="mt-1 text-2xl font-bold">Order #{order?.orderNumber || "…"}</h2>
-            {order && <p className="mt-1 text-sm text-gray-600">{order.customer?.fullName || order.customerName} · {inr(order.total)} · {order.fulfillmentStatus}</p>}
+            {order && <p className="mt-1 text-sm text-gray-600">{order.customer?.fullName || order.customerName} · {inr(orderTotal)} · {order.fulfillmentStatus}</p>}
           </div>
           <button type="button" onClick={onClose} className="rounded-xl border px-3 py-2 text-sm font-bold">Close</button>
         </header>

@@ -616,6 +616,9 @@ export default function CheckoutClient() {
             if (verifyData?.orderNumber) {
               nextParams.set("orderNumber", String(verifyData.orderNumber));
             }
+            if (verifyData?.shipment?.trackingNumber) {
+              nextParams.set("awb", String(verifyData.shipment.trackingNumber));
+            }
 
             clear();
             walletHoldRef.current = null;

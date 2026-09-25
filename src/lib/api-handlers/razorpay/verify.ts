@@ -111,6 +111,7 @@ export async function handleRazorpayVerify(req: Request) {
       orderNumber: result.orderNumber,
       alreadyCreated: result.alreadyCreated,
       processing: result.processing,
+      shipment: result.shipment,
       paymentCaptured: paymentStatus === "captured",
       paymentStatus,
     });

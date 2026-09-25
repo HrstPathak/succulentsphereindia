@@ -9,6 +9,7 @@ import {
   isDelivered as isShippingDelivered,
 } from "@/lib/shippingProgress";
 import type { FirebaseCustomerOrder } from "@/lib/commerce";
+import { getOrderPaymentSummary } from "@/lib/orderAmounts";
 import OrderLineItemsClient from "@/components/auth/OrderLineItemsClient";
 
 export const metadata: Metadata = {
@@ -58,19 +59,13 @@ function prettyStatus(value: string): string {
     .trim();
 }
 
-function extractCodMeta(lineItems: FirebaseCustomerOrder["lineItems"]) {
-  for (const item of lineItems) {
-    const attrs = Array.isArray(item.customAttributes) ? item.customAttributes : [];
-    const paymentMode = attrs.find((attr) => attr.key === "payment_mode")?.value;
-    if (paymentMode === "cod_deposit") {
-      const depositRaw = attrs.find((attr) => attr.key === "cod_deposit")?.value || "100";
-      const balanceRaw = attrs.find((attr) => attr.key === "cod_balance")?.value || "0";
-      const deposit = Number(depositRaw) || 100;
-      const balance = Number(balanceRaw) || 0;
-      return { isCod: true, deposit, balance };
-    }
-  }
-  return { isCod: false, deposit: 0, balance: 0 };
+function extractCodMeta(order: FirebaseCustomerOrder) {
+  const payment = getOrderPaymentSummary(order);
+  return {
+    isCod: payment.paymentMode === "COD",
+    deposit: payment.depositAmount,
+    balance: payment.codBalance,
+  };
 }
 
 function isReviewEligible(status: string): boolean {
@@ -134,27 +129,32 @@ export default async function AccountOrderDetailPage({
   const trackingStep = shippingPresentation.step;
   const deliveredByProgress = isShippingDelivered(shippingProgress);
   const canReview = isReviewEligible(order.fulfillmentStatus) || deliveredByProgress;
-  const codMeta = extractCodMeta(order.lineItems);
-  const orderTotalAmount = Number(order.currentTotalPrice?.amount || order.totalPrice.amount || 0);
+  const payment = getOrderPaymentSummary(order);
+  const codMeta = {
+    isCod: payment.paymentMode === "COD",
+    deposit: payment.depositAmount,
+    balance: payment.codBalance,
+  };
+  const orderTotalAmount = payment.grandTotal;
   const subtotalAmount = Number(order.currentSubtotalPrice?.amount || order.totalPrice.amount || 0);
   const taxAmount = Number(order.currentTotalTax?.amount || 0);
   const rawShippingAmount = Number(order.currentTotalShippingPrice?.amount || 0);
   const derivedShippingAmount =
     rawShippingAmount > 0 ? rawShippingAmount : Math.max(orderTotalAmount - subtotalAmount - taxAmount, 0);
   const shippingAmount = Number.isFinite(derivedShippingAmount) ? derivedShippingAmount : 0;
-  const codBalance = codMeta.isCod ? Math.max(codMeta.balance || orderTotalAmount - codMeta.deposit, 0) : 0;
+  const codBalance = codMeta.isCod ? Math.max(0, codMeta.balance) : 0;
   const normalizedFinancial = normalizeStatus(order.financialStatus);
   const financialLabel = codMeta.isCod
-    ? normalizedFinancial === "PAID"
-      ? "COD (Paid in Full)"
-      : "COD (Deposit Paid)"
+    ? codMeta.deposit > 0
+      ? "COD (Deposit Paid)"
+      : "COD (Payable on Delivery)"
     : prettyStatus(order.financialStatus);
   const isDelivered = deliveredByProgress;
   const paymentMethodLabel = codMeta.isCod ? "Cash on Delivery" : "Paid Online (Razorpay)";
   const paymentMethodDescription = codMeta.isCod
     ? isDelivered
-      ? "This order was placed on COD. Your ₹100 security deposit was received, and the remaining balance was collected at delivery."
-      : "This order is placed on COD. Your ₹100 security deposit is received, and the remaining balance will be collected at delivery."
+      ? `This order was placed on COD. Your ${formatPrice(codMeta.deposit.toFixed(2), order.totalPrice.currencyCode)} security deposit was received, and the remaining balance was collected at delivery.`
+      : `This order is placed on COD. Your ${formatPrice(codMeta.deposit.toFixed(2), order.totalPrice.currencyCode)} security deposit is received, and the remaining balance will be collected at delivery.`
     : "This order was prepaid securely via Razorpay.";
 
   return (

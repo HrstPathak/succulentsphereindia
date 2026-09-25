@@ -112,6 +112,7 @@ export async function POST(req: Request) {
       orderNumber: result.orderNumber,
       alreadyCreated: result.alreadyCreated,
       processing: result.processing,
+      shipment: result.shipment,
       paymentCaptured: paymentStatus === "captured",
       paymentStatus,
     });

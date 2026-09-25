@@ -5,6 +5,7 @@ import { MAX_PINNED_ARTICLES, comparePinnedOrder } from "@/lib/article-pinning";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { getReviewStats, type ProductReview } from "@/lib/reviews";
 import { getWalletSummary, type WalletSummary } from "@/lib/wallet";
+import { getOrderGrandTotal, getOrderPaymentSummary } from "@/lib/orderAmounts";
 
 export interface ProductQueryOptions {
   first?: number;
@@ -38,6 +39,11 @@ export interface FirebaseCustomerOrder {
   lineItems: FirebaseCustomerOrderLineItem[];
   currentSubtotalPrice?: Money; currentTotalShippingPrice?: Money; currentTotalTax?: Money; currentTotalPrice?: Money;
   totalPrice: Money;
+  paymentMode?: string;
+  paymentReceived?: number;
+  codDepositAmount?: number;
+  codBalance?: number;
+  codFee?: number;
 }
 export interface FirebaseOrderTrackingEntry { number: string; url: string; company: string; }
 export interface FirebaseCustomerOrderLineItem {
@@ -57,6 +63,7 @@ export type Money = { amount: string; currencyCode: string };
 
 function string(value: unknown, fallback = "") { return typeof value === "string" ? value : value == null ? fallback : String(value); }
 function numeric(value: unknown, fallback = 0) { const n = Number(value); return Number.isFinite(n) ? n : fallback; }
+function optionalNumeric(value: unknown) { if (value === undefined || value === null || String(value).trim() === "") return undefined; const n = Number(value); return Number.isFinite(n) ? n : undefined; }
 function list(value: unknown): string[] { return Array.isArray(value) ? value.map((item) => string(item).trim()).filter(Boolean) : []; }
 function cleanHtml(value: unknown) { return string(value).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(); }
 function normaliseHandle(value: unknown) {
@@ -254,7 +261,14 @@ export async function fetchPlantCareArticleByHandle(handleInput: unknown): Promi
 }
 function mapOrder(id: string, raw: Record<string, any>): FirebaseCustomerOrder {
   const lineItems = Array.isArray(raw.lineItems) ? raw.lineItems : [];
-  return { id, orderNumber: numeric(raw.orderNumber), processedAt: string(raw.processedAt || raw.createdAt), fulfillmentStatus: string(raw.fulfillmentStatus, "UNFULFILLED"), financialStatus: string(raw.financialStatus, "PENDING"), tags: list(raw.tags), fulfillmentOrderStatuses: list(raw.fulfillmentOrderStatuses), tracking: Array.isArray(raw.tracking) ? raw.tracking.map((x: any) => ({ number: string(x.number), url: string(x.url), company: string(x.company) })) : [], fulfillmentEvents: list(raw.fulfillmentEvents), lineItems: lineItems.map((item: any, index: number) => ({ id: string(item.id, `${id}-${index}`), title: string(item.title), quantity: numeric(item.quantity, 1), variantTitle: string(item.variantTitle), productHandle: string(item.productHandle), image: string(item.image), imageAlt: string(item.imageAlt), customAttributes: Array.isArray(item.customAttributes) ? item.customAttributes : [], originalTotalPrice: item.originalTotalPrice ? money(item.originalTotalPrice) : undefined, discountedTotalPrice: item.discountedTotalPrice ? money(item.discountedTotalPrice) : undefined, price: money(item.price ?? { amount: item.unitPrice, currencyCode: raw.currency || "INR" }) })), currentSubtotalPrice: raw.currentSubtotalPrice ? money(raw.currentSubtotalPrice) : money({ amount: raw.subtotal, currencyCode: raw.currency || "INR" }), currentTotalShippingPrice: raw.currentTotalShippingPrice ? money(raw.currentTotalShippingPrice) : money({ amount: raw.shipping, currencyCode: raw.currency || "INR" }), currentTotalTax: raw.currentTotalTax ? money(raw.currentTotalTax) : undefined, currentTotalPrice: raw.currentTotalPrice ? money(raw.currentTotalPrice) : money({ amount: raw.total, currencyCode: raw.currency || "INR" }), totalPrice: money(raw.totalPrice ?? { amount: raw.total, currencyCode: raw.currency || "INR" }) };
+  const payment = getOrderPaymentSummary(raw);
+  const grandTotal = payment.grandTotal;
+  const totalCurrency =
+    raw.currentTotalPrice?.currencyCode ||
+    raw.totalPrice?.currencyCode ||
+    raw.currency ||
+    "INR";
+  return { id, orderNumber: numeric(raw.orderNumber), processedAt: string(raw.processedAt || raw.createdAt), fulfillmentStatus: string(raw.fulfillmentStatus, "UNFULFILLED"), financialStatus: string(raw.financialStatus, "PENDING"), paymentMode: String(raw.paymentMode || raw.payment_method) === "admin_test" ? "admin_test" : payment.paymentMode === "COD" ? (payment.depositAmount > 0 ? "cod_deposit" : "cod") : "prepaid", paymentReceived: payment.paidAmount, codDepositAmount: payment.depositAmount, codBalance: payment.codBalance, codFee: optionalNumeric(raw.codFee), tags: list(raw.tags), fulfillmentOrderStatuses: list(raw.fulfillmentOrderStatuses), tracking: Array.isArray(raw.tracking) ? raw.tracking.map((x: any) => ({ number: string(x.number), url: string(x.url), company: string(x.company) })) : [], fulfillmentEvents: list(raw.fulfillmentEvents), lineItems: lineItems.map((item: any, index: number) => ({ id: string(item.id, `${id}-${index}`), title: string(item.title), quantity: numeric(item.quantity, 1), variantTitle: string(item.variantTitle), productHandle: string(item.productHandle), image: string(item.image), imageAlt: string(item.imageAlt), customAttributes: Array.isArray(item.customAttributes) ? item.customAttributes : [], originalTotalPrice: item.originalTotalPrice ? money(item.originalTotalPrice) : undefined, discountedTotalPrice: item.discountedTotalPrice ? money(item.discountedTotalPrice) : undefined, price: money(item.price ?? { amount: item.unitPrice, currencyCode: raw.currency || "INR" }) })), currentSubtotalPrice: raw.currentSubtotalPrice ? money(raw.currentSubtotalPrice) : money({ amount: raw.subtotal, currencyCode: raw.currency || "INR" }), currentTotalShippingPrice: raw.currentTotalShippingPrice ? money(raw.currentTotalShippingPrice) : money({ amount: raw.shipping, currencyCode: raw.currency || "INR" }), currentTotalTax: raw.currentTotalTax ? money(raw.currentTotalTax) : undefined, currentTotalPrice: money({ amount: grandTotal, currencyCode: totalCurrency }), totalPrice: money({ amount: grandTotal, currencyCode: totalCurrency }) };
 }
 export async function fetchOrderByEmailAndNumber(email: string, orderNumber: string) { const snapshot = await getFirebaseDb().collection("orders").where("emailLower", "==", email.toLowerCase()).where("orderNumber", "==", Number(orderNumber.replace(/^#/, ""))).limit(1).get(); return snapshot.empty ? null : mapOrder(snapshot.docs[0]!.id, snapshot.docs[0]!.data()); }
 export async function fetchCustomerOrdersByUid(uid: string, limitCount = 50) {

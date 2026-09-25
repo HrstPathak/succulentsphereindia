@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   BookOpenText,
   Check,
   ChevronRight,
   CircleDollarSign,
   ClipboardList,
+  ExternalLink,
   Mail,
   Package,
   Pencil,
@@ -15,6 +17,7 @@ import {
   Send,
   Sparkles,
   Star,
+  Truck,
   Users,
   Wand2,
   X,
@@ -442,10 +445,29 @@ export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
                   <ChevronRight size={14} className="ml-auto opacity-50" />
                 </button>
               ))}
+              <Link
+                href="/admin/delhivery"
+                className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm text-white/[0.72] transition hover:bg-white/10 hover:text-white"
+              >
+                <Truck size={17} />
+                Delhivery
+                <ChevronRight size={14} className="ml-auto opacity-50" />
+              </Link>
             </nav>
-            <div className="mt-8 rounded-2xl border border-white/15 bg-white/10 p-3 text-xs leading-relaxed text-white/70">
-              Only email addresses listed in <code>ADMIN_EMAILS</code> can open
-              this screen.
+            <div className="mt-5 border-t border-white/15 pt-4">
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-3 py-3 text-left text-sm font-semibold text-white transition hover:bg-white/20"
+              >
+                <ExternalLink size={17} />
+                View Store
+                <ExternalLink size={13} className="ml-auto opacity-50" />
+              </a>
+              <p className="mt-2 px-1 text-[11px] leading-relaxed text-white/45">
+                Opens your website home page in a new tab.
+              </p>
             </div>
           </div>
         </aside>

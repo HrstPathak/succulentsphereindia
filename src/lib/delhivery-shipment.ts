@@ -1,3 +1,5 @@
+import { getOrderPaymentSummary } from "./orderAmounts";
+
 export const DELHIVERY_MAX_BOXES = 5;
 export const DELHIVERY_VOLUMETRIC_DIVISOR = 5;
 
@@ -92,7 +94,7 @@ export type DelhiveryPackageMetrics = {
 };
 
 const text = (value: unknown, fallback = "") => {
-  const result = String(value ?? "").trim();
+  const result = String(value ?? "").replace(/[&#%;\\]/g, "").trim();
   return result || fallback;
 };
 
@@ -106,6 +108,76 @@ const grams = (value: unknown, fallback: number) => Math.max(1, Math.round(numer
 const centimeters = (value: unknown, fallback: number) => Math.max(0.1, Number(numeric(value, fallback).toFixed(2)));
 const pincode = (value: unknown) => text(value).replace(/\D/g, "").slice(0, 6);
 const phone = (value: unknown) => text(value).replace(/\D/g, "").slice(0, 15);
+const waybill = (value: unknown) => {
+  const result = String(value ?? "").trim();
+  return /^[A-Za-z0-9]{10,}$/.test(result) ? result : "";
+};
+
+function lineItemQuantity(item: Record<string, unknown>) {
+  return Math.max(1, Math.round(numeric(item.quantity ?? item.qty, 1)));
+}
+
+function orderLineItems(order: Record<string, unknown>) {
+  return Array.isArray(order.lineItems)
+    ? order.lineItems.filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item) && typeof item === "object",
+      )
+    : [];
+}
+
+
+export function getDelhiveryOrderAmounts(
+  order: Record<string, unknown>,
+): {
+  paymentMode: DelhiveryPaymentMode;
+  invoiceTotal: number;
+  collectableAmount: number;
+  paidAmount: number;
+  depositAmount: number;
+} {
+  const payment = getOrderPaymentSummary(order);
+  return {
+    paymentMode: payment.paymentMode,
+    invoiceTotal: payment.grandTotal,
+    collectableAmount: payment.codBalance,
+    paidAmount: payment.paidAmount,
+    depositAmount: payment.depositAmount,
+  };
+}
+
+export function getConfirmedShipmentWaybills(
+  order: Record<string, unknown>,
+  job?: Record<string, unknown> | null,
+): string[] {
+  const fromTracking = Array.isArray(order.tracking)
+    ? order.tracking
+        .map((item) =>
+          waybill(
+            item && typeof item === "object"
+              ? (item as Record<string, unknown>).number
+              : item,
+          ),
+        )
+        .filter(Boolean)
+    : [];
+  const orderWaybill = waybill(order.awb);
+  const orderWaybills = [...new Set([...fromTracking, orderWaybill].filter(Boolean))];
+  if (orderWaybills.length) return orderWaybills;
+
+  const shipment = job && typeof job === "object" ? job : {};
+  const shipmentIsConfirmed =
+    shipment.status === "done" || shipment.fulfillmentStatus === "SHIPPED";
+  if (!shipmentIsConfirmed) return [];
+
+  const candidates = [
+    ...(Array.isArray(shipment.waybills) ? shipment.waybills : []),
+    ...(Array.isArray(shipment.trackingNumbers) ? shipment.trackingNumbers : []),
+    shipment.trackingNumber,
+    shipment.awb,
+  ].map(waybill).filter(Boolean);
+  return [...new Set(candidates)];
+}
 
 export function normalizeDelhiveryPhone(value: unknown): string {
   return phone(value);
@@ -203,7 +275,9 @@ export function normalizeDelhiveryDetails(
         ? "Express"
         : "Surface",
     paymentMode:
-      text(value.paymentMode, text(fallback?.paymentMode, "Prepaid")).toUpperCase() === "COD"
+      [value.paymentMode, value.payment_method, fallback?.paymentMode]
+        .map((item) => text(item).toUpperCase())
+        .some((item) => item === "COD" || item === "CASH ON DELIVERY")
         ? "COD"
         : "Prepaid",
     packageType: text(
@@ -263,51 +337,43 @@ export function buildDelhiveryDetailsFromOrder(
   order: Record<string, unknown>,
   input?: unknown,
 ): DelhiveryShipmentDetails {
-  const customer =
-    order.customer && typeof order.customer === "object"
-      ? (order.customer as Record<string, unknown>)
-      : {};
-  const lineItems = Array.isArray(order.lineItems) ? order.lineItems : [];
-  const items = lineItems.map((item) => {
-    const entry = item && typeof item === "object" ? (item as Record<string, unknown>) : {};
-    const price = entry.price && typeof entry.price === "object"
-      ? (entry.price as Record<string, unknown>)
-      : {};
-    return {
-      title: text(entry.title, "Product"),
-      sku: text(entry.productId ?? entry.id),
-      quantity: Math.max(1, Math.round(numeric(entry.quantity, 1))),
-      unitPrice: money(price.amount ?? entry.price),
-    };
-  });
-  const total = money(order.total ?? order.totalPrice ?? order.currentTotalPrice);
-  const paymentMode = text(order.paymentMode, "prepaid").toLowerCase().startsWith("cod")
-    ? "COD"
-    : "Prepaid";
-  const paymentReceived = money(order.paymentReceived ?? order.payableAmount ?? order.amountPaid);
-  const collectableAmount = paymentMode === "COD"
-    ? Number(Math.max(0, total - paymentReceived).toFixed(2))
-    : 0;
   const existing = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
+  const amounts = getDelhiveryOrderAmounts(order);
   const orderReference = String(order.orderNumber ?? order.id ?? "ORDER");
+  const productName = "Succulents";
+  const productSku = "1001";
+  const orderQuantity = orderLineItems(order).reduce(
+    (sum, item) => sum + lineItemQuantity(item),
+    0,
+  );
+  const aggregateQuantity = Math.max(1, orderQuantity);
+  // Delhivery's single-piece manifest represents the whole physical parcel as
+  // one SKU line. The product quantity is the total number of plants, while the
+  // product/commodity value remains the complete order total.
+  const items = [{
+    title: productName,
+    sku: productSku,
+    quantity: aggregateQuantity,
+    unitPrice: Number((amounts.invoiceTotal / aggregateQuantity).toFixed(2)),
+  }];
 
   return normalizeDelhiveryDetails(
     {
       ...existing,
-      orderReference: text(existing.orderReference, orderReference),
+      orderReference,
       orderDate: text(existing.orderDate, text(order.createdAt ?? order.processedAt)),
-      paymentMode,
-      invoiceTotal: total,
-      collectableAmount,
+      paymentMode: amounts.paymentMode,
+      invoiceTotal: amounts.invoiceTotal,
+      collectableAmount: amounts.collectableAmount,
       items,
       confirmed: existing.confirmed ?? true,
     },
     {
       orderReference,
       orderDate: text(order.createdAt ?? order.processedAt),
-      paymentMode,
-      invoiceTotal: total,
-      collectableAmount,
+      paymentMode: amounts.paymentMode,
+      invoiceTotal: amounts.invoiceTotal,
+      collectableAmount: amounts.collectableAmount,
       items,
       confirmed: true,
     },
@@ -329,15 +395,16 @@ export function validateDelhiveryDetails(input: {
   const errors: string[] = [];
   const recipientName = text(customer.fullName ?? order.customerName);
   const recipientPhone = phone(customer.phone ?? order.customerPhone ?? order.phone);
-  const address = [customer.address1 ?? customer.address, customer.address2, customer.landmark]
+  const address = [customer.address1, customer.address2]
     .map((part) => text(part))
     .filter(Boolean)
-    .join(", ");
+    .join(", ") || text(customer.address);
   const destinationPin = pincode(customer.pincode ?? customer.zip ?? order.pincode ?? order.zip);
 
   if (!details.orderReference) errors.push("Order reference is required.");
   if (!details.orderDate) errors.push("Order date is required.");
   if (!details.items.length) errors.push("At least one product item is required.");
+  if (details.invoiceTotal <= 0) errors.push("Order grand total must be greater than zero.");
   if (input.requireConfirmed !== false && !details.confirmed) {
     errors.push("Confirm the packed measurements before creating a shipment.");
   }
@@ -416,92 +483,191 @@ export function getDelhiveryServiceabilityMessage(input: {
 
 export function buildDelhiveryCreatePayload(input: {
   order: Record<string, unknown>;
-  company: DelhiveryCompanyDetails;
-  clientName: string;
+  orderId: string;
   details: DelhiveryShipmentDetails;
-  waybills?: string[];
-}): Record<string, unknown> {
-  const { order, company, clientName, details, waybills = [] } = input;
+  company?: Partial<DelhiveryCompanyDetails>;
+  /** Overrides the `order`/`seller_inv` reference, e.g. "1009(2)" for a repeat shipment. */
+  orderReference?: string;
+}): {
+  shipments: Array<{
+    name: string;
+    add: string;
+    pin: string;
+    city: string;
+    state: string;
+    country: string;
+    phone: string;
+    order: string;
+    order_date: string;
+    payment_mode: DelhiveryPaymentMode;
+    cod_amount: number;
+    total_amount: number;
+    commodity_value: number;
+    products_desc: string;
+    quantity: string;
+    seller_name: string;
+    seller_add: string;
+    seller_inv: string;
+    hsn_code: string;
+    seller_gst_tin?: string;
+    shipment_length: number;
+    shipment_width: number;
+    shipment_height: number;
+    weight: string;
+    package_type: string;
+    fragile_shipment: string;
+    shipping_mode: string;
+    address_type: string;
+    client: string;
+  }>;
+  pickup_location: { name: string };
+} {
+  const { order, orderId, details, company = {} } = input;
   const customer =
     order.customer && typeof order.customer === "object"
       ? (order.customer as Record<string, unknown>)
       : {};
-  const metrics = calculateDelhiveryPackageMetrics(details.boxes);
-  const address = [customer.address1 ?? customer.address, customer.address2, customer.landmark]
-    .map((part) => text(part))
+  const address =
+    [customer.address1, customer.address2]
+      .map((part) => text(part))
+      .filter(Boolean)
+      .join(", ") || text(customer.address);
+  const amounts = getDelhiveryOrderAmounts(order);
+  const normalizedDetails = buildDelhiveryDetailsFromOrder(order, details);
+  const box = normalizedDetails.boxes[0] || defaultBox();
+  const totalAmount = amounts.invoiceTotal || money(normalizedDetails.invoiceTotal);
+  const collectableAmount = amounts.paymentMode === "COD" ? amounts.collectableAmount : 0;
+  const orderReference =
+    text(input.orderReference) ||
+    String(
+      order.orderNumber ?? order.id ?? normalizedDetails.orderReference ?? orderId ?? "",
+    );
+  const orderDateValue = new Date(
+    normalizedDetails.orderDate || text(order.createdAt) || text(order.processedAt) || Date.now(),
+  );
+  const orderDate = Number.isNaN(orderDateValue.getTime())
+    ? new Date().toISOString().slice(0, 19).replace("T", " ")
+    : orderDateValue.toISOString().slice(0, 19).replace("T", " ");
+  const sellerName = text(company.name, "Succulent Sphere");
+  const sellerAddress = [
+    text(company.address, text(process.env.DELHIVERY_SELLER_ADDRESS)),
+    text(company.city, "Bhimtal"),
+    text(company.state, "Uttarakhand"),
+    text(company.pincode, "263136"),
+  ]
     .filter(Boolean)
     .join(", ");
-  const total = money(details.invoiceTotal);
-  const orderDate = new Date(details.orderDate);
-  const safeOrderDate = Number.isNaN(orderDate.getTime())
-    ? new Date().toISOString().slice(0, 19).replace("T", " ")
-    : orderDate.toISOString().slice(0, 19).replace("T", " ");
-  const totalChargeableWeight = metrics.chargeableWeightGrams || 1;
-  let remainingInvoice = total;
-  let remainingCollectable = money(details.collectableAmount);
-  const boxAmounts = metrics.boxes.map((box, index) => {
-    if (index === metrics.boxes.length - 1) {
-      const amount = { invoice: remainingInvoice, collectable: remainingCollectable };
-      remainingInvoice = 0;
-      remainingCollectable = 0;
-      return amount;
-    }
-    const invoice = Number((total * (box.chargeableWeightGrams / totalChargeableWeight)).toFixed(2));
-    const collectable = Number(
-      (money(details.collectableAmount) * (box.chargeableWeightGrams / totalChargeableWeight)).toFixed(2),
-    );
-    remainingInvoice = Number((remainingInvoice - invoice).toFixed(2));
-    remainingCollectable = Number((remainingCollectable - collectable).toFixed(2));
-    return { invoice, collectable };
-  });
-
-  const shipments = metrics.boxes.map((box, index) => ({
-    name: text(customer.fullName ?? order.customerName, "Customer"),
-    add: address,
-    city: text(customer.city ?? order.city),
-    state: text(customer.state ?? customer.province ?? order.state),
-    country: text(customer.country ?? order.country, "India"),
-    pin: pincode(customer.pincode ?? customer.zip ?? order.pincode ?? order.zip),
-    phone: phone(customer.phone ?? order.customerPhone ?? order.phone),
-    email: text(customer.email ?? order.emailLower),
-    order: metrics.boxes.length > 1 ? `${details.orderReference}-B${index + 1}` : details.orderReference,
-    ...(waybills[index] ? { waybill: waybills[index] } : {}),
-    order_date: safeOrderDate,
-    address_type: "home",
-    payment_mode: details.paymentMode,
-    cod_amount: boxAmounts[index].collectable,
-    total_amount: boxAmounts[index].invoice,
-    shipping_mode: details.shippingMode,
-    weight: `${box.weightGrams} gm`,
-    shipment_length: Math.round(box.lengthCm),
-    shipment_width: Math.round(box.widthCm),
-    shipment_height: Math.round(box.heightCm),
-    package_type: details.packageType,
-    fragile_shipment: details.fragile ? "true" : "false",
-    products_desc: details.items.map((item) => item.title).join(", ").slice(0, 256),
-    commodity_value: boxAmounts[index].invoice,
-    quantity: details.items.reduce((sum, item) => sum + item.quantity, 0),
-    seller_name: company.name,
-    seller_add: [company.address, company.city, company.state, company.pincode]
-      .filter(Boolean)
-      .join(", "),
-    hsn_code: company.hsnCode,
-    ...(company.gstin ? { seller_gst_tin: company.gstin } : {}),
-    client: clientName,
-  }));
+  const product = normalizedDetails.items[0];
+  const productDescription = text(product?.title, "Succulents");
 
   return {
-    client: clientName,
+    shipments: [
+      {
+        name: text(customer.fullName ?? order.customerName, "Customer"),
+        add: address,
+        pin: pincode(customer.pincode ?? customer.zip),
+        city: text(customer.city ?? order.city),
+        state: text(customer.state ?? customer.province ?? order.state),
+        country: "India",
+        phone: phone(customer.phone ?? order.customerPhone ?? order.phone),
+        order: orderReference,
+        order_date: orderDate,
+        payment_mode: amounts.paymentMode,
+        cod_amount: collectableAmount,
+        total_amount: totalAmount,
+        commodity_value: totalAmount,
+        products_desc: productDescription,
+        quantity: String(product?.quantity || 1),
+        seller_name: sellerName,
+        seller_add: sellerAddress,
+        seller_inv: orderReference,
+        hsn_code: text(company.hsnCode ?? process.env.DELHIVERY_HSN_CODE),
+        ...(text(company.gstin ?? process.env.DELHIVERY_SELLER_GST_TIN)
+          ? { seller_gst_tin: text(company.gstin ?? process.env.DELHIVERY_SELLER_GST_TIN) }
+          : {}),
+        shipment_length: Math.round(box.lengthCm),
+        shipment_width: Math.round(box.widthCm),
+        shipment_height: Math.round(box.heightCm),
+        weight: `${Math.round(box.weightGrams)} gm`,
+        package_type: normalizedDetails.packageType,
+        fragile_shipment: normalizedDetails.fragile ? "true" : "false",
+        shipping_mode: normalizedDetails.shippingMode,
+        address_type: "home",
+        client: "e3ac15-SucculentSphere-do",
+      },
+    ],
     pickup_location: {
-      name: company.pickupLocation,
-      city: company.city,
-      pin_code: company.pickupPincode || company.pincode,
-      country: company.country || "India",
-      phone: company.phone,
-      add: company.address,
+      name: "Succulent Sphere",
     },
-    fragile_shipment: details.fragile,
-    shipments,
+  };
+}
+
+
+export type DelhiveryManifestEditPayload = {
+  waybill: string;
+  /** Delhivery's Edit API requires decimals; integers are rejected as "voll must be an instance of float". */
+  shipment_length: string;
+  shipment_width: string;
+  shipment_height: string;
+  cod: string;
+  gm: string;
+  name: string;
+  add: string;
+  product_details: string;
+  pt: DelhiveryPaymentMode;
+};
+
+export function buildDelhiveryManifestEditPayload(input: {
+  order: Record<string, unknown>;
+  orderId: string;
+  awb: string;
+  details: DelhiveryShipmentDetails;
+}): DelhiveryManifestEditPayload {
+  const { order, awb, details } = input;
+  const customer =
+    order.customer && typeof order.customer === "object"
+      ? (order as Record<string, unknown>).customer as Record<string, unknown>
+      : {};
+  const address =
+    [customer.address1, customer.address2]
+      .map((part) => text(part))
+      .filter(Boolean)
+      .join(", ") || text(customer.address);
+  const normalizedDetails = buildDelhiveryDetailsFromOrder(order, details);
+  const box = normalizedDetails.boxes[0] || defaultBox();
+  const amounts = getDelhiveryOrderAmounts(order);
+  const product = normalizedDetails.items[0];
+  const productName = text(product?.title, "Succulents");
+  const quantity = Math.max(1, product?.quantity || 1);
+  const grandTotal = amounts.invoiceTotal;
+  const tracking = Array.isArray(order.tracking) ? order.tracking : [];
+  const trackingRecord =
+    tracking[0] && typeof tracking[0] === "object"
+      ? (tracking[0] as Record<string, unknown>)
+      : {};
+  const validWaybill = waybill(String(
+    order.awb || trackingRecord.number || awb,
+  ));
+  if (!validWaybill) {
+    throw new Error("A valid Delhivery AWB is required before updating the manifest.");
+  }
+
+  // Delhivery's Edit endpoint validates the derived volumetric weight as a
+  // float. Integer JSON values make it compute an int and reject the request
+  // with "voll must be an instance of float not int", so every numeric field is
+  // sent with an explicit decimal representation.
+  const decimal = (value: number) => Number(value).toFixed(2);
+  return {
+    waybill: validWaybill,
+    shipment_length: decimal(box.lengthCm),
+    shipment_width: decimal(box.widthCm),
+    shipment_height: decimal(box.heightCm),
+    cod: decimal(amounts.paymentMode === "COD" ? amounts.collectableAmount : 0),
+    gm: decimal(box.weightGrams),
+    name: text(customer.fullName ?? order.customerName, "Customer"),
+    add: address,
+    product_details: `${productName} | Quantity: ${quantity} | Total price: INR ${grandTotal.toFixed(2)}`,
+    pt: amounts.paymentMode,
   };
 }
 

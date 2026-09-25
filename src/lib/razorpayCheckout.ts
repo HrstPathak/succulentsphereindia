@@ -5,7 +5,7 @@ import { calculateOrderPricing, MIN_ORDER_AMOUNT } from "@/lib/pricing";
 import { COD_DEPOSIT_AMOUNT, COD_FEE_AMOUNT, COD_ORDER_LIMIT } from "@/lib/checkoutConfig";
 import type { OrderConfirmationEmail } from "@/lib/order-email";
 import { sendOrderConfirmationEmail } from "@/lib/order-email";
-import { enqueueShipment } from "@/lib/shipping";
+import { createAutomaticShipmentForOrder, type ShipmentCreationSummary } from "@/lib/shipping";
 import { consumeWalletHoldForOrder, creditWalletCashback } from "@/lib/wallet";
 
 export type CartItem = {
@@ -241,7 +241,7 @@ export async function recordPaymentAgainstSession(input: { razorpayOrderId: stri
 export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: string; paymentId: string; paymentStatus: string; amountPaise: number; currency: string; waitForLockMs?: number }) {
   const db = getFirebaseDb();
   const sessionRef = sessions().doc(input.razorpayOrderId);
-  let result: { firebaseOrderId?: string; orderNumber?: number; alreadyCreated: boolean; processing: boolean; email?: OrderConfirmationEmail } = {
+  let result: { firebaseOrderId?: string; orderNumber?: number; alreadyCreated: boolean; processing: boolean; email?: OrderConfirmationEmail; shipment?: ShipmentCreationSummary } = {
     alreadyCreated: false,
     processing: false,
   };
@@ -259,6 +259,51 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
         alreadyCreated: true,
         processing: false,
       };
+      if (input.paymentStatus === "captured") {
+        const paymentReceived = Number(input.amountPaise) / 100;
+        const codDepositAmount =
+          session.paymentMode === "cod_deposit" ? session.payableAmount : 0;
+        const walletAmountApplied = Math.max(
+          0,
+          Number(session.walletAmountApplied) || 0,
+        );
+        const codBalance =
+          session.paymentMode === "cod_deposit"
+            ? Number(
+                Math.max(
+                  0,
+                  session.totalWithCod - codDepositAmount - walletAmountApplied,
+                ).toFixed(2),
+              )
+            : 0;
+        tx.set(
+          db.collection("orders").doc(session.firebaseOrderId),
+          {
+            paymentStatus: "captured",
+            razorpayPaymentId: input.paymentId,
+            paymentReceived,
+            codDepositAmount,
+            cod_balance: codBalance,
+            codBalance,
+            financialStatus:
+              session.paymentMode === "cod_deposit"
+                ? "DEPOSIT_PAID"
+                : "PAID",
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true },
+        );
+        tx.set(
+          sessionRef,
+          {
+            paymentId: input.paymentId,
+            paymentStatus: "captured",
+            status: "order_created",
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true },
+        );
+      }
       return;
     }
 
@@ -283,6 +328,29 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
     const orderNumber = Number(counter.get("orderNumber") || 1000) + 1;
     const orderRef = db.collection("orders").doc();
 
+    const paymentReceived = Number(input.amountPaise) / 100;
+    const codDepositAmount =
+      session.paymentMode === "cod_deposit" ? session.payableAmount : 0;
+    const walletAmountApplied = Math.max(0, Number(session.walletAmountApplied) || 0);
+    const codBalance =
+      session.paymentMode === "cod_deposit"
+        ? Number(
+            Math.max(
+              0,
+              session.totalWithCod - codDepositAmount - walletAmountApplied,
+            ).toFixed(2),
+          )
+        : 0;
+    const paymentAttributes = [
+      { key: "payment_mode", value: session.paymentMode },
+      { key: "payment_received", value: paymentReceived.toFixed(2) },
+      ...(session.paymentMode === "cod_deposit"
+        ? [
+            { key: "cod_deposit", value: codDepositAmount.toFixed(2) },
+            { key: "cod_balance", value: codBalance.toFixed(2) },
+          ]
+        : []),
+    ];
     const orderItems = session.items.map((item, index) => {
       const data = products[index]!.data() || {};
       return {
@@ -296,7 +364,7 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
         price: { amount: String(item.price), currencyCode: "INR" },
         originalTotalPrice: { amount: (Number(item.price) * Number(item.quantity || 1)).toFixed(2), currencyCode: "INR" },
         discountedTotalPrice: { amount: (Number(item.price) * Number(item.quantity || 1)).toFixed(2), currencyCode: "INR" },
-        customAttributes: [],
+        customAttributes: index === 0 ? paymentAttributes : [],
       };
     });
 
@@ -327,6 +395,11 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
       discount: session.discount,
       walletAmountUsed,
       payableAmount: session.payableAmount,
+      paymentReceived,
+      codDepositAmount,
+      cod_balance: codBalance,
+      codBalance,
+      codFee: session.codFee,
       walletCashbackEarned,
       walletCashbackBasisAmount: session.cashbackBasisAmount,
       walletCashbackReversed: false,
@@ -395,7 +468,9 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
         shipping: session.shipping,
         discount: session.discount,
         codFee: session.codFee,
-        paymentReceived: Number(input.amountPaise) / 100,
+        paymentReceived,
+        codDepositAmount,
+        codBalance,
         walletAmountUsed,
         cashbackEarned: walletCashbackEarned,
         payableAmount: session.payableAmount,
@@ -403,14 +478,28 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
     };
   });
 
-  // External calls happen after the transaction. A paid order gets a durable
-  // shipment draft, but no AWB is allocated until an admin confirms the packed
-  // box details and explicitly chooses API creation or manual preparation.
-  if (result.firebaseOrderId) {
+  // Only captured money may create an AWB. Authorized payments can already
+  // have a pending Firestore order; their capture webhook/status retry will
+  // enter this block later and allocate the shipment exactly once.
+  if (result.firebaseOrderId && input.paymentStatus === "captured") {
     try {
-      await enqueueShipment(result.firebaseOrderId, { orderNumber: result.orderNumber });
+      result.shipment = await createAutomaticShipmentForOrder(result.firebaseOrderId, {
+        orderNumber: result.orderNumber,
+      });
+      if (!result.shipment.ok) {
+        console.warn("Automatic Delhivery shipment not completed", result.shipment.error);
+      }
     } catch (error) {
-      console.warn("Failed to enqueue shipment draft", String((error as Error).message || error));
+      result.shipment = {
+        ok: false,
+        skipped: false,
+        status: "failed",
+        error: String((error as Error).message || error),
+        waybills: [],
+        trackingNumber: "",
+        trackingUrl: "",
+      };
+      console.warn("Failed to auto-create Delhivery shipment", result.shipment.error);
     }
   }
 

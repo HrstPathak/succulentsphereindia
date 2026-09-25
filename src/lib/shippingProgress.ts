@@ -193,12 +193,81 @@ function resolveWorkState(input: ShippingProgressInput) {
   return { key: "", label: "Order Confirmed" };
 }
 
+/**
+ * Statuses an admin sets by hand. These are authoritative and take precedence
+ * over the live carrier scan, because they are used precisely when the Delhivery
+ * scan is missing or the parcel was handled outside the carrier.
+ */
+const MANUAL_STAGE: Record<
+  string,
+  { step: number; label: string; caption: string; isDelivered: boolean }
+> = {
+  CANCELLED: {
+    step: 0,
+    label: "Cancelled",
+    caption: "This order has been cancelled. Any refund is on its way.",
+    isDelivered: false,
+  },
+  IN_TRANSIT: {
+    step: 2,
+    label: "In transit",
+    caption: "Your order is on the way.",
+    isDelivered: false,
+  },
+  OUT_FOR_DELIVERY: {
+    step: 3,
+    label: "Out for Delivery",
+    caption: "Your order is out for delivery.",
+    isDelivered: false,
+  },
+  DELIVERED: {
+    step: 4,
+    label: "Delivered",
+    caption: "This order has been delivered.",
+    isDelivered: true,
+  },
+};
+
 export function resolveShippingPresentation(input: ShippingProgressInput): ShippingPresentation {
   const hasTracking = Boolean(input.hasTracking);
   const tagList = normalizeList(input.tags);
   const eventList = [...normalizeList(input.fulfillmentEvents), ...tagList];
   const workState = resolveWorkState(input);
+
   const shipmentStage = getShipmentStage(eventList, hasTracking);
+  const manual = MANUAL_STAGE[workState.key];
+
+  // A status set by hand is authoritative when the carrier has not caught up
+  // yet — that is exactly when this control exists. It must not drag the order
+  // backwards though, so the furthest-along stage wins. A cancellation always
+  // wins, because a cancelled order must never read as delivered.
+  if (manual) {
+    if (manual.label === "Cancelled") {
+      return {
+        step: 0,
+        label: manual.label,
+        trackerCaption: manual.caption,
+        isDelivered: false,
+        isOnHold: false,
+        hasShipmentActivity: false,
+      };
+    }
+    const carrierStep = shipmentStage?.step ?? 0;
+    const winner = carrierStep > manual.step ? shipmentStage! : manual;
+    return {
+      step: winner.step,
+      label: winner.label,
+      trackerCaption:
+        winner === shipmentStage
+          ? shipmentStage!.step >= 4
+            ? "Delhivery marked this shipment as delivered."
+            : "Your order is on the way."
+          : manual.caption,
+      isDelivered: winner.step >= 4,
+      isOnHold: false,
+      hasShipmentActivity: winner.step > 0,
+    };
+  }
 
   if (shipmentStage) {
     return {

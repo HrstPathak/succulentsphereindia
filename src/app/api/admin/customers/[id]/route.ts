@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
+import { getOrderGrandTotal } from "@/lib/orderAmounts";
 
 const text = (value: unknown, fallback = "") => typeof value === "string" ? value.trim() : value == null ? fallback : String(value).trim();
 const number = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -23,7 +24,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
       .filter((order, index, all) => all.findIndex((candidate) => candidate.id === order.id) === index)
       .map((order) => {
         const value = order.data(); const customer = (value.customer || {}) as Record<string, unknown>;
-        return { id: order.id, orderNumber: number(value.orderNumber), customerName: text(customer.fullName, text(value.customerName, "Customer")), email: text(value.emailLower, text(customer.email)), createdAt: text(value.createdAt || value.processedAt), total: number(value.total), financialStatus: text(value.financialStatus, "PENDING"), fulfillmentStatus: text(value.fulfillmentStatus, "UNFULFILLED"), emailStatus: text(value.emailStatus, "pending"), itemCount: Array.isArray(value.lineItems) ? value.lineItems.length : 0, paymentMode: text(value.paymentMode), tracking: Array.isArray(value.tracking) ? value.tracking : [], shippingAddress: customer };
+        return { id: order.id, orderNumber: number(value.orderNumber), customerName: text(customer.fullName, text(value.customerName, "Customer")), email: text(value.emailLower, text(customer.email)), createdAt: text(value.createdAt || value.processedAt), total: getOrderGrandTotal(value), financialStatus: text(value.financialStatus, "PENDING"), fulfillmentStatus: text(value.fulfillmentStatus, "UNFULFILLED"), emailStatus: text(value.emailStatus, "pending"), itemCount: Array.isArray(value.lineItems) ? value.lineItems.length : 0, paymentMode: text(value.paymentMode), tracking: Array.isArray(value.tracking) ? value.tracking : [], shippingAddress: customer };
       }).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return NextResponse.json({
       customer: { id: user.id, name: text(data.displayName, `${text(data.firstName)} ${text(data.lastName)}`.trim()), firstName: text(data.firstName), lastName: text(data.lastName), displayName: text(data.displayName), email: text(data.email), phone: text(data.phone), createdAt: text(data.createdAt), updatedAt: text(data.updatedAt), wishlistProductIds: Array.isArray(data.wishlistProductIds) ? data.wishlistProductIds.map(String) : [], defaultAddressId: text(data.defaultAddressId) },

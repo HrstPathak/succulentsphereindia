@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, LoaderCircle, ShoppingBag } from "lucide-react";
 import { formatINR } from "@/lib/currency";
+import { buildDelhiveryTrackingUrl } from "@/lib/delhiveryTracking";
 import PurchaseDataLayerEvent from "./PurchaseDataLayerEvent";
 
 type Props = {
@@ -12,12 +13,19 @@ type Props = {
   amount: number;
   paymentMode: string;
   initialOrderNumber?: number;
+  initialAwb?: string;
 };
 
 type ConfirmationState = {
   status: "processing" | "confirmed";
   firebaseOrderId?: string;
   orderNumber?: number;
+  trackingNumber?: string;
+};
+
+const normalizeAwb = (value: unknown) => {
+  const awb = String(value || "").trim();
+  return /^[A-Za-z0-9]{10,}$/.test(awb) ? awb : undefined;
 };
 
 export default function OrderPlacedStatusCard({
@@ -26,6 +34,7 @@ export default function OrderPlacedStatusCard({
   amount,
   paymentMode,
   initialOrderNumber,
+  initialAwb,
 }: Props) {
   const isCodDeposit = paymentMode === "cod_deposit";
   const [confirmation, setConfirmation] = useState<ConfirmationState>(() =>
@@ -33,18 +42,22 @@ export default function OrderPlacedStatusCard({
       ? {
           status: "confirmed",
           orderNumber: initialOrderNumber,
+          trackingNumber: normalizeAwb(initialAwb),
         }
       : { status: "processing" }
   );
 
   useEffect(() => {
-    if (confirmation.status === "confirmed") return;
+    if (confirmation.status === "confirmed" && confirmation.trackingNumber) return;
     if (!razorpayOrderId && !paymentId) return;
 
     let cancelled = false;
+    let attempts = 0;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const pollStatus = async () => {
+      if (attempts >= 24) return;
+      attempts += 1;
       try {
         const params = new URLSearchParams();
         if (razorpayOrderId) params.set("orderId", razorpayOrderId);
@@ -58,12 +71,14 @@ export default function OrderPlacedStatusCard({
         if (cancelled) return;
 
         if (response.ok && payload?.status === "confirmed") {
+          const trackingNumber = normalizeAwb(payload?.shipment?.trackingNumber);
           setConfirmation({
             status: "confirmed",
             firebaseOrderId: String(payload?.firebaseOrderId || "").trim() || undefined,
             orderNumber: Number(payload?.orderNumber) || undefined,
+            trackingNumber: trackingNumber || confirmation.trackingNumber,
           });
-          return;
+          if (trackingNumber) return;
         }
       } catch {
         // Keep polling silently. Webhook confirmation can still arrive.
@@ -80,7 +95,10 @@ export default function OrderPlacedStatusCard({
       cancelled = true;
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [confirmation.status, paymentId, razorpayOrderId]);
+  }, [confirmation.status, confirmation.trackingNumber, paymentId, razorpayOrderId]);
+
+  const trackingNumber = normalizeAwb(confirmation.trackingNumber) || "";
+  const trackingUrl = buildDelhiveryTrackingUrl(trackingNumber);
 
   const confirmedOrderLabel = useMemo(() => {
     return confirmation.orderNumber ? `#${confirmation.orderNumber}` : confirmation.firebaseOrderId || "-";
@@ -144,9 +162,26 @@ export default function OrderPlacedStatusCard({
             </div>
           </div>
 
+          {trackingNumber && (
+            <div className="rounded-2xl border border-[#cddfce] bg-[#eef7ee] p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#52705a]">Delhivery AWB</p>
+              <p className="mt-2 break-all font-mono text-lg font-bold text-[#244733]">{trackingNumber}</p>
+              <a
+                href={trackingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex rounded-xl bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+              >
+                Track on Delhivery ↗
+              </a>
+            </div>
+          )}
+
           <div className="rounded-xl border border-[#e8dece] bg-white/70 px-4 py-3 text-sm text-[#3f4f45]">
             {isConfirmed
-              ? "You will receive an order confirmation email with your Order ID shortly. Please check your inbox and spam folder. Our team will contact you within 24 hours."
+              ? trackingNumber
+                ? "Your Delhivery shipment is created and the tracking link above is ready."
+                : "Your order is confirmed. Delhivery shipment creation is queued; tracking will appear here when the AWB is issued."
               : "We will update this page automatically as soon as the order is created."}
           </div>
 

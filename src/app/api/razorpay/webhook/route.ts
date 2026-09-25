@@ -83,6 +83,7 @@ export async function POST(req: Request) {
       orderNumber: result.orderNumber,
       alreadyCreated: result.alreadyCreated,
       processing: result.processing,
+      shipment: result.shipment,
     });
   } catch (error) {
     const payloadText = rawBody.slice(0, 300);

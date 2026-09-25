@@ -17,30 +17,27 @@ email allowlisting, Delhivery, media hosting, and optional Redis/Vercel KV.
 Official API reference: https://delhivery-express-api-doc.readme.io/
 
 1. Copy the Delhivery block from `.env.example` into `.env.local`.
-2. Set the production API token, exact registered client name, registered pickup
-   location/pincode, seller GSTIN, and HSN code. The pickup location name is
-   case-sensitive and must match Delhivery exactly.
-3. Open an order from the admin dashboard. The Delhivery workbench opens under
-   **Create Delhivery Shipment**.
-4. Verify the final packed box count, L/W/H, actual scale weight, recipient,
-   payment mode, and fragile flag. The default 14 × 12 × 12 cm / 450 g values
-   are only editable starting points.
-5. Use one of these explicit paths:
-   - **API automation:** save, check serviceability/rates, confirm, then create.
-   - **Manual dashboard:** confirm, prepare the copy-ready handoff, create the
-     shipment in Delhivery, then attach the returned AWB in the admin workbench.
+2. Set `DELHIVERY_API_TOKEN` and choose server mode with
+   `DELHIVERY_MODE=production` (or `staging`). This mode is authoritative.
+   `DELHIVERY_CREATE_URL` is only a compatibility override when the mode is
+   absent. The registered client and pickup values are fixed in code.
+3. Open an order from the admin dashboard. **Ready to Ship** is the default
+   destination under the Delhivery shipment panel.
+4. The button rechecks serviceability and creates the AWB immediately. The AWB
+   is saved to both the order and durable Firestore shipment job, and tracking is
+   emailed to the customer. Existing AWBs are reconciled without a carrier call,
+   preventing duplicate shipments.
+5. The integration uses the confirmed shipment details already stored for the
+   order. Its starting defaults are 14 × 12 × 12 cm and 450 g.
 
-A paid order creates only an `awaiting_details` shipment draft. It never
-allocates an AWB automatically. API mode rechecks serviceability before create,
-splits invoice/COD totals across multiple boxes, persists one AWB per box, and
-sends the customer a tracking email. If a create response is uncertain or
-partial, normal retry is blocked until the admin verifies Delhivery or attaches
-the AWB manually.
+A paid order creates a durable Firestore shipment job. The admin's **Create Ready
+to Ship** action rechecks serviceability before create, persists the AWB in both
+`orders/{orderId}` and `shipments/{orderId}`, and sends tracking email. A confirmed
+AWB always short-circuits future create/retry actions. Pending AWB is not exposed
+because this repository has no Shopify Admin integration or credentials.
 
-Delhivery's public documentation does not define a supported client-dashboard
-prefill URL or downloadable-label endpoint. Manual mode therefore provides a
-structured handoff and dashboard link; use the dashboard's documented label
-workflow after creating the AWB.
+Delhivery does not document a supported client-dashboard prefill URL or
+downloadable-label endpoint, so the application does not fabricate either.
 
 ## Verification
 

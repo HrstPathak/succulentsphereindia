@@ -7,6 +7,7 @@ type Params = {
   amount?: string;
   paymentMode?: string;
   orderNumber?: string;
+  awb?: string;
 };
 
 export const metadata: Metadata = {
@@ -33,6 +34,7 @@ export default async function OrderPlacedPage({
   const paymentMode = String(resolvedParams.paymentMode || "").trim();
   const amountNumber = Number(amount) || 0;
   const orderNumber = Number(resolvedParams.orderNumber) || undefined;
+  const awb = String(resolvedParams.awb || "").trim();
 
   return (
     <section
@@ -49,6 +51,7 @@ export default async function OrderPlacedPage({
           amount={amountNumber}
           paymentMode={paymentMode}
           initialOrderNumber={orderNumber}
+          initialAwb={awb}
         />
       </div>
     </section>

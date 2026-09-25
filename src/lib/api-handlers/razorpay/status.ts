@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ensureFirebaseOrderForPayment, fetchRazorpayPayment, getCheckoutSessionByOrderId, getCheckoutSessionByPaymentId } from "@/lib/razorpayCheckout";
 import { sendOrderConfirmationEmail } from "@/lib/order-email";
+import { getShipmentCreationSummary } from "@/lib/shipping";
 
 /** GET /api/razorpay/status — poll payment/checkout status */
 export async function handleRazorpayStatus(req: Request) {
@@ -10,7 +11,21 @@ export async function handleRazorpayStatus(req: Request) {
     const paymentId = String(searchParams.get("paymentId") || "");
     const session = orderId ? await getCheckoutSessionByOrderId(orderId) : paymentId ? await getCheckoutSessionByPaymentId(paymentId) : null;
     if (!session) return NextResponse.json({ error: "Checkout session not found." }, { status: 404 });
-    if (session.status === "order_created" && session.firebaseOrderId) return NextResponse.json({ status: "confirmed", firebaseOrderId: session.firebaseOrderId, orderNumber: session.orderNumber, paymentId: paymentId || session.paymentId });
+    const paymentIsCaptured =
+      String(session.paymentStatus || "").toLowerCase() === "captured";
+    if (
+      session.status === "order_created" &&
+      session.firebaseOrderId &&
+      paymentIsCaptured
+    ) {
+      return NextResponse.json({
+        status: "confirmed",
+        firebaseOrderId: session.firebaseOrderId,
+        orderNumber: session.orderNumber,
+        paymentId: paymentId || session.paymentId,
+        shipment: await getShipmentCreationSummary(session.firebaseOrderId),
+      });
+    }
     const effectivePaymentId = paymentId || session.paymentId;
     const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -19,7 +34,13 @@ export async function handleRazorpayStatus(req: Request) {
       if (String(payment.status).toLowerCase() === "captured") {
         const result = await ensureFirebaseOrderForPayment({ razorpayOrderId: session.razorpayOrderId, paymentId: effectivePaymentId, paymentStatus: "captured", amountPaise: Number(payment.amount), currency: String(payment.currency || "INR") });
         if (result.email) await sendOrderConfirmationEmail(result.email);
-        return NextResponse.json({ status: "confirmed", firebaseOrderId: result.firebaseOrderId, orderNumber: result.orderNumber, paymentId: effectivePaymentId });
+        return NextResponse.json({
+          status: "confirmed",
+          firebaseOrderId: result.firebaseOrderId,
+          orderNumber: result.orderNumber,
+          paymentId: effectivePaymentId,
+          shipment: result.shipment,
+        });
       }
     }
     return NextResponse.json({ status: "processing", paymentId: effectivePaymentId, paymentStatus: session.paymentStatus || null, lastError: session.lastError || null });

@@ -2,8 +2,10 @@ import { getFirebaseDb } from "@/lib/firebase-admin";
 import { getAdminSession } from "@/lib/admin-auth";
 import { notFound, redirect } from "next/navigation";
 import AdminOrderTrackingForm from "@/components/admin/AdminOrderTrackingForm";
+import AdminOrderStatusControl from "@/components/admin/AdminOrderStatusControl";
 import AdminResendEmailButton from "@/components/admin/AdminResendEmailButton";
 import AdminWhatsAppMessage from "@/components/admin/AdminWhatsAppMessage";
+import { getOrderGrandTotal, getOrderPaymentSummary } from "@/lib/orderAmounts";
 
 type Props = { params: { id?: string; order?: string } };
 
@@ -26,24 +28,17 @@ export default async function Page({ params }: Props) {
   if (!doc.exists) return <div className="p-6">Order not found.</div>;
   const order: any = doc.data();
   const shipment = await db.collection("shipments").doc(id).get().then((s: any) => (s.exists ? s.data() : null));
+  const grandTotal = getOrderGrandTotal(order);
+  const payment = getOrderPaymentSummary(order);
 
-  // compute COD metadata from line item custom attributes
-  const codMeta = (() => {
-    const items = Array.isArray(order.lineItems) ? order.lineItems : [];
-    for (const item of items) {
-      const attrs = Array.isArray(item.customAttributes) ? item.customAttributes : [];
-      const paymentMode = attrs.find((a: any) => a.key === "payment_mode")?.value;
-      if (paymentMode === "cod_deposit") {
-        const depositRaw = attrs.find((a: any) => a.key === "cod_deposit")?.value || "100";
-        const balanceRaw = attrs.find((a: any) => a.key === "cod_balance")?.value || "0";
-        const deposit = Number(depositRaw) || 100;
-        const balance = Number(balanceRaw) || 0;
-        return { isCod: true, deposit, balance };
-      }
-    }
-    return { isCod: false, deposit: 0, balance: 0 };
-  })();
-  const codCharge = codMeta.isCod ? 50 : 0;
+  const codMeta = payment.paymentMode === "COD"
+    ? { isCod: true, deposit: payment.depositAmount, balance: payment.codBalance }
+    : { isCod: false, deposit: 0, balance: 0 };
+  const codCharge = codMeta.isCod
+    ? Number.isFinite(Number(order.codFee))
+      ? Number(order.codFee)
+      : 50
+    : 0;
 
   return (
     <main className="min-h-screen p-6">
@@ -81,7 +76,7 @@ export default async function Page({ params }: Props) {
               <dl className="grid gap-2">
                 <div className="flex justify-between">
                   <dt className="text-sm text-gray-600">Payment mode</dt>
-                  <dd className="font-medium">{order.paymentMode || order.payment_method || '—'}</dd>
+                  <dd className="font-medium">{codMeta.isCod ? (codMeta.balance > 0 && codMeta.deposit > 0 ? "COD (partial paid)" : "Cash on Delivery") : "Prepaid"}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-sm text-gray-600">Financial status</dt>
@@ -96,8 +91,26 @@ export default async function Page({ params }: Props) {
                   <dd className="font-medium">{(order.tracking || []).map((t:any)=> t.number).join(', ') || '—'}</dd>
                 </div>
               </dl>
-              <AdminOrderTrackingForm id={doc.id} initialTracking={order.tracking || []} shipment={shipment} />
+              <AdminOrderTrackingForm
+                id={doc.id}
+                initialTracking={order.tracking || []}
+                shipment={shipment}
+                customerName={order.customer?.fullName || order.customerName || order.name}
+                customerPhone={order.customer?.phone || order.phone}
+                orderNumber={order.orderNumber}
+              />
             </article>
+
+            <AdminOrderStatusControl
+              orderId={doc.id}
+              orderNumber={order.orderNumber}
+              customerName={
+                order.customer?.fullName || order.customerName || order.name || "Customer"
+              }
+              currentStatus={order.fulfillmentStatus || order.fulfillment_status || order.status}
+              codBalance={codMeta.balance}
+              trackingNumber={order.awb || (order.tracking || [])[0]?.number}
+            />
           </div>
 
           <aside className="space-y-4">
@@ -116,7 +129,7 @@ export default async function Page({ params }: Props) {
                   orderNumber={order.orderNumber}
                   items={(order.lineItems || []).map((li: any) => ({ title: li.title, quantity: li.quantity, price: (li.price && (li.price.amount || li.price)) || li.originalTotalPrice?.amount || li.discountedTotalPrice?.amount }))}
                   paymentMode={order.paymentMode || order.payment_method}
-                  total={order.total || order.currentTotalPrice?.amount || order.totalPrice?.amount}
+                  total={grandTotal}
                   customerName={order.customer?.fullName || order.customerName || order.name}
                   createdAt={order.createdAt || order.processedAt || order.createdAt}
                   address={[(order.customer?.address || order.customer?.address1 || order.customer?.address_line1 || "").trim(), order.customer?.city, order.customer?.state || order.customer?.province, order.customer?.pincode || order.customer?.zip].filter(Boolean).join(", ")}
@@ -163,7 +176,7 @@ export default async function Page({ params }: Props) {
                 {codMeta.isCod && (
                   <div className="flex justify-between"><span>COD Charge</span><span className="font-medium">{new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(Number(codCharge))}</span></div>
                 )}
-                <div className="flex justify-between text-lg"><span className="font-bold">Total</span><span className="font-bold">{new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(Number(order.total || 0))}</span></div>
+                <div className="flex justify-between text-lg"><span className="font-bold">Total</span><span className="font-bold">{new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(grandTotal)}</span></div>
               </div>
               {codMeta.isCod && codMeta.balance > 0 && (
                 <p className="mt-3 text-sm text-[#6b766a]">Partial COD: deposit ₹{codMeta.deposit} received — balance ₹{codMeta.balance} due on delivery.</p>

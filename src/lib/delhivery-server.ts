@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   buildDelhiveryCreatePayload,
+  buildDelhiveryManifestEditPayload,
   calculateDelhiveryPackageMetrics,
   getDelhiveryServiceabilityMessage,
   normalizeDelhiveryDetails,
@@ -12,6 +13,7 @@ import {
   type DelhiveryServiceability,
   type DelhiveryShipmentDetails,
 } from "@/lib/delhivery-shipment";
+import { resolveDelhiveryStateName } from "@/lib/delhiveryTracking";
 
 export type DelhiveryCreateResult = {
   waybills: string[];
@@ -19,13 +21,56 @@ export type DelhiveryCreateResult = {
   raw: Record<string, unknown>;
 };
 
+export type DelhiveryApiMode = "production" | "staging";
+
+export function getDelhiveryApiMode(): DelhiveryApiMode {
+  return String(process.env.DELHIVERY_MODE || "production").trim().toLowerCase() === "staging"
+    ? "staging"
+    : "production";
+}
+
+export function getDelhiveryEndpointMode(): DelhiveryApiMode {
+  return getDelhiveryCreateUrl().includes("staging-express.delhivery.com")
+    ? "staging"
+    : "production";
+}
+
+export function getDelhiveryCreateUrl() {
+  const configuredMode = String(process.env.DELHIVERY_MODE || "")
+    .trim()
+    .toLowerCase();
+  if (configuredMode === "staging") {
+    return "https://staging-express.delhivery.com/api/cmu/create.json";
+  }
+  if (configuredMode === "production") {
+    return "https://track.delhivery.com/api/cmu/create.json";
+  }
+  return (
+    String(process.env.DELHIVERY_CREATE_URL || "").trim() ||
+    "https://track.delhivery.com/api/cmu/create.json"
+  );
+}
+
+export function getDelhiveryEditUrl() {
+  const configuredMode = String(process.env.DELHIVERY_MODE || "")
+    .trim()
+    .toLowerCase();
+  if (configuredMode === "staging") {
+    return "https://staging-express.delhivery.com/api/p/edit";
+  }
+  if (configuredMode === "production") {
+    return "https://track.delhivery.com/api/p/edit";
+  }
+  return (
+    String(process.env.DELHIVERY_EDIT_URL || "").trim() ||
+    "https://track.delhivery.com/api/p/edit"
+  );
+}
+
 const config = {
   apiToken: () => String(process.env.DELHIVERY_API_TOKEN || "").trim(),
-  createUrl: () =>
-    String(
-      process.env.DELHIVERY_CREATE_URL ||
-        "https://track.delhivery.com/api/cmu/create.json",
-    ).trim(),
+  createUrl: getDelhiveryCreateUrl,
+  editUrl: getDelhiveryEditUrl,
   serviceabilityUrl: () =>
     String(
       process.env.DELHIVERY_SERVICEABILITY_URL ||
@@ -37,11 +82,7 @@ const config = {
         "https://track.delhivery.com/api/kinko/v1/invoice/charges/.json",
     ).trim(),
   clientName: () =>
-    String(
-      process.env.DELHIVERY_CLIENT_NAME ||
-        process.env.DELHIVERY_SELLER_NAME ||
-        "Succulent Sphere",
-    ).trim(),
+    "e3ac15-SucculentSphere-do",
 };
 
 export function getDelhiveryCompanyDetails(): DelhiveryCompanyDetails {
@@ -50,7 +91,11 @@ export function getDelhiveryCompanyDetails(): DelhiveryCompanyDetails {
     name: String(process.env.DELHIVERY_SELLER_NAME || "Succulent Sphere").trim(),
     gstin: String(process.env.DELHIVERY_SELLER_GST_TIN || "").trim().toUpperCase(),
     pan: String(process.env.DELHIVERY_SELLER_PAN || "").trim().toUpperCase(),
-    address: String(process.env.DELHIVERY_SELLER_ADDRESS || "").trim(),
+    address: String(
+      process.env.DELHIVERY_SELLER_ADDRESS ||
+        process.env.DELHIVERY_PICKUP_LOCATION ||
+        "",
+    ).trim(),
     city: String(process.env.DELHIVERY_SELLER_CITY || "Bhimtal").trim(),
     state: String(process.env.DELHIVERY_SELLER_STATE || "Uttarakhand").trim(),
     pincode: normalizeDelhiveryPincode(
@@ -83,9 +128,9 @@ export function isDelhiveryApiConfigured() {
 export function getDelhiveryAdminConfig() {
   return {
     configured: isDelhiveryApiConfigured(),
-    clientNameConfigured: Boolean(
-      String(process.env.DELHIVERY_CLIENT_NAME || "").trim(),
-    ),
+    mode: getDelhiveryEndpointMode(),
+    createUrl: config.createUrl(),
+    clientNameConfigured: Boolean(config.clientName()),
     dashboardUrl: String(
       process.env.DELHIVERY_DASHBOARD_URL || "https://client.delhivery.com/",
     ).trim(),
@@ -99,17 +144,17 @@ function requestTimeoutMs() {
 function errorMessage(payload: unknown, fallback: string) {
   if (!payload || typeof payload !== "object") return fallback;
   const value = payload as Record<string, unknown>;
-  const messages = [value.error, value.message, value.detail, value.rmk]
-    .map((item) => String(item || "").trim())
-    .filter(Boolean);
+  const exactMessage = [value.rmk, value.message, value.detail, value.error]
+    .find((item) => typeof item === "string" && item.trim());
+  if (exactMessage) return String(exactMessage).trim();
   const packages = Array.isArray(value.packages) ? value.packages : [];
   for (const item of packages) {
     if (!item || typeof item !== "object") continue;
     const entry = item as Record<string, unknown>;
     const remark = String(entry.remarks || entry.error || "").trim();
-    if (remark) messages.push(remark);
+    if (remark) return remark;
   }
-  return [...new Set(messages)].slice(0, 3).join(" · ") || fallback;
+  return fallback;
 }
 
 async function carrierFetch(url: string, init: RequestInit = {}) {
@@ -122,16 +167,17 @@ async function carrierFetch(url: string, init: RequestInit = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), requestTimeoutMs());
   try {
+    const outgoingHeaders = {
+      Accept: "application/json,text/plain,*/*",
+      "Content-Type": "application/json",
+      Authorization: `Token ${token}`,
+      ...(init.headers || {}),
+    };
     const response = await fetch(url, {
       ...init,
       cache: "no-store",
       signal: controller.signal,
-      headers: {
-        Accept: "application/json,text/plain,*/*",
-        "Content-Type": "application/json",
-        Authorization: `Token ${token}`,
-        ...(init.headers || {}),
-      },
+      headers: outgoingHeaders,
     });
     const raw = await response.text();
     let payload: unknown = null;
@@ -141,6 +187,7 @@ async function carrierFetch(url: string, init: RequestInit = {}) {
       payload = { raw };
     }
     if (!response.ok) {
+      console.error("Delhivery API Error:", payload);
       throw new Error(
         errorMessage(payload, `Delhivery request failed (${response.status}).`),
       );
@@ -252,7 +299,9 @@ export async function checkDelhiveryServiceability(input: {
   const maxWeightGrams = Math.max(0, Number(entry.max_weight || 0));
   const city = String(entry.city || "").trim();
   const district = String(entry.district || "").trim();
-  const state = String(entry.state || entry.state_code || "").trim();
+  // Delhivery usually returns only a state code (UK, DL, ...), so expand it to
+  // the full name that Delhivery's create manifest expects.
+  const state = resolveDelhiveryStateName(entry.state || entry.state_code);
   const sortCode = String(entry.sort_code || "").trim();
   const result = {
     serviceable,
@@ -347,14 +396,20 @@ function packageWaybill(value: unknown) {
   const waybill = String(
     item.waybill || item.awb || item.waybill_number || item.awb_number || "",
   ).trim();
-  return /^\d{10,}$/.test(waybill) ? waybill : "";
+  return /^[A-Za-z0-9]{10,}$/.test(waybill) ? waybill : "";
+}
+
+function responseWaybill(value: unknown) {
+  const waybill = String(value || "").trim();
+  return /^[A-Za-z0-9]{10,}$/.test(waybill) ? waybill : "";
 }
 
 export async function createDelhiveryShipment(input: {
   order: Record<string, unknown>;
-  company: DelhiveryCompanyDetails;
+  orderId: string;
   details: DelhiveryShipmentDetails;
-  waybills?: string[];
+  /** Distinct reference for a repeat shipment, e.g. "1009(2)". */
+  orderReference?: string;
 }): Promise<DelhiveryCreateResult> {
   const clientName = config.clientName();
   if (!clientName) {
@@ -364,33 +419,85 @@ export async function createDelhiveryShipment(input: {
   }
   const payload = buildDelhiveryCreatePayload({
     order: input.order,
-    company: input.company,
-    clientName,
+    orderId: input.orderId,
     details: normalizeDelhiveryDetails(input.details),
-    waybills: input.waybills,
+    company: getDelhiveryCompanyDetails(),
+    ...(input.orderReference ? { orderReference: input.orderReference } : {}),
   });
+  const data = encodeURIComponent(JSON.stringify(payload));
   const raw = await carrierFetch(config.createUrl(), {
     method: "POST",
     headers: {
       Accept: "application/json",
+      Authorization: `Token ${config.apiToken()}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: `format=json&data=${data}`,
+  });
+  const response = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  if (response.success === false || response.error === true || response.rmk) {
+    console.error("Delhivery API Error:", response);
+    throw new Error(errorMessage(raw, "Delhivery rejected the shipment creation request."));
+  }
+  const packageResults = collectPackageResults(raw);
+  const rootWaybillValue = response.upload_wbn || response.waybill || response.awb;
+  const waybills = [
+    ...packageResults
+    .map((item) => packageWaybill(item))
+    .filter(Boolean),
+    ...(rootWaybillValue ? [responseWaybill(rootWaybillValue)].filter(Boolean) : []),
+  ];
+  const uniqueWaybills = [...new Set(waybills)];
+  if (!uniqueWaybills.length) {
+    throw new Error(errorMessage(raw, "Delhivery did not return a waybill. The order was not marked as shipped."));
+  }
+  return { waybills: uniqueWaybills, packageResults, raw: response };
+}
+
+export type DelhiveryEditResult = {
+  waybill: string;
+  orderId: string | null;
+  raw: Record<string, unknown>;
+  payload: ReturnType<typeof buildDelhiveryManifestEditPayload>;
+};
+
+export async function editDelhiveryShipment(input: {
+  order: Record<string, unknown>;
+  orderId: string;
+  awb: string;
+  details: DelhiveryShipmentDetails;
+}): Promise<DelhiveryEditResult> {
+  const payload = buildDelhiveryManifestEditPayload({
+    order: input.order,
+    orderId: input.orderId,
+    awb: input.awb,
+    details: normalizeDelhiveryDetails(input.details),
+  });
+  const raw = await carrierFetch(config.editUrl(), {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Token ${config.apiToken()}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
   });
   const response = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
-  const packageResults = collectPackageResults(raw);
-  const waybills = packageResults
-    .map((item) => packageWaybill(item))
-    .filter(Boolean);
-  if (!waybills.length) {
+  if (response.status !== true || response.error) {
+    console.error("Delhivery API Error:", response);
     throw new Error(
-      errorMessage(
-        raw,
-        "Delhivery did not return a waybill. The order was not marked as shipped.",
-      ),
+      errorMessage(raw, "Delhivery rejected the shipment manifest update."),
     );
   }
-  return { waybills, packageResults, raw: response };
+  const responseWaybill = String(response.waybill || payload.waybill).trim();
+  if (!/^[A-Za-z0-9]{10,}$/.test(responseWaybill)) {
+    throw new Error("Delhivery did not return the updated AWB.");
+  }
+  return {
+    waybill: responseWaybill,
+    orderId: response.order_id == null ? null : String(response.order_id),
+    raw: response,
+    payload,
+  };
 }
-
 

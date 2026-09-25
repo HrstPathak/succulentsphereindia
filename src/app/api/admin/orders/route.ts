@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { sendTrackingEmail } from "@/lib/order-email";
 import { applyWalletOrderCancellationPolicy } from "@/lib/wallet";
+import { buildDelhiveryTrackingUrl } from "@/lib/delhiveryTracking";
 
 function cleanWaybills(values: unknown) {
   const input = Array.isArray(values) ? values : [values];
@@ -15,7 +16,7 @@ function cleanWaybills(values: unknown) {
             : String(value || "").split(/[\s,]+/),
         )
         .map((value) => value.trim())
-        .filter((value) => /^\d{10,}$/.test(value)),
+        .filter((value) => /^[A-Za-z0-9]{10,}$/.test(value)),
     ),
   ];
 }
@@ -61,15 +62,17 @@ export async function PATCH(request: Request) {
     const submittedWaybills = cleanWaybills(trackingNumbers || trackingNumber);
     const waybills = [...new Set([...previousWaybills, ...submittedWaybills])];
     const safeTrackingNumber = waybills[0] || "";
+    const safeUrl = String(trackingUrl || "").trim();
+    const canonicalUrl = buildDelhiveryTrackingUrl(safeTrackingNumber);
     if (waybills.length) {
       if (!update.fulfillmentStatus) update.fulfillmentStatus = "SHIPPED";
-      const safeUrl = String(trackingUrl || "").trim();
+      update.awb = safeTrackingNumber;
       update.tracking = waybills.map((number, index) => ({
         number,
         url:
           index === 0 && safeUrl
             ? safeUrl
-            : `https://www.delhivery.com/track/package/${encodeURIComponent(number)}`,
+            : buildDelhiveryTrackingUrl(number),
         company: String(carrier || "Delhivery").trim() || "Delhivery",
       }));
     }
@@ -90,10 +93,13 @@ export async function PATCH(request: Request) {
           orderId: String(id),
           status: "done",
           mode: shipment.mode || "manual",
+          tracking: update.tracking,
+          awb: safeTrackingNumber,
+          fulfillmentStatus: "SHIPPED",
           waybills: allWaybills,
           trackingNumbers: allWaybills,
           trackingNumber: safeTrackingNumber,
-          trackingUrl: String(trackingUrl || "").trim(),
+          trackingUrl: safeUrl || canonicalUrl,
           completedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
@@ -122,7 +128,7 @@ export async function PATCH(request: Request) {
           ),
           customerEmail: recipient,
           trackingNumber: safeTrackingNumber,
-          trackingUrl: String(trackingUrl || "").trim(),
+          trackingUrl: safeUrl || canonicalUrl,
           carrier: String(carrier || "Delhivery").trim() || "Delhivery",
         });
         trackingEmailSent = result.sent;
