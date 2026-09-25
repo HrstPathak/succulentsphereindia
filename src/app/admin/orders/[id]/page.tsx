@@ -1,5 +1,7 @@
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { getAdminSession } from "@/lib/admin-auth";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import AdminOrderTrackingForm from "@/components/admin/AdminOrderTrackingForm";
 import AdminOrderStatusControl from "@/components/admin/AdminOrderStatusControl";
@@ -43,11 +45,20 @@ export default async function Page({ params }: Props) {
   return (
     <main className="min-h-screen p-6">
       <div className="mx-auto max-w-5xl">
-        <header className="mb-6 flex items-center justify-between">
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-serif">Order #{order.orderNumber}</h1>
             <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleString()}</p>
           </div>
+          {/* ?tab=orders lets the dashboard restore the Orders tab, so this returns
+              to the order list instead of dropping the admin on Overview. */}
+          <Link
+            href="/admin?tab=orders"
+            className="inline-flex items-center gap-1 rounded-xl border border-[rgba(52,78,65,0.18)] bg-white/85 px-4 py-2 text-sm font-semibold text-[#1f2b24] shadow-[0_10px_20px_-18px_rgba(36,55,45,0.9)] transition hover:bg-white"
+          >
+            <ChevronLeft size={16} />
+            Back to Orders
+          </Link>
         </header>
 
         <section className="grid gap-6 lg:grid-cols-3">

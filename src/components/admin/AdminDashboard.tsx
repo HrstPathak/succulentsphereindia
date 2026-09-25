@@ -201,9 +201,15 @@ function Status({
   );
 }
 
-export default function AdminDashboard({ adminEmail }: { adminEmail: string }) {
+export default function AdminDashboard({
+  adminEmail,
+  initialTab = "overview",
+}: {
+  adminEmail: string;
+  initialTab?: Tab;
+}) {
   const [data, setData] = useState<Data | null>(null);
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [query, setQuery] = useState("");
   const [productPriceSort, setProductPriceSort] = useState<ProductPriceSort>("default");
   const [selected, setSelected] = useState<string[]>([]);

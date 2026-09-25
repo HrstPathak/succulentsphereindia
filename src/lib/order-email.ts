@@ -158,6 +158,10 @@ function emailHtml(order: OrderConfirmationEmail) {
             <div style="margin-top:18px;padding:12px;border-radius:12px;background:#f6fbf6;border:1px solid #e9f2ea">
               <p style="margin:0;font-size:13px;color:#415a4d">${paymentSummary}</p>
             </div>
+            <div style="margin-top:10px;padding:12px;border-radius:12px;background:#fff8ec;border:1px solid #f2e4c8">
+              <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#7a5b23">Didn&rsquo;t receive this email?</p>
+              <p style="margin:0;font-size:13px;color:#6d5a33">Please check your <strong>Spam</strong> or <strong>Junk</strong> folder and the Promotions tab in your inbox &mdash; it may have landed there. If it still isn&rsquo;t showing, WhatsApp us on +91-9458321209 with your Order ID and we&rsquo;ll resend it right away.</p>
+            </div>
             <footer style="margin-top:22px;display:flex;justify-content:space-between;align-items:center">
               <p style="margin:0;font-size:12px;color:#6b8774">Questions? Reply to this email and our plant team will help.</p>
               <p style="margin:0;font-size:12px;color:#4a6a57">&copy; ${new Date().getFullYear()} Succulent Sphere</p>

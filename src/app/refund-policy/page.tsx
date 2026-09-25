@@ -121,6 +121,29 @@ export default function RefundPolicyPage() {
               <p className="mt-3">
                 For COD orders, approved refunds are transferred via bank transfer or UPI after verification.
               </p>
+              <p className="mt-3">
+                <strong>Refund to wallet (instant, on request):</strong> If you would like the refund faster, we can
+                credit the amount to your Succulent Sphere wallet instead of waiting for the bank settlement. Just reply
+                to your refund confirmation email or WhatsApp us with your Order ID and the word <em>WALLET</em>. We
+                will confirm and credit your wallet once the claim is approved.
+              </p>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                <li>
+                  The wallet credit is issued only with your consent. We never move a refund into the wallet without
+                  your confirmation.
+                </li>
+                <li>
+                  Wallet credit is usually reflected in your account within minutes of approval, instead of 5-7 business
+                  days.
+                </li>
+                <li>
+                  You may request a withdrawal of your wallet balance back to your original bank account or UPI at any
+                  time, subject to our standard withdrawal timelines.
+                </li>
+                <li>
+                  Cashback or wallet balance already earned on the refunded portion is reversed as per our wallet terms.
+                </li>
+              </ul>
             </section>
 
             <section className="rounded-2xl border border-[#e8dece] bg-white/70 p-5">
