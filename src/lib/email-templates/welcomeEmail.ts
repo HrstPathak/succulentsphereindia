@@ -221,9 +221,15 @@ const HERO_COLUMN = 240;
  * this is a different component (no tagline, one line of nav), not a variant
  * of it. `.ss-hide-sm` drops the nav on a phone, where three links and a 25px
  * wordmark cannot share a 320px row.
+ *
+ * The circular mark is gone. It was the loudest thing in the first screen and it
+ * pushed the wordmark out of true, while the brand is already stated twice more
+ * in the message: in the hero's "Welcome to Succulent Sphere!" and in the
+ * footer. `logo-mark.png` stays in build-email-assets.cjs even though this was
+ * its only reader, so putting the mark back is a one-line change rather than a
+ * re-encode of the source artwork.
  */
 function welcomeMasthead(args: {
-  base: string;
   links: Array<{ label: string; url: string }>;
 }) {
   const links = args.links
@@ -239,9 +245,6 @@ function welcomeMasthead(args: {
   return `<tr>
             <td class="ss-masthead" style="padding:24px 34px 22px;background:${BRAND.card};border-radius:16px 16px 0 0">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-                <td width="52" valign="middle" style="width:52px;padding-right:13px">
-                  <img src="${escapeHtml(assetUrl(args.base, "logo-mark.png"))}" width="40" height="40" alt="" style="display:block;width:40px;height:40px;border:0;outline:none;text-decoration:none" />
-                </td>
                 <td valign="middle" style="font-family:${FONT_SERIF};font-size:25px;line-height:1.1;color:${BRAND.ink}">Succulent Sphere</td>
                 <td align="right" valign="middle" class="ss-hide-sm" style="font-family:${FONT_SANS};font-size:11px;line-height:1.4;letter-spacing:0.4px;color:#5C6B61">${links}</td>
               </tr></table>
@@ -269,7 +272,7 @@ function welcomeMasthead(args: {
 function heroPanel(args: {
   src: string;
   imageAlt: string;
-  eyebrow: string;
+  greeting: string;
   heading: string;
   lede: string;
 }) {
@@ -289,15 +292,8 @@ function heroPanel(args: {
                           <table role="presentation" class="ss-hero-col" cellpadding="0" cellspacing="0" border="0" width="${HERO_COLUMN}" style="width:${HERO_COLUMN}px">
                             <tr>
                               <td>
-                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-                                  <td valign="middle" style="font-family:${FONT_SANS};font-size:9.5px;letter-spacing:3.2px;font-weight:bold;color:#6B7F70;white-space:nowrap">${escapeHtml(args.eyebrow)}</td>
-                                  <td valign="middle" style="padding-left:11px;font-size:0;line-height:0">
-                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-                                      <td style="border-top:1px solid #C9C4B8;font-size:0">&nbsp;</td>
-                                    </tr></table>
-                                  </td>
-                                </tr></table>
-                                <h1 class="ss-hero-title" style="margin:15px 0 0;padding:0;font-family:${FONT_SERIF};font-size:30px;line-height:1.12;color:${BRAND.ink};font-weight:normal;letter-spacing:-0.4px">${escapeHtml(args.heading)}</h1>
+                                <p class="ss-hero-hello" style="margin:0;padding:0;font-family:${FONT_SERIF};font-size:27px;line-height:1.14;color:${BRAND.ink};font-weight:normal;letter-spacing:-0.2px">${escapeHtml(args.greeting)}</p>
+                                <h1 class="ss-hero-title" style="margin:11px 0 0;padding:0;font-family:${FONT_SERIF};font-size:30px;line-height:1.12;color:${BRAND.ink};font-weight:normal;letter-spacing:-0.4px">${escapeHtml(args.heading)}</h1>
                                 <p class="ss-hero-lede" style="margin:13px 0 0;padding:0;font-family:${FONT_SANS};font-size:12.5px;line-height:1.62;color:${BRAND.body}">${escapeHtml(args.lede)}</p>
                               </td>
                             </tr>
@@ -400,6 +396,7 @@ const WELCOME_MEDIA_CSS = [
   "        .ss-hero-pull { margin-top:0 !important; }",
   "        .ss-hero-pad { padding:26px 22px 4px 22px !important; }",
   "        .ss-hero-col { width:100% !important; }",
+  "        .ss-hero-hello { font-size:24px !important; line-height:1.16 !important; }",
   "        .ss-hero-title { font-size:25px !important; line-height:1.16 !important; }",
   "        .ss-hero-lede { font-size:14.5px !important; line-height:1.6 !important; }",
   "        /* The masthead's three links cannot share a 320px row with a 25px",
@@ -459,12 +456,14 @@ export function buildWelcomeEmail(input: WelcomeEmailInput): {
     "Your account is ready. Here is what to expect from us: handpicked " +
     "plants, careful delivery, and real plant-care help whenever you need it.";
 
-  // The design's eyebrow reads "HELLO THERE!" because the design itself is
-  // unpersonalised. Using the customer's first name in that slot is the whole
-  // reason a welcome is not a brochure, and it is the same name the plain-text
-  // twin greets with, so the two cannot disagree. An account with no first name
-  // gets the design's own wording rather than a dangling comma.
-  const eyebrow = firstName ? `HELLO, ${firstName.toUpperCase()}!` : "HELLO THERE!";
+  // The design opens on a small-caps "HELLO THERE!" eyebrow, which put the
+  // customer's name in 9.5px type above a 30px headline, so the one thing that
+  // makes this a welcome rather than a brochure was the smallest thing on the
+  // page. This greets by name at nearly headline size instead. It is the same
+  // name the plain-text twin greets with, so the two cannot disagree, and an
+  // account with no first name gets the design's own wording rather than a
+  // dangling comma.
+  const greeting = firstName ? `Hi ${firstName},` : "Hi there,";
 
   const html = documentShell({
     title: subject,
@@ -472,7 +471,6 @@ export function buildWelcomeEmail(input: WelcomeEmailInput): {
     preheaderHtml: `${escapeHtml(preheader)} ${PREHEADER_PAD}`,
     bodyHtml: `      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:${PANEL_WIDTH}px;margin:0 auto;background:${BRAND.card};border-radius:16px">
         ${welcomeMasthead({
-          base,
           links: [
             { label: "Premium Succulents", url: shopUrl },
             { label: "Plant Care", url: careUrl },
@@ -482,19 +480,22 @@ export function buildWelcomeEmail(input: WelcomeEmailInput): {
         ${heroPanel({
           src: src.hero,
           imageAlt: images.hero.alt,
-          eyebrow,
+          greeting,
           heading: "Welcome to Succulent Sphere!",
-          // Three lines, deliberately, and the length below is load-bearing.
-          // The hero photo's lower-left corner is the dark leafy plant, not flat
-          // wall, so a fourth line drops the tail of this copy onto dark green
-          // and costs real legibility. At 240px and 12.5px the measure runs
-          // ~45 characters per line, so three lines is a hard ceiling of about
-          // 125 characters and this is 112. The design's "greener, happier
-          // homes" became "greener homes" to land on three; the sign-off below
-          // the CTA still carries the fuller line.
+          // Two lines, and the length is load-bearing. The hero photo's
+          // lower-left corner is the dark leafy plant, not flat wall, so a third
+          // line drops the tail of this copy onto dark green and costs real
+          // legibility. The greeting above pushed this block down by roughly a
+          // line, which is what brought the tail onto the plant, so the fix is
+          // fewer words rather than a tighter top offset: the offset is shared
+          // with the greeting, and shrinking it moves the name off the clean
+          // wall at the top. At 240px and 12.5px the measure runs ~45 characters
+          // per line, so two lines is a hard ceiling near 90 characters and this
+          // is 85. "greener, happier homes" is not lost -- the sign-off under the
+          // CTA still carries it, in full.
           lede:
             "We\u2019re so happy to have you here. You\u2019ve joined a growing " +
-            "community of plant lovers who believe in greener homes.",
+            "community of plant lovers.",
         })}
         <tr>
           <td style="padding:26px 0 0">
