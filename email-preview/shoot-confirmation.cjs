@@ -79,18 +79,49 @@ const VARIANTS = [
 /**
  * The rendered HTML points at https://succulentsphere.com/images/email/*.
  * Those files only exist after a deploy, so for local review we rewrite the
- * origin to a relative path that resolves against public/ on disk. The
- * catalogue product images are on another host entirely, so they are stripped:
- * a local preview has no business reaching the network for them, and a broken
- * thumbnail is a layout question, not a content one.
+ * origin to a relative path that resolves against public/ on disk.
+ *
+ * Product images get the same treatment, as a generated local sample rather
+ * than a strip. An earlier version blanked the cdn.example.com URLs outright,
+ * on the reasonable-sounding grounds that a preview should not touch the
+ * network. The consequence was that every preview showed a broken-image
+ * placeholder where the plant thumbnail goes, which is exactly the region
+ * whose layout was under review. A preview that cannot show the thing being
+ * reviewed is worse than no preview, so the sample is synthesised here and
+ * stays offline.
  */
-function localize(html) {
+const SAMPLE_THUMB = path.join(DIR, "render", "_sample-thumb.jpg");
+
+function makeSampleThumb() {
+  const sharp = require("sharp");
+  // Two-tone gradient, so a squeezed or clipped thumbnail is obvious by eye
+  // and not just "a grey box, probably fine".
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E8DCC8"/><stop offset="100%" stop-color="#9DB89A"/>
+    </linearGradient></defs>
+    <rect width="240" height="240" fill="url(#g)"/>
+    <circle cx="120" cy="140" r="62" fill="#6E8F72"/>
+    <text x="120" y="215" font-family="Arial" font-size="26" fill="#20352A" text-anchor="middle">plant</text>
+  </svg>`;
+  return sharp(Buffer.from(svg))
+    .jpeg()
+    .toBuffer()
+    .then((buffer) => {
+      // sharp is async; this runs before the browser opens, so awaiting it
+      // here keeps the sample ready by the time the first page loads.
+      require("node:fs").writeFileSync(SAMPLE_THUMB, buffer);
+      return `file:///${SAMPLE_THUMB.replace(/\\/g, "/")}`;
+    });
+}
+
+function localize(html, sampleThumb) {
   return html
     .replace(
       /https?:\/\/[^"']*\/images\/email\//g,
       `file:///${path.join(__dirname, "..", "public", "images", "email").replace(/\\/g, "/")}/`,
     )
-    .replace(/https?:\/\/cdn\.example\.com\/[^"']*/g, "");
+    .replace(/https?:\/\/cdn\.example\.com\/[^"']*/g, sampleThumb);
 }
 
 function buildHtml() {
@@ -108,6 +139,7 @@ function buildHtml() {
 
 (async () => {
   buildHtml();
+  const sampleThumb = await makeSampleThumb();
 
   const browser = await chromium.launch({ executablePath: CHROME });
 
@@ -128,7 +160,7 @@ function buildHtml() {
       const file = path.join(DIR, "render", `confirmation-${variant.name}.html`);
       if (!fs.existsSync(file)) continue;
       const out = path.join(DIR, "render", `confirmation-${variant.name}.local.html`);
-      fs.writeFileSync(out, localize(fs.readFileSync(file, "utf8")));
+      fs.writeFileSync(out, localize(fs.readFileSync(file, "utf8"), sampleThumb));
       await page.goto(`file:///${out.replace(/\\/g, "/")}`, { waitUntil: "load" });
       await page.screenshot({
         path: path.join(DIR, "render", `confirmation-${variant.name}-${viewport.name}.png`),
@@ -140,7 +172,7 @@ function buildHtml() {
     const adminOut = path.join(DIR, "render", "admin-alert.local.html");
     fs.writeFileSync(
       adminOut,
-      localize(fs.readFileSync(path.join(DIR, "render", "admin-alert.html"), "utf8")),
+      localize(fs.readFileSync(path.join(DIR, "render", "admin-alert.html"), "utf8"), sampleThumb),
     );
     await page.goto(`file:///${adminOut.replace(/\\/g, "/")}`, { waitUntil: "load" });
     await page.screenshot({

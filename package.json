@@ -13,13 +13,17 @@
     "order:email:test": "node scripts/order-email-smoke.cjs",
     "order:email:send-test": "node --env-file=.env.local scripts/order-email-send-test.cjs",
     "order:confirmation:send-test": "node --env-file=.env.local scripts/order-confirmation-send-test.cjs",
+    "welcome:email:send-test": "node --env-file=.env.local scripts/welcome-email-send-test.cjs",
     "order:email:build": "tsc -p tsconfig.email-preview.json",
     "order:email:verify": "npm run order:email:build && node email-preview/verify.cjs",
     "order:confirmation:verify": "npm run order:email:build && node email-preview/verify-confirmation.cjs",
     "email:verify": "npm run order:email:verify && npm run order:confirmation:verify",
     "email:preview": "node email-preview/shoot.cjs && node email-preview/shoot-confirmation.cjs",
     "email:assets": "node scripts/build-email-assets.cjs",
-    "email:thumbnail:test": "node scripts/email-thumbnail-smoke.cjs"
+    "email:thumbnail:test": "node scripts/email-thumbnail-smoke.cjs",
+    "email:probe:layout": "node email-preview/probe-layout.cjs",
+    "email:probe:structure": "node email-preview/probe-structure.cjs",
+    "email:probe:mutations": "node email-preview/probe-mutations.cjs"
   },
   "dependencies": {
     "@google/genai": "^2.23.0",

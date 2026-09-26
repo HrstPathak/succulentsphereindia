@@ -54,7 +54,6 @@ import {
   FONT_SANS,
   FONT_SERIF,
   formatInr,
-  masthead,
   money,
   PANEL_WIDTH,
   PREHEADER_PAD,
@@ -118,6 +117,53 @@ const DEFAULT_ACCOUNT_PATH = "/account/orders";
 
 /** The measure of the hero's copy column, in CSS px. */
 const HERO_COPY_WIDTH = 330;
+
+/**
+ * The <style> block both confirmation messages share.
+ *
+ * This used to be a literal array copy-pasted into each builder, which is the
+ * precise failure mode the emailChrome header warns about: the two had already
+ * drifted (only the customer copy carried the explanatory comments), and the
+ * next person to add a rule would add it to one and forget the other. The
+ * customer and admin emails are the same layout with different copy, so they
+ * get the same phone behaviour by construction.
+ *
+ * Indentation is intentional — it lines up inside documentShell's <style>.
+ */
+const CONFIRMATION_MEDIA_CSS = [
+  "        .ss-pad { padding-left:22px !important; padding-right:22px !important; }",
+  "        .ss-hide-sm { display:none !important; }",
+  "        .ss-hero { padding-left:24px !important; padding-right:24px !important; }",
+  "        /* The copy is dark on a light photo, so on a phone it must stay on",
+  "           the flat left half of the frame. Anchoring the crop left keeps",
+  "           the heading and intro over empty wall; the succulent is cropped",
+  "           out on narrow screens, which is the right trade for legibility. */",
+  "        .ss-hero { background-position:0% center !important; }",
+  "        .ss-hero-copy { display:block !important; width:100% !important; max-width:100% !important; }",
+  "        /* Stack the two information cards. The mso ghost table keeps them",
+  "           side by side in Outlook, which has no inline-block. */",
+  "        .ss-card { display:block !important; max-width:100% !important; }",
+  "        /* Four columns do not fit a 375px screen. The unit price is the one",
+  "           that can go: quantity and line total still tell the story, and",
+  "           the unit price is implied by the two. */",
+  "        .ss-col-qty { display:none !important; }",
+  "        /* The item row is thumbnail + title + line total, and the title is",
+  "           the only elastic cell. Botanical names are long and mostly",
+  "           unbreakable ('Pachyphytum oviferum' is a single ~140px word at",
+  "           15.5px), so on a narrow phone the title's intrinsic width used to",
+  "           win the column negotiation and squeeze the thumbnail out of the",
+  "           row entirely. Two changes fix it: the chip is pinned so it can",
+  "           never collapse, and the title is given a smaller measure and",
+  "           allowed to break mid-word so it yields instead. */",
+  "        .ss-thumb-cell { min-width:56px !important; width:56px !important; }",
+  "        .ss-thumb-box { width:56px !important; height:56px !important; }",
+  "        .ss-thumb-img { width:56px !important; height:56px !important; }",
+  "        .ss-item-title { font-size:14px !important; overflow-wrap:break-word !important; word-break:break-word !important; }",
+  "        .ss-item-total { font-size:13px !important; }",
+  "        /* Swap the trust artwork for its text twin — see trustStrip(). */",
+  "        .ss-trust-art { display:none !important; }",
+  "        .ss-trust-text { display:block !important; }",
+].join("\n");
 
 /**
  * The resolved money story for one order.
@@ -296,7 +342,11 @@ function heroPanel(args: {
   heroUrl: string;
 }) {
   const bg = escapeHtml(args.heroUrl);
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:${PANEL_WIDTH}px;margin:0 auto;background:${BRAND.trustCream}">
+  // The hero is now the first block in the message, so it owns the card's top
+  // corners. Those used to live on the masthead, which no longer renders here:
+  // without moving the radius the panel would open with square corners above a
+  // photo, which reads as a bug even though nothing is actually misaligned.
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:${PANEL_WIDTH}px;margin:0 auto;background:${BRAND.trustCream};border-radius:16px 16px 0 0">
         <tr>
           <td class="ss-hero" width="${PANEL_WIDTH}" valign="top" bgcolor="${BRAND.trustCream}" background="${bg}" style="width:100%;max-width:${PANEL_WIDTH}px;background-color:${BRAND.trustCream};background-image:url('${bg}');background-size:cover;background-position:center center;background-repeat:no-repeat;padding:30px 34px 32px">
             <!--[if gte mso 9]>
@@ -511,11 +561,21 @@ function itemRow(args: { item: OrderConfirmationItem }) {
   // row renders without a thumbnail rather than with one that can never load.
   const usable = /^(?:https?:\/\/|cid:)/i.test(rawImage) ? rawImage : "";
 
+  // The chip carries its geometry three times over, deliberately: the `width`
+  // attribute (Outlook's Word engine sizes the table from the attributes and
+  // ignores <style>), the `min-width` + `width` on the cell, and the fixed
+  // `width`/`height` on the image. `min-width` is the important one — without
+  // it the chip is an ordinary elastic cell, and because the product title
+  // beside it is mostly one long unbreakable botanical name, a narrow phone
+  // would resolve the column contest in the title's favour and squeeze the
+  // photo down to nothing. Pinning the minimum means the title yields first,
+  // which is the correct priority: a wrapped four-line name is still readable,
+  // a collapsed thumbnail is not.
   const thumb = usable
-    ? `<td width="64" valign="top" style="width:64px;padding-right:16px">
-                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="64" style="width:64px"><tr>
+    ? `<td width="64" valign="top" class="ss-thumb-cell" style="width:64px;min-width:64px;padding-right:16px">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="64" class="ss-thumb-box" style="width:64px"><tr>
                     <td width="64" height="64" align="center" valign="middle" bgcolor="${BRAND.cream}" style="width:64px;height:64px;background:${BRAND.cream};border:1px solid ${BRAND.hairline};border-radius:12px">
-                      <img src="${escapeHtml(usable)}" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border:0;outline:none;text-decoration:none;border-radius:12px" />
+                      <img src="${escapeHtml(usable)}" width="64" height="64" alt="" class="ss-thumb-img" style="display:block;width:64px;height:64px;max-width:100%;border:0;outline:none;text-decoration:none;border-radius:11px;object-fit:cover;object-position:center center" />
                     </td>
                   </tr></table>
                 </td>`
@@ -525,25 +585,56 @@ function itemRow(args: { item: OrderConfirmationItem }) {
               <td valign="top" style="padding:14px 0;border-bottom:1px solid ${BRAND.hairline}">
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
                   ${thumb}
-                  <td valign="middle" style="font-family:${FONT_SERIF};font-size:15.5px;line-height:1.35;color:${BRAND.ink}">${escapeHtml(title)}</td>
+                  <td valign="middle" class="ss-item-title" style="font-family:${FONT_SERIF};font-size:15.5px;line-height:1.35;color:${BRAND.ink}">${escapeHtml(title)}</td>
                 </tr></table>
               </td>
               <td valign="middle" align="center" class="ss-col-qty" width="52" style="width:52px;padding:14px 0;border-bottom:1px solid ${BRAND.hairline};font-family:${FONT_SANS};font-size:14px;color:${BRAND.body};text-align:center">${quantity}</td>
               <td valign="middle" align="right" class="ss-hide-sm" width="96" style="width:96px;padding:14px 0;border-bottom:1px solid ${BRAND.hairline};font-family:${FONT_SANS};font-size:14px;color:${BRAND.body};text-align:right">${escapeHtml(formatInr(unit))}</td>
-              <td valign="middle" align="right" width="92" style="width:92px;padding:14px 0;border-bottom:1px solid ${BRAND.hairline};font-family:${FONT_SANS};font-size:14px;font-weight:bold;color:${BRAND.ink};text-align:right">${escapeHtml(formatInr(lineTotal))}</td>
+              <td valign="middle" align="right" width="92" class="ss-item-total" style="width:92px;padding:14px 0;border-bottom:1px solid ${BRAND.hairline};font-family:${FONT_SANS};font-size:14px;font-weight:bold;color:${BRAND.ink};text-align:right;white-space:nowrap">${escapeHtml(formatInr(lineTotal))}</td>
             </tr>`;
 }
 
-/** Items band: heading, column heads and one row per line item. */
+/**
+ * Items band: heading, column heads and one row per line item.
+ *
+ * This returns a COMPLETE, self-contained panel rather than a run of <tr>s to
+ * be injected into the card table, and that is not a style preference — it is
+ * the only thing that works.
+ *
+ * The card <table> is not actually a container for everything that looks like
+ * it should be. The HTML5 parser has a rule nobody expects: a <table> start tag
+ * appearing where a cell is expected implicitly closes the enclosing table
+ * ("act as if </table> had been seen, then reprocess"). The blocks injected
+ * after the greeting — paymentPlanPanel, deliveryBlock, orderSummary — each
+ * return a complete <table>, so the card table is closed at the first of them
+ * and everything after it is re-parented as a sibling of the card, straight
+ * into the page background div. Measured in the browser, only 1 of the 3
+ * `td.ss-pad` cells in the message actually existed in the DOM.
+ *
+ * The reason this stayed invisible for so long is that the escaping blocks each
+ * carry their own background and border, so they still look like cards. The
+ * items band was the one block with no background of its own, so it inherited
+ * the page tone and rendered edge to edge — the heading, the thumbnail and the
+ * TOTAL column all hard against the card border while every block above and
+ * below was inset. Owning the background here makes the band correct whether
+ * or not the surrounding table survived parsing.
+ */
 function itemsBand(args: { items: OrderConfirmationItem[] }) {
   const { items } = args;
   if (!items.length) {
-    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:26px 0 0">
-        <tr><td style="padding:0"><div style="font-family:${FONT_SERIF};font-size:19px;color:${BRAND.ink}">Items ordered</div></td></tr>
+    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:${PANEL_WIDTH}px;margin:0 auto;background:${BRAND.card}">
+        <tr>
+          <td class="ss-pad" style="padding:26px 34px 0">
+            <div style="font-family:${FONT_SERIF};font-size:19px;color:${BRAND.ink}">Items ordered</div>
+          </td>
+        </tr>
       </table>`;
   }
   const count = items.length;
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:26px 0 0">
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:${PANEL_WIDTH}px;margin:0 auto;background:${BRAND.card}">
+        <tr>
+          <td class="ss-pad" style="padding:26px 34px 0">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td valign="middle" style="padding-bottom:12px;border-bottom:1px solid ${BRAND.hairline}">
             <div style="font-family:${FONT_SERIF};font-size:19px;color:${BRAND.ink}">Items ordered</div>
@@ -557,6 +648,9 @@ function itemsBand(args: { items: OrderConfirmationItem[] }) {
           <td align="right" width="92" style="width:92px;padding:12px 0 6px;font-family:${FONT_SANS};font-size:9.5px;letter-spacing:1.8px;color:#9AA79B;font-weight:bold;text-align:right">TOTAL</td>
         </tr>
         ${items.map((item) => itemRow({ item })).join("\n        ")}
+      </table>
+          </td>
+        </tr>
       </table>`;
 }
 
@@ -776,30 +870,9 @@ export function buildOrderConfirmationEmail(
 
   const html = documentShell({
     title: subject,
-    mediaCss: [
-      "        .ss-pad { padding-left:22px !important; padding-right:22px !important; }",
-      "        .ss-hide-sm { display:none !important; }",
-      "        .ss-hero { padding-left:24px !important; padding-right:24px !important; }",
-      "        /* The copy is dark on a light photo, so on a phone it must stay on",
-      "           the flat left half of the frame. Anchoring the crop left keeps",
-      "           the heading and intro over empty wall; the succulent is cropped",
-      "           out on narrow screens, which is the right trade for legibility. */",
-      "        .ss-hero { background-position:0% center !important; }",
-      "        .ss-hero-copy { display:block !important; width:100% !important; max-width:100% !important; }",
-      "        /* Stack the two information cards. The mso ghost table keeps them",
-      "           side by side in Outlook, which has no inline-block. */",
-      "        .ss-card { display:block !important; max-width:100% !important; }",
-      "        /* Four columns do not fit a 375px screen. The unit price is the one",
-      "           that can go: quantity and line total still tell the story, and",
-      "           the unit price is implied by the two. */",
-      "        .ss-col-qty { display:none !important; }",
-      "        /* Swap the trust artwork for its text twin — see trustStrip(). */",
-      "        .ss-trust-art { display:none !important; }",
-      "        .ss-trust-text { display:block !important; }",
-    ].join("\n"),
+    mediaCss: CONFIRMATION_MEDIA_CSS,
     preheaderHtml: `${escapeHtml(preheader)} ${PREHEADER_PAD}`,
-    bodyHtml: `      ${masthead({ logoUrl: assetUrl(base, "logo-mark.png") })}
-      ${heroPanel({ orderNumber, intro: plan.hero, heroUrl })}
+    bodyHtml: `      ${heroPanel({ orderNumber, intro: plan.hero, heroUrl })}
 
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:${PANEL_WIDTH}px;margin:0 auto;background:${BRAND.card}">
         <tr>
@@ -999,20 +1072,9 @@ export function buildAdminOrderAlertEmail(
 
   const html = documentShell({
     title: subject,
-    mediaCss: [
-      "        .ss-pad { padding-left:22px !important; padding-right:22px !important; }",
-      "        .ss-hide-sm { display:none !important; }",
-      "        .ss-hero { padding-left:24px !important; padding-right:24px !important; }",
-      "        .ss-hero { background-position:0% center !important; }",
-      "        .ss-hero-copy { display:block !important; width:100% !important; max-width:100% !important; }",
-      "        .ss-card { display:block !important; max-width:100% !important; }",
-      "        .ss-col-qty { display:none !important; }",
-      "        .ss-trust-art { display:none !important; }",
-      "        .ss-trust-text { display:block !important; }",
-    ].join("\n"),
+    mediaCss: CONFIRMATION_MEDIA_CSS,
     preheaderHtml: `${escapeHtml(preheader)} ${PREHEADER_PAD}`,
-    bodyHtml: `      ${masthead({ logoUrl: assetUrl(base, "logo-mark.png") })}
-      ${heroPanel({
+    bodyHtml: `      ${heroPanel({
         orderNumber,
         intro:
           "A fresh customer purchase has been received. Everything needed to pack and hand it over is below.",

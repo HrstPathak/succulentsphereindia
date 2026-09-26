@@ -319,6 +319,39 @@ for (const scenario of SCENARIOS) {
     check(`${name}: asset exists ${file}`, fs.existsSync(path.join(assetsDir, file)));
   }
 
+  // --- No wordmark in the message ----------------------------------------
+  // The masthead was removed on purpose: the hero already carries the brand,
+  // and the wordmark plus its nav column was a second, competing header. It is
+  // checked rather than left to review because masthead() is still exported and
+  // still used by the status template, so re-adding the call here is a
+  // one-line change that would otherwise pass silently.
+  check(
+    `${name}: no wordmark header`,
+    !/SMALL PLANTS\. BIG JOY\./.test(html) && !/logo-mark\.png/.test(html),
+    "masthead/wordmark is back in the confirmation",
+  );
+  check(
+    `${name}: opens on the hero`,
+    /ORDER CONFIRMED/.test(body) && /Thank you for your order!/.test(body),
+  );
+
+  // --- Items band is inset ------------------------------------------------
+  // The band has to own a padded cell AND its own card background. The
+  // background is the part that is easy to drop and hard to notice: a padded
+  // cell nested in the card table is silently discarded by the HTML parser
+  // (a <table> start tag implicitly closes an enclosing <table>), so the band
+  // renders edge to edge against the page tone and still looks plausible.
+  const bandCell = body.match(/<td class="ss-pad" style="padding:26px 34px 0">/i);
+  check(`${name}: items band is padded`, !!bandCell, "no padded band cell");
+  const bandPanel = body.match(
+    /<table[^>]*background:#FFFFFF[^>]*>\s*<tr>\s*<td class="ss-pad" style="padding:26px 34px 0">/i,
+  );
+  check(
+    `${name}: items band owns its card background`,
+    !!bandPanel,
+    "band is not a self-contained card panel",
+  );
+
   // --- Product thumbnails ------------------------------------------------
   // A `cid:` reference is what production sends: Gmail blocks remote images
   // until the reader clicks through, so the bytes are attached to the message
@@ -333,6 +366,32 @@ for (const scenario of SCENARIOS) {
   // width/height on both its <td> and its <img>, so matching the raw attribute
   // string counts every thumbnail twice.
   const thumbCells = (html.match(/<img\b[^>]*\bwidth="64"[^>]*>/gi) || []).length;
+
+  // The title beside the chip is one long unbreakable botanical name, so on a
+  // narrow screen the browser resolves the column contest in the title's favour
+  // and the photo is squeezed away. min-width makes the chip the cell that
+  // refuses to give ground, and object-fit stops a non-square source being
+  // squashed rather than cropped. Neither is visible on a desktop screenshot,
+  // which is why both are asserted here rather than eyeballed.
+  if (imageItems.length) {
+    const chip = html.match(/<td[^>]*class="ss-thumb-cell"[^>]*>/i);
+    check(
+      `${name}: thumbnail cell is pinned`,
+      !!chip && /min-width:\d+px/.test(chip[0]),
+      (chip && chip[0]) || "no chip cell",
+    );
+    const chipImg = html.match(/<img[^>]*class="ss-thumb-img"[^>]*>/i);
+    check(
+      `${name}: thumbnail uses object-fit`,
+      !!chipImg && /object-fit:cover/.test(chipImg[0]),
+      (chipImg && chipImg[0]) || "no chip image",
+    );
+    check(
+      `${name}: media query shrinks the chip`,
+      /\.ss-thumb-img \{[^}]*width:\d+px/.test(html) && /\.ss-item-title \{/.test(html),
+      "no phone rule for the chip/title",
+    );
+  }
 
   check(
     `${name}: one thumbnail cell per image-bearing item`,

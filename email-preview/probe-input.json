@@ -1,0 +1,33 @@
+{
+  "orderId": "o1",
+  "orderNumber": 1014,
+  "customerName": "Rose maria",
+  "customerEmail": "rosemariaofficial04@gmail.com",
+  "phone": "9778398376",
+  "address": "Vellookunnel house, thazepathinaramkandom",
+  "city": "murickassery p o",
+  "state": "Kerala",
+  "pincode": "685604",
+  "items": [
+    {
+      "title": "Pink Moonstone (Pachyphytum oviferum) - Pearl Pink Egg Leaf",
+      "quantity": 3,
+      "price": 139,
+      "image": "https://cdn.example.com/products/pink-moonstone.jpg"
+    },
+    {
+      "title": "Moonstone (Pachyphytum oviferum) - Pearl White Egg Leaf",
+      "quantity": 3,
+      "price": 79,
+      "image": "https://cdn.example.com/products/moonstone.jpg"
+    }
+  ],
+  "shipping": 0,
+  "discount": 0,
+  "codFee": 0,
+  "total": 724,
+  "paymentMode": "cod_deposit",
+  "codDepositAmount": 100,
+  "paymentReceived": 100,
+  "codBalance": 624
+}

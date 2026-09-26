@@ -292,14 +292,27 @@ export function signature(args: { base: string }) {
           </tr>`;
 }
 
-export function footer(args: { orderNumber: string; phone: string; siteHost: string }) {
+export function footer(args: {
+  orderNumber: string;
+  phone: string;
+  siteHost: string;
+  /**
+   * Why this person is receiving the message. Defaults to the order line the
+   * transactional templates want; a non-order email (the welcome) passes its
+   * own so the footer never claims an order that does not exist.
+   */
+  reason?: string;
+}) {
+  const reason =
+    args.reason ??
+    `You are receiving this because you placed order #${escapeHtml(args.orderNumber)} with us.`;
   return `<tr>
             <td align="center" style="padding:26px 34px 30px;background:#FAF9F5;border-top:1px solid ${BRAND.hairline}">
               <div style="font-family:${FONT_SERIF};font-size:19px;color:${BRAND.ink}">Succulent Sphere</div>
               <div style="padding-top:7px;font-family:${FONT_SANS};font-size:9px;letter-spacing:2.8px;color:#9AA79B">PLANTS &nbsp;&bull;&nbsp; PEOPLE &nbsp;&bull;&nbsp; A GREENER TOMORROW</div>
               <div style="padding-top:16px;font-family:${FONT_SANS};font-size:11px;line-height:1.7;color:#A8B3A9">
                 ${escapeHtml(args.siteHost)} &nbsp;&bull;&nbsp; ${escapeHtml(args.phone)}<br>
-                You are receiving this because you placed order #${escapeHtml(args.orderNumber)} with us.
+                ${reason}
               </div>
             </td>
           </tr>`;
