@@ -12,6 +12,7 @@
     "delhivery:shipment:test": "node scripts/delhivery-shipment-smoke.cjs",
     "order:email:test": "node scripts/order-email-smoke.cjs",
     "order:email:send-test": "node --env-file=.env.local scripts/order-email-send-test.cjs",
+    "order:confirmation:send-test": "node --env-file=.env.local scripts/order-confirmation-send-test.cjs",
     "order:email:build": "tsc -p tsconfig.email-preview.json",
     "order:email:verify": "npm run order:email:build && node email-preview/verify.cjs",
     "order:confirmation:verify": "npm run order:email:build && node email-preview/verify-confirmation.cjs",

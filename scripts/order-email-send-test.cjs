@@ -99,6 +99,22 @@ const firebaseAdmin = {
   }),
 };
 
+// The templates import the shared chrome with a relative "./emailChrome"
+// specifier (see the note in emailChrome.ts — a path alias would be emitted
+// verbatim by tsc and then fail to resolve on plain node). Node cannot require
+// a .ts file, so the chrome is transpiled once here and handed to the template
+// through the same Module._load interception the aliases use.
+const emailChrome = loadTypeScript(
+  path.join(process.cwd(), "src", "lib", "email-templates", "emailChrome.ts"),
+);
+
+function loadTemplate(file) {
+  return loadTypeScriptWithMocks(
+    path.join(process.cwd(), "src", "lib", "email-templates", file),
+    { "./emailChrome": emailChrome },
+  );
+}
+
 const orderEmail = loadTypeScriptWithMocks(
   path.join(process.cwd(), "src", "lib", "order-email.ts"),
   {
@@ -108,9 +124,10 @@ const orderEmail = loadTypeScriptWithMocks(
     "@/lib/delhiveryTracking": {
       buildDelhiveryTrackingUrl: (n) => `https://www.delhivery.com/track/package/${n}`,
     },
-    "@/lib/email-templates/orderStatus": loadTypeScript(
-      path.join(process.cwd(), "src", "lib", "email-templates", "orderStatus.ts"),
-    ),
+    "@/lib/email-templates/orderStatus": loadTemplate("orderStatus.ts"),
+    // order-email.ts imports the confirmation module unconditionally, so this
+    // script has to supply it too even though it only sends lifecycle emails.
+    "@/lib/email-templates/orderConfirmation": loadTemplate("orderConfirmation.ts"),
   },
 );
 
@@ -138,9 +155,7 @@ const trackingNumber = arg("tracking", "1234567890123");
     };
 
     if (dryRun) {
-      const { buildOrderStatusEmail } = loadTypeScript(
-        path.join(process.cwd(), "src", "lib", "email-templates", "orderStatus.ts"),
-      );
+      const { buildOrderStatusEmail } = loadTemplate("orderStatus.ts");
       const email = buildOrderStatusEmail(input);
       console.log(
         `  ${status.padEnd(17)} ${String(email.html.length / 1024).padStart(6)}KB html  ` +
