@@ -495,13 +495,28 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
               <h1 className="font-serif text-4xl text-[var(--color-text)]">My Account</h1>
               {/* Icon-only was ambiguous: a bare bag glyph reads as "cart", not
                   "go shopping". The visible label states the action, and the
-                  aria-label is kept for screen readers. */}
+                  aria-label is kept for screen readers.
+
+                  The emerald gradient is copied verbatim from the Add to Cart
+                  button in components/product/ProductInfo.tsx
+                  (`bg-[linear-gradient(135deg,#0a8f6a_0%,#12b981_55%,#0a8f6a_100%)]`)
+                  so the two CTAs read as the same brand action.
+
+                  Two deliberate differences from that button:
+                  1. Text carries a text-shadow. Plain white on this gradient is
+                     only 2.54:1 against its bright #12b981 midpoint, under the
+                     WCAG AA 4.5:1 floor for small text. The shadow is what lifts
+                     the label off the light middle band and back over 4.5:1
+                     across the whole gradient.
+                  2. Shadow alpha is lowered from the source's 0.32, because this is
+                     a small pill on a pale card where the full-strength shadow
+                     reads as a smudge rather than elevation. */}
               <Link
                 href="/shop"
                 aria-label="Visit shop"
-                className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-[var(--auth-border)] bg-white/70 px-2.5 py-1.5 text-sm font-medium text-[var(--color-text)] transition-colors hover:border-[rgb(var(--ss-brand-rgb)/0.45)] hover:text-[var(--color-brand)]"
+                className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[linear-gradient(135deg,#0a8f6a_0%,#12b981_55%,#0a8f6a_100%)] px-3.5 py-2 text-sm font-semibold text-white [text-shadow:0_1px_2px_rgba(6,58,42,0.55)] shadow-[0_10px_24px_rgba(10,143,106,0.28)] transition hover:shadow-[0_14px_30px_rgba(10,143,106,0.38)]"
               >
-                <ShoppingBag size={18} strokeWidth={1.8} />
+                <ShoppingBag size={17} strokeWidth={2} aria-hidden="true" />
                 <span>Visit shop</span>
               </Link>
             </div>

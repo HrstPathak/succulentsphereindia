@@ -35,7 +35,7 @@ export default function AccountLoading() {
               <div className="ss-skeleton ss-skeleton-strong h-10 w-52 rounded-lg" />
               {/* Matches the real "Visit shop" pill (icon + text) so the hero
                   does not resize when the loaded card swaps in. */}
-              <div className="ss-skeleton h-9 w-28 shrink-0 rounded-lg" />
+              <div className="ss-skeleton h-9 w-32 shrink-0 rounded-full" />
             </div>
             <div className="ss-skeleton mt-3 h-7 w-full max-w-xs rounded-lg" />
             <div className="ss-skeleton mt-3 h-4 w-full max-w-xl" />
