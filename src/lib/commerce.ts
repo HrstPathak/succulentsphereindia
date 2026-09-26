@@ -1,8 +1,10 @@
 import "server-only";
 
+import { cache } from "react";
 import { FieldPath } from "firebase-admin/firestore";
 import { MAX_PINNED_ARTICLES, comparePinnedOrder } from "@/lib/article-pinning";
 import { getFirebaseDb } from "@/lib/firebase-admin";
+import { cacheDelete, cacheGet, cacheSet } from "@/lib/redis";
 import { getReviewStats, type ProductReview } from "@/lib/reviews";
 import { getWalletSummary, type WalletSummary } from "@/lib/wallet";
 import { getOrderGrandTotal, getOrderPaymentSummary } from "@/lib/orderAmounts";
@@ -103,39 +105,206 @@ function mapProduct(id: string, raw: Record<string, unknown>, reviews: ProductRe
   };
 }
 
+/** How many published reviews a product page renders. */
+const PRODUCT_REVIEW_DISPLAY_LIMIT = 50;
+
+/**
+ * Hard ceiling on documents the index-less fallback will read for one product.
+ *
+ * Deliberately higher than PRODUCT_REVIEW_DISPLAY_LIMIT: because the fallback
+ * has no orderBy, Firestore returns an arbitrary subset once a product exceeds
+ * this number, so the margin keeps every currently-realistic product (max 6
+ * reviews today) on the exact, ordered path. It exists purely as a blast
+ * radius, not as a display limit.
+ */
+const FALLBACK_REVIEW_READ_LIMIT = 200;
+
+/** Redis key for one product's published reviews. */
+const reviewsRedisKey = (productId: string) => `catalog:reviews:v1:${productId}`;
+
+/**
+ * Drops a product's cached review list.
+ *
+ * Call this after ANY write that changes a product's reviews: customer
+ * submit/edit/delete, admin moderation (published/hidden) and admin creation.
+ * A newly published review is the case that matters most — the storefront
+ * product page and its star rating are both rendered from this cache, so a
+ * stale entry means a review the customer just wrote never appears.
+ */
+export function invalidateProductReviewsCache(productId: string | null | undefined): void {
+  const id = String(productId || "").trim();
+  if (!id) return;
+  void cacheDelete(reviewsRedisKey(id));
+}
+
+async function readReviewsFromFirestore(productId: string) {
+  const map = (snapshot: FirebaseFirestore.QuerySnapshot) =>
+    snapshot.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() } as ProductReview))
+      .sort((a, b) => string(b.createdAt).localeCompare(string(a.createdAt)));
+
+  // Preferred path: ordering by createdAt on top of the two equality filters
+  // needs the composite index (productId, status, createdAt). It is the only
+  // path that both sorts correctly AND caps the read at 50 documents.
+  try {
+    return map(
+      await getFirebaseDb()
+        .collection("reviews")
+        .where("productId", "==", productId)
+        .where("status", "==", "published")
+        .orderBy("createdAt", "desc")
+        .limit(PRODUCT_REVIEW_DISPLAY_LIMIT)
+        .get(),
+    );
+  } catch {
+    // Index absent. Two equality filters on single fields are served by the
+    // automatic single-field indexes, so this query still runs — it just cannot
+    // order or cap server-side.
+    //
+    // The .limit() is what stops a product with thousands of reviews from
+    // reading every one of them, which was the original risk in the unbounded
+    // fallback. Be precise about what it costs: WITHOUT an orderBy Firestore
+    // returns an ARBITRARY subset once a product exceeds this limit, so a
+    // product with more than 200 published reviews would show an arbitrary
+    // selection rather than the 50 most recent.
+    //
+    // That is a deliberate trade: a wrong-ish review list is acceptable, a
+    // single product consuming a quarter of the daily read quota is not. At
+    // the current maximum of 6 reviews per product the two are identical.
+    // Creating the (productId, status, createdAt) composite index removes the
+    // trade-off entirely and makes the query above the one that runs.
+    return map(
+      await getFirebaseDb()
+        .collection("reviews")
+        .where("productId", "==", productId)
+        .where("status", "==", "published")
+        .limit(FALLBACK_REVIEW_READ_LIMIT)
+        .get(),
+    );
+  }
+}
+
 async function getReviewsForProduct(productId: string): Promise<ProductReview[]> {
-  const snapshot = await getFirebaseDb().collection("reviews").where("productId", "==", productId).where("status", "==", "published").get();
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as ProductReview)).sort((a, b) => string(b.createdAt).localeCompare(string(a.createdAt)));
+  const key = reviewsRedisKey(productId);
+  const cached = await cacheGet<ProductReview[]>(key);
+  // An empty array is a legitimate cache value ("this product has no reviews"),
+  // so only null/undefined counts as a miss. JSON round-tripping is safe here
+  // because every field on ProductReview is a string, number or boolean.
+  if (Array.isArray(cached)) return cached;
+
+  const reviews = await readReviewsFromFirestore(productId);
+  void cacheSet(key, reviews);
+  return reviews;
 }
 
 // Catalog cache: allProducts() powers every storefront catalog path (shop,
 // collections, /api/products, search, combo). Each call used to read the whole
 // products collection (up to 1000 docs) — multiplied by every filter/sort/
-// pagination request (the shop grid calls /api/products with cache:"no-store")
-// and every ISR regeneration of the revalidate=60 catalog pages, that alone
-// could exhaust the Firestore free-tier daily read quota. Cache the mapped
-// catalog in memory for a short TTL; admin product mutations call
-// invalidateCatalogCache() so edits show up immediately on the same instance
-// (other warm instances catch up within the TTL).
+// pagination request and every ISR regeneration, that alone could exhaust the
+// Firestore free-tier daily read quota.
+//
+// The cache has three tiers now:
+//
+//   1. per-instance memory  — microseconds, but dies with the process
+//   2. shared Redis         — survives cold starts, so a NEW Vercel instance
+//                             pays 1 Redis GET instead of 147 Firestore reads
+//   3. Firestore            — only when both miss, and only the winner writes
+//
+// Tier 2 is the one that matters on serverless. The CDN (s-maxage in
+// next.config.js) already absorbs repeat visits, so by the time a request
+// reaches this function the CDN entry has usually expired — meaning it is
+// typically a COLD instance. Before Redis, every one of those paid a full
+// Firestore read. Now only the very first pays.
+//
+// The matching client half of this lives in src/lib/cachedFetch.ts.
 const CATALOG_CACHE_TTL_MS =
   Math.max(30_000, Number.parseInt(process.env.CATALOG_CACHE_TTL_MS || "", 10) || 5 * 60 * 1000);
+const CATALOG_REDIS_KEY = "catalog:products:v1";
 let catalogCache: { at: number; items: ReturnType<typeof mapProduct>[] } | null = null;
+let catalogRefresh: Promise<ReturnType<typeof mapProduct>[]> | null = null;
 
+/**
+ * Clears the catalog everywhere it is held.
+ *
+ * Must also drop the shared Redis copy, not just this instance's memory. The
+ * admin product routes call this after a write; without the DEL the new price
+ * would stay invisible sitewide until the Redis TTL expired, which for a store
+ * means selling at the wrong number. The Redis delete is fire-and-forget so a
+ * cache outage cannot delay or fail the admin's save.
+ */
 export function invalidateCatalogCache() {
   catalogCache = null;
+  catalogRefresh = null;
+  void cacheDelete(CATALOG_REDIS_KEY);
 }
 
-async function allProducts() {
-  if (catalogCache && Date.now() - catalogCache.at < CATALOG_CACHE_TTL_MS) {
-    return catalogCache.items;
-  }
+async function readCatalogFromFirestore() {
   const snapshot = await getFirebaseDb().collection("products").limit(1000).get();
   // Catalog and filter pages do not need every individual review document.
   // Fetching reviews once per product made a 119-item catalog request issue
   // hundreds of Firestore reads and delayed normal storefront pages.
-  const items = snapshot.docs.map((doc) => mapProduct(doc.id, doc.data()));
-  catalogCache = { at: Date.now(), items };
+  return snapshot.docs.map((doc) => mapProduct(doc.id, doc.data()));
+}
+
+/** Reads the shared copy. Returns null on a miss, a bad shape, or any error. */
+async function readCatalogFromRedis() {
+  const cached = await cacheGet<ReturnType<typeof mapProduct>[]>(CATALOG_REDIS_KEY);
+  if (!Array.isArray(cached) || !cached.length) return null;
+  // Guard the shape: a truncated or hand-edited key must degrade to Firestore
+  // rather than poison the storefront with undefined products.
+  if (!cached.every((item) => item && typeof item === "object" && typeof item.id === "string")) {
+    return null;
+  }
+  return cached;
+}
+
+async function loadCatalog() {
+  const cached = await readCatalogFromRedis();
+  if (cached) return cached;
+
+  const items = await readCatalogFromFirestore();
+  // Best-effort populate for the next cold instance. A failure here costs
+  // nothing but a future Firestore read.
+  void cacheSet(CATALOG_REDIS_KEY, items);
   return items;
+}
+
+async function allProducts() {
+  const now = Date.now();
+  if (catalogCache && now - catalogCache.at < CATALOG_CACHE_TTL_MS) {
+    return catalogCache.items;
+  }
+
+  // Stale-while-revalidate: once the TTL lapses, return the previous snapshot
+  // immediately and refresh in the background. Callers never queue behind a
+  // cold Firestore read, and a single shared refresh serves every concurrent
+  // request instead of one read per request.
+  if (catalogCache) {
+    if (!catalogRefresh) {
+      catalogRefresh = loadCatalog()
+        .then((items) => {
+          catalogCache = { at: Date.now(), items };
+          return items;
+        })
+        .finally(() => {
+          catalogRefresh = null;
+        });
+    }
+    return catalogCache.items;
+  }
+
+  // Cold start: nothing to serve yet, so wait for the first real read.
+  if (!catalogRefresh) {
+    catalogRefresh = loadCatalog()
+      .then((items) => {
+        catalogCache = { at: Date.now(), items };
+        return items;
+      })
+      .finally(() => {
+        catalogRefresh = null;
+      });
+  }
+  return catalogRefresh;
 }
 
 function sortProducts(items: any[], options: ProductQueryOptions) {
@@ -170,12 +339,33 @@ export async function fetchProductsByQuery(searchQuery: string, options: Product
 }
 export async function fetchProductsList(limit = 24, options: ProductQueryOptions = {}) { return sortProducts(await allProducts(), options).slice(0, limit); }
 export async function fetchAllProductsList(options: ProductQueryOptions = {}) { return sortProducts(await allProducts(), options); }
-export async function fetchProductByHandle(handleInput: unknown) {
-  const handle = normaliseHandle(handleInput); if (!handle) return null;
+/**
+ * Product lookup by handle, deduplicated per request.
+ *
+ * A product page resolves its product TWICE: once in `generateMetadata` for
+ * the title/description/OG tags, and once in the page body for the render.
+ * Nothing shared the result, so each page view issued two identical Firestore
+ * reads for the document and two for its reviews.
+ *
+ * React's `cache()` scopes the memo to a single server render, which is
+ * exactly the lifetime of the duplicate we want to collapse. It is request-
+ * scoped, not global, so it cannot serve one visitor's product to another, and
+ * it does not outlive the render — a price edited by the admin is picked up on
+ * the very next request rather than being pinned in memory.
+ *
+ * Outside a React render (a script, a cron) `cache()` degrades to a plain
+ * call, so behaviour is unchanged there.
+ */
+const fetchProductByHandleCached = cache(async (handle: string) => {
   const snapshot = await getFirebaseDb().collection("products").where("handle", "==", handle).limit(1).get();
   if (snapshot.empty) return null;
   const doc = snapshot.docs[0]!;
   return mapProduct(doc.id, doc.data(), await getReviewsForProduct(doc.id));
+});
+
+export async function fetchProductByHandle(handleInput: unknown) {
+  const handle = normaliseHandle(handleInput); if (!handle) return null;
+  return fetchProductByHandleCached(handle);
 }
 export async function fetchProductsByIds(ids: string[]) {
   const uniqueIds = [...new Set(ids.map((id) => string(id).trim()).filter(Boolean))].slice(0, 30);
@@ -282,7 +472,7 @@ export async function fetchCustomerOrdersByUid(uid: string, limitCount = 50) {
     .map((doc) => mapOrder(doc.id, doc.data()))
     .sort((a, b) => b.processedAt.localeCompare(a.processedAt));
 }
-export async function fetchCustomerByUid(uid: string, options?: { includeOrders?: boolean; orderLimit?: number }): Promise<FirebaseAuthenticatedCustomer | null> {
+export async function fetchCustomerByUid(uid: string, options?: { includeOrders?: boolean; orderLimit?: number; walletTransactionLimit?: number }): Promise<FirebaseAuthenticatedCustomer | null> {
   try {
     const db = getFirebaseDb();
     const userRef = db.collection("users").doc(uid);
@@ -299,7 +489,9 @@ export async function fetchCustomerByUid(uid: string, options?: { includeOrders?
     const includeOrders = options?.includeOrders !== false;
     const [orders, wallet] = await Promise.all([
       includeOrders ? fetchCustomerOrdersByUid(uid, options?.orderLimit ?? 50) : Promise.resolve([]),
-      getWalletSummary(uid).catch((error) => {
+      getWalletSummary(uid, {
+        transactionLimit: options?.walletTransactionLimit,
+      }).catch((error) => {
         console.info(`[fetchCustomerByUid] Wallet lookup failed; continuing without wallet: ${String((error as Error)?.message || error)}`);
         return undefined;
       }),

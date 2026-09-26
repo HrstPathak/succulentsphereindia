@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { clearAuthCookies, getAuthenticatedCustomer } from "@/lib/auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { getReviewStats, type ProductReview } from "@/lib/reviews";
+import { invalidateProductReviewsCache } from "@/lib/commerce";
 async function responseForProduct(productId: string, review: ProductReview) { const reviews = (await getFirebaseDb().collection("reviews").where("productId", "==", productId).where("status", "==", "published").get()).docs.map((doc) => ({ id: doc.id, ...doc.data() } as ProductReview)); const stats = getReviewStats(reviews); return NextResponse.json({ ok: true, review, reviews, reviewCount: stats.reviewCount, rating: stats.averageRating }); }
 export async function POST(request: Request) {
   try {
@@ -43,6 +44,10 @@ export async function POST(request: Request) {
     const ref = await getFirebaseDb().collection("reviews").add({ ...review, orderId: orderId || null });
     review.id = ref.id;
     await ref.update({ id: ref.id });
+    // The product page renders its review list and star rating from the cache,
+    // so a review the customer just wrote has to be visible immediately — not
+    // on the next cache expiry.
+    invalidateProductReviewsCache(productId);
     return responseForProduct(productId, review);
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message || "Unable to submit review." }, { status: 500 });

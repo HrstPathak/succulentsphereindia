@@ -46,7 +46,7 @@ function fallbackCustomerFromToken(decoded: DecodedIdToken): FirebaseAuthenticat
   };
 }
 
-export async function getAuthenticatedCustomer(options?: { orderLimit?: number }): Promise<{ customer: FirebaseAuthenticatedCustomer | null; uid: string | null; error?: string }> {
+export async function getAuthenticatedCustomer(options?: { orderLimit?: number; walletTransactionLimit?: number }): Promise<{ customer: FirebaseAuthenticatedCustomer | null; uid: string | null; error?: string }> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(AUTH_COOKIE_NAME)?.value;
   if (!sessionCookie) return { customer: null, uid: null };
@@ -59,7 +59,16 @@ export async function getAuthenticatedCustomer(options?: { orderLimit?: number }
   }
 
   try {
-    return { customer: (await fetchCustomerByUid(decoded.uid, options?.orderLimit != null ? { orderLimit: options.orderLimit } : undefined)) || fallbackCustomerFromToken(decoded), uid: decoded.uid };
+    const profileOptions =
+      options?.orderLimit != null || options?.walletTransactionLimit != null
+        ? {
+            ...(options.orderLimit != null ? { orderLimit: options.orderLimit } : {}),
+            ...(options.walletTransactionLimit != null
+              ? { walletTransactionLimit: options.walletTransactionLimit }
+              : {}),
+          }
+        : undefined;
+    return { customer: (await fetchCustomerByUid(decoded.uid, profileOptions)) || fallbackCustomerFromToken(decoded), uid: decoded.uid };
   } catch (error) {
     console.info(`[firebase auth] profile lookup failed; using token claims: ${String((error as Error)?.message || error)}`);
     return { customer: fallbackCustomerFromToken(decoded), uid: decoded.uid };
@@ -92,6 +101,34 @@ export async function requireAuthenticatedUid() {
   const session = await getAuthenticatedCustomer();
   if (!session.uid) throw new Error(session.error || "Unauthorized.");
   return session.uid;
+}
+
+/**
+ * Session identity straight from the verified cookie - ZERO Firestore reads.
+ *
+ * `verifySessionCookie` checks the signature, expiry and revocation locally
+ * against cached public keys, and the decoded token already carries `uid` and
+ * `email`. Anything that only needs to know *who* is signed in (and their
+ * email) should use this instead of `getAuthenticatedCustomer()`.
+ *
+ * `getAdminSession()` is the motivating case: it guards ~25 admin API routes
+ * and the whole admin UI, and it previously hydrated up to 50 orders plus 250
+ * wallet documents on every single call just to read one email string.
+ */
+export async function getSessionIdentity(): Promise<{ uid: string | null; email: string; error?: string }> {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+  if (!sessionCookie) return { uid: null, email: "" };
+
+  try {
+    const decoded = await getFirebaseAdminAuth().verifySessionCookie(sessionCookie, true);
+    return {
+      uid: decoded.uid,
+      email: String(decoded.email || "").trim().toLowerCase(),
+    };
+  } catch {
+    return { uid: null, email: "", error: "Your session has expired. Please sign in again." };
+  }
 }
 
 export async function revokeCurrentSession(uid: string) {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { invalidateCatalogCache } from "@/lib/commerce";
+import { invalidateAdminScopes } from "@/lib/admin-cache";
 
 const clean = (value: unknown) => String(value || "").trim();
 const safeNumber = (value: unknown, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
@@ -148,6 +149,7 @@ export async function POST(request: Request) {
 
     await productRef.set(productData);
     invalidateCatalogCache();
+    invalidateAdminScopes("products");
     return NextResponse.json({ ok: true, product: productData });
   } catch (error) {
     return NextResponse.json({ error: String((error as Error).message || error) }, { status: 500 });
@@ -172,6 +174,7 @@ export async function PATCH(request: Request) {
     productIds.forEach((id) => batch.update(db.collection("products").doc(id), update));
     await batch.commit();
     invalidateCatalogCache();
+    invalidateAdminScopes("products");
     return NextResponse.json({ ok: true, updated: productIds.length });
   } catch (error) { return NextResponse.json({ error: String((error as Error).message) === "ADMIN_REQUIRED" ? "Not found." : (error as Error).message }, { status: String((error as Error).message) === "ADMIN_REQUIRED" ? 404 : 500 }); }
 }

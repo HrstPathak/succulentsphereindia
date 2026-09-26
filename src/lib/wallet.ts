@@ -111,17 +111,52 @@ export function calculateWalletCashback(finalOrderTotal: number) {
   return roundRupees(finalOrderTotal * WALLET_CASHBACK_RATE);
 }
 
-export async function getWalletSummary(uid: string): Promise<WalletSummary> {
+export type GetWalletSummaryOptions = {
+  /**
+   * How many historical ledger entries to return for display. The balance
+   * itself no longer depends on this number (see below), so a page that only
+   * shows a short activity list can ask for a small slice.
+   */
+  transactionLimit?: number;
+};
+
+/** Default history length. Was a hard 200 before, regardless of caller. */
+const DEFAULT_TRANSACTION_LIMIT = 50;
+const MAX_TRANSACTION_LIMIT = 200;
+
+/**
+ * Upper bound for the active-credit scan. This one IS balance-critical, so it
+ * is deliberately far above any realistic unspent-credit count: credits expire
+ * after 90 days and are only minted once per qualifying order. Truncating here
+ * would understate a customer's balance, so the cap exists only as a runaway
+ * guard, not as a routine limit.
+ */
+const ACTIVE_CREDIT_SCAN_LIMIT = 200;
+
+export async function getWalletSummary(uid: string, options: GetWalletSummaryOptions = {}): Promise<WalletSummary> {
   const db = getFirebaseDb();
   const now = new Date();
   const userRef = db.collection("users").doc(uid);
-  const [ledgerSnapshot, holdsSnapshot] = await Promise.all([
-    userRef.collection("walletLedger").orderBy("createdAt", "desc").limit(200).get(),
+  const requested = options.transactionLimit ?? DEFAULT_TRANSACTION_LIMIT;
+  const transactionLimit = Math.max(1, Math.min(MAX_TRANSACTION_LIMIT, Math.trunc(requested) || DEFAULT_TRANSACTION_LIMIT));
+
+  // The balance is derived from UNSPENT CREDITS ONLY, queried directly.
+  //
+  // It used to be summed out of the 200-entry history snapshot below, which
+  // means a customer with a long enough ledger could have a genuine, unspent
+  // credit fall outside the window and see their balance silently understate.
+  // The active-credit set is tiny in practice (typically 0-3 documents), so
+  // querying it directly costs a couple of reads and is correct by
+  // construction rather than correct-by-luck.
+  const [activeCreditsSnapshot, holdsSnapshot, historySnapshot] = await Promise.all([
+    userRef.collection("walletLedger").where("status", "==", "active").limit(ACTIVE_CREDIT_SCAN_LIMIT).get(),
     userRef.collection("walletHolds").where("status", "==", "active").limit(50).get(),
+    userRef.collection("walletLedger").orderBy("createdAt", "desc").limit(transactionLimit).get(),
   ]);
 
-  const transactions = ledgerSnapshot.docs.map((doc) => mapLedgerDoc(doc, now));
-  const activeCredits = transactions
+  const transactions = historySnapshot.docs.map((doc) => mapLedgerDoc(doc, now));
+  const activeCredits = activeCreditsSnapshot.docs
+    .map((doc) => mapLedgerDoc(doc, now))
     .filter((entry) => entry.type === "credit" && entry.effectiveStatus === "active" && entry.amount > 0)
     .sort((left, right) => String(left.expiresAt || "").localeCompare(String(right.expiresAt || "")));
   const balance = Number(activeCredits.reduce((sum, entry) => sum + entry.amount, 0).toFixed(2));

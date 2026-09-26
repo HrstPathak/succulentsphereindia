@@ -9,6 +9,7 @@ import Providers from "../components/Providers";
 import DeferredChatbot from "../components/chatbot/DeferredChatbot";
 import BackToTopButton from "../components/ui/BackToTopButton";
 import DeferredMarketingScripts from "../components/analytics/DeferredMarketingScripts";
+import ServiceWorkerRegistration from "@/components/analytics/ServiceWorkerRegistration";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import { buildOrganizationStructuredData, toJsonLd } from "@/lib/structured-data";
 
@@ -52,6 +53,20 @@ export const viewport: Viewport = {
   themeColor: "#F5F3EF",
 };
 
+// Product media is served from the Hostinger host rather than this origin.
+// Without these hints the browser pays DNS + TLS + TCP setup for that host on
+// every cold navigation, delaying the first product photo by ~100-300ms on
+// mobile. `crossOrigin` keeps those responses CORS-eligible for the optimizer.
+const MEDIA_HOST = (() => {
+  try {
+    return new URL(
+      process.env.NEXT_PUBLIC_MEDIA_BASE_URL || "https://whitesmoke-cattle-754161.hostingersite.com",
+    );
+  } catch {
+    return new URL("https://whitesmoke-cattle-754161.hostingersite.com");
+  }
+})();
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID?.trim();
   const facebookPixelId =
@@ -62,8 +77,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href={MEDIA_HOST.origin} crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href={MEDIA_HOST.origin} />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+      </head>
       <body className={`${inter.variable} ${playfair.variable}`}>
         <DeferredMarketingScripts gtmId={gtmId} facebookPixelId={facebookPixelId} />
+        <ServiceWorkerRegistration />
 
         {gaMeasurementId ? (
           <>

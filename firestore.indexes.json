@@ -1,0 +1,16 @@
+{
+  "//": "Succulent Sphere — Firestore composite indexes. Deploy with: firebase deploy --only firestore:indexes",
+  "note": "getReviewsForProduct() in src/lib/commerce.ts PREFERS a query ordered by createdAt across the (productId, status) equality filters, because it is the only form that both sorts correctly and caps the read at 50 documents. Without this index Firestore rejects that query and the code falls back to an unordered, limit-bounded read (see the comment there for what that trades away).",
+  "indexes": [
+    {
+      "collectionGroup": "reviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "productId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

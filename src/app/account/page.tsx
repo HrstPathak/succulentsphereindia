@@ -20,7 +20,21 @@ export default async function AccountPage() {
   // Fetch only the 3 orders this page renders (dashboard shows maxItems={3}).
   // Previously the full order history (every doc, full lineItems) was pulled
   // on every /account view; full history lives on /account/orders.
-  const session = await getAdminSession({ orderLimit: 3 });
+  //
+  // This page needs the REAL profile (name, email, addresses, 3 orders), so it
+  // must use hydrateProfile. getAdminSession() on its own now returns identity
+  // only - zero Firestore reads - because every admin API route calls it purely
+  // to check one email against ADMIN_EMAILS.
+  //
+  // walletTransactionLimit mirrors the WalletSection display slice, which is
+  // `transactions.slice(0, 12)`. Asking for more would be reads nobody sees.
+  // The balance is computed from unspent credits directly and is unaffected by
+  // this number, so a small history slice is safe here.
+  const session = await getAdminSession({
+    orderLimit: 3,
+    walletTransactionLimit: 12,
+    hydrateProfile: true,
+  });
   if (!session.customer) {
     redirect("/login");
   }

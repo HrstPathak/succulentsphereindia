@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { clearAuthCookies, getAuthenticatedCustomer } from "@/lib/auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { getReviewStats, type ProductReview } from "@/lib/reviews";
+import { invalidateProductReviewsCache } from "@/lib/commerce";
 
 export async function POST(request: Request) {
   try {
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
       verifiedPurchase: Boolean(prior.verifiedPurchase),
       orderNumber: String(prior.orderNumber || "") || undefined,
     };
+    invalidateProductReviewsCache(productId || snapshot.get("productId"));
     const reviews = (await getFirebaseDb().collection("reviews").where("productId", "==", String(productId || snapshot.get("productId"))).where("status", "==", "published").get()).docs.map((doc) => ({ id: doc.id, ...doc.data() } as ProductReview));
     const stats = getReviewStats(reviews);
     return NextResponse.json({ ok: true, review, reviews, reviewCount: stats.reviewCount, rating: stats.averageRating });

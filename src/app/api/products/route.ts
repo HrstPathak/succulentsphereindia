@@ -163,18 +163,33 @@ export async function GET(req: Request) {
     const totalPages = Math.max(1, Math.ceil(total / limit));
     const page = Math.floor(offset / limit) + 1;
 
-    return NextResponse.json({
-      results,
-      pagination: {
-        limit,
-        offset,
-        page,
-        total,
-        totalPages,
-        hasMore,
+    // s-maxage lets the Vercel edge serve repeat catalog requests without
+    // invoking this function at all; stale-while-revalidate refreshes in the
+    // background so a price/stock change lands within one stale window instead
+    // of blocking the visitor behind a cold read.
+    return NextResponse.json(
+      {
+        results,
+        pagination: {
+          limit,
+          offset,
+          page,
+          total,
+          totalPages,
+          hasMore,
+        },
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      },
+    );
   } catch (error) {
-    return NextResponse.json({ results: [], error: (error as Error).message }, { status: 500 });
+    // Errors are never cached.
+    return NextResponse.json(
+      { results: [], error: (error as Error).message },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
+    );
   }
 }

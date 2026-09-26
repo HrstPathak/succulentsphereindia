@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -73,21 +73,19 @@ type Review = {
   createdAt: string;
   verifiedPurchase: boolean;
 };
-type Data = {
-  summary: {
-    products: number;
-    lowStock: number;
-    outOfStock: number;
-    orders: number;
-    paidRevenue: number;
-    customers: number;
-    reviews: number;
-  };
-  products: Product[];
-  orders: Order[];
-  customers: Customer[];
-  reviews: Review[];
+type Summary = {
+  products: number;
+  lowStock: number;
+  outOfStock: number;
+  orders: number;
+  paidRevenue: number;
+  customers: number;
+  reviews: number;
 };
+type StatsRecord = { summary: Summary; computedAt: string };
+/** Tabs that own a row collection, each fetched only when first opened. */
+type RowTab = "products" | "orders" | "customers" | "reviews";
+const ROW_TABS: RowTab[] = ["products", "orders", "customers", "reviews"];
 type Tab =
   "overview" | "products" | "orders" | "customers" | "reviews" | "mail" | "blog" | "automation";
 type ProductPriceSort = "default" | "price_asc" | "price_desc";
@@ -208,7 +206,19 @@ export default function AdminDashboard({
   adminEmail: string;
   initialTab?: Tab;
 }) {
-  const [data, setData] = useState<Data | null>(null);
+  // The Command Center counters are a stored snapshot (one document read).
+  // The four row collections are loaded per tab, on first open, and then held
+  // in state so flipping back to a tab costs nothing.
+  const [stats, setStats] = useState<StatsRecord | null>(null);
+  const [rows, setRows] = useState<Record<RowTab, any[]>>({
+    products: [],
+    orders: [],
+    customers: [],
+    reviews: [],
+  });
+  const [loaded, setLoaded] = useState<Record<string, boolean>>({});
+  const [recounting, setRecounting] = useState(false);
+  const loadedRef = useRef<Record<string, boolean>>({});
   const [tab, setTab] = useState<Tab>(initialTab);
   const [query, setQuery] = useState("");
   const [productPriceSort, setProductPriceSort] = useState<ProductPriceSort>("default");
@@ -226,34 +236,83 @@ export default function AdminDashboard({
   const [productId, setProductId] = useState<string | null>(null);
   const [createProductOpen, setCreateProductOpen] = useState(false);
   const productTagOptions = useMemo(() => {
-    const createdTags = (data?.products || []).flatMap((product) => product.tags || []);
+    const createdTags = (rows.products || []).flatMap((product) => product.tags || []);
     return [...new Set([...tagSuggestions, ...createdTags.map((tag) => tag.trim()).filter(Boolean)])].sort((left, right) => left.localeCompare(right));
-  }, [data]);
+  }, [rows.products]);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [testOrderOpen, setTestOrderOpen] = useState(false);
   const [openOrderId, setOpenOrderId] = useState<string | null>(null);
-  const load = async () => {
+  /** Loads one tab's rows. Skips work if that tab is already in memory. */
+  const loadTab = useCallback(async (target: RowTab, force = false) => {
+    if (!force && loadedRef.current[target]) return;
+    // Mark in-flight so a second tab switch cannot fire a duplicate request.
+    // This is a ref rather than state because it guards concurrency, not render.
+    loadedRef.current[target] = true;
     setBusy(true);
     try {
-      const response = await fetch("/api/admin/dashboard", {
+      const response = await fetch(`/api/admin/dashboard?scope=${target}`, {
         cache: "no-store",
       });
       const payload = await response.json();
       if (!response.ok)
         throw new Error(payload.error || "Unable to load store data.");
-      setData(payload);
+      setRows((current) => ({ ...current, [target]: payload[target] || [] }));
+      setLoaded((current) => ({ ...current, [target]: true }));
+    } catch (error) {
+      // Allow a retry: the tab never actually populated.
+      delete loadedRef.current[target];
+      setNotice((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }, []);
+
+  /** The counters are a stored document, so this is a single read. */
+  const loadSummary = useCallback(async () => {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/dashboard?scope=summary", {
+        cache: "no-store",
+      });
+      const payload = await response.json();
+      if (!response.ok)
+        throw new Error(payload.error || "Unable to load store data.");
+      setStats(payload);
     } catch (error) {
       setNotice((error as Error).message);
     } finally {
       setBusy(false);
     }
-  };
-  useEffect(() => {
-    void load();
   }, []);
+
+  /** Explicit recount: recomputes every counter and stores it. */
+  const recount = async () => {
+    setRecounting(true);
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/dashboard", { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Recount failed.");
+      setStats(payload);
+      setNotice("Counters recalculated.");
+    } catch (error) {
+      setNotice((error as Error).message);
+    } finally {
+      setRecounting(false);
+      setBusy(false);
+    }
+  };
+
+  // Counters on mount, plus whichever tab was deep-linked into.
+  useEffect(() => {
+    void loadSummary();
+  }, [loadSummary]);
+  useEffect(() => {
+    if ((ROW_TABS as string[]).includes(tab)) void loadTab(tab as RowTab);
+  }, [tab, loadTab]);
   const search = query.trim().toLowerCase();
   const products = useMemo(() => {
-    const filtered = (data?.products || []).filter(
+    const filtered = rows.products.filter(
         (item) =>
           !search ||
           [item.title, item.handle, item.status, item.tags.join(" ")]
@@ -265,10 +324,10 @@ export default function AdminDashboard({
     return [...filtered].sort((left, right) =>
       productPriceSort === "price_asc" ? left.price - right.price : right.price - left.price,
     );
-  }, [data, search, productPriceSort]);
+  }, [rows.products, search, productPriceSort]);
   const orders = useMemo(
     () =>
-      (data?.orders || []).filter(
+      rows.orders.filter(
         (item) =>
           !search ||
           [
@@ -281,11 +340,11 @@ export default function AdminDashboard({
             .toLowerCase()
             .includes(search),
       ),
-    [data, search],
+    [rows.orders, search],
   );
   const customers = useMemo(
     () =>
-      (data?.customers || []).filter(
+      rows.customers.filter(
         (item) =>
           !search ||
           [item.name, item.email, item.phone]
@@ -293,11 +352,11 @@ export default function AdminDashboard({
             .toLowerCase()
             .includes(search),
       ),
-    [data, search],
+    [rows.customers, search],
   );
   const reviews = useMemo(
     () =>
-      (data?.reviews || []).filter(
+      rows.reviews.filter(
         (item) =>
           !search ||
           [item.authorName, item.title, item.content, item.productId]
@@ -305,9 +364,17 @@ export default function AdminDashboard({
             .toLowerCase()
             .includes(search),
       ),
-    [data, search],
+    [rows.reviews, search],
   );
-  const mutate = async (url: string, body: unknown) => {
+  /**
+   * PATCH helper. `scope` names the tab whose rows just went stale, so only
+   * that collection is refetched — previously every edit re-pulled all 1,750
+   * documents worth of rows for the whole dashboard.
+   *
+   * The stored counters are intentionally left alone here. They are a snapshot
+   * refreshed by the explicit Recount button, not a live total.
+   */
+  const mutate = async (url: string, body: unknown, scope?: RowTab) => {
     setBusy(true);
     try {
       const response = await fetch(url, {
@@ -318,7 +385,7 @@ export default function AdminDashboard({
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Update failed.");
       setNotice("Saved successfully.");
-      await load();
+      if (scope) await loadTab(scope, true);
       return true;
     } catch (error) {
       setNotice((error as Error).message);
@@ -335,7 +402,7 @@ export default function AdminDashboard({
     if (bulk.status) changes.status = bulk.status;
     if (bulk.available) changes.available = bulk.available === "true";
     if (bulk.tags) changes.tags = bulk.tags;
-    if (await mutate("/api/admin/products", { ids: selected, changes })) {
+    if (await mutate("/api/admin/products", { ids: selected, changes }, "products")) {
       setSelected([]);
       setBulk({
         price: "",
@@ -371,7 +438,7 @@ export default function AdminDashboard({
       trackingNumber,
       trackingUrl,
       carrier,
-    });
+    }, "orders");
   };
   const sendMail = async () => {
     setBusy(true);
@@ -402,7 +469,9 @@ export default function AdminDashboard({
     ["blog", "Blog", BookOpenText],
     ["automation", "Automation", Wand2],
   ] as const;
-  if (!data && busy)
+  // The shell renders as soon as the counters land. Tab rows stream in after,
+  // so a slow Products query no longer blocks Orders or the Command Center.
+  if (!stats && busy)
     return (
       <main className="min-h-screen bg-[#e8ece6] p-10">
         <div className="mx-auto max-w-7xl animate-pulse rounded-[32px] bg-white p-10 text-[#31533e]">
@@ -410,13 +479,13 @@ export default function AdminDashboard({
         </div>
       </main>
     );
-  if (!data)
+  if (!stats)
     return (
       <main className="min-h-screen bg-[#e8ece6] p-10">
         <div className="mx-auto max-w-xl rounded-[32px] bg-white p-10 text-center">
           <p className="text-lg font-bold">Store control could not load.</p>
           <button
-            onClick={() => void load()}
+            onClick={() => void loadSummary()}
             className="mt-4 rounded-full bg-[#1f4a35] px-5 py-2 text-white"
           >
             Try again
@@ -502,7 +571,12 @@ export default function AdminDashboard({
               </label>
             )}
             <button
-              onClick={() => void load()}
+              onClick={() => {
+                // Refreshing only re-reads what this tab actually needs.
+                void loadSummary();
+                if ((ROW_TABS as string[]).includes(tab))
+                  void loadTab(tab as RowTab, true);
+              }}
               className="rounded-2xl border border-[#d5dfd5] bg-white px-4 py-2.5 text-sm font-bold shadow-[0_5px_0_#d4ddd4] active:translate-y-1 active:shadow-none"
             >
               Refresh
@@ -517,11 +591,17 @@ export default function AdminDashboard({
             </div>
           )}
           {tab === "overview" && (
-            <Overview data={data} onGo={(next) => setTab(next)} />
+            <Overview
+              record={stats}
+              onGo={(next) => setTab(next)}
+              onRecount={() => void recount()}
+              recounting={recounting}
+            />
           )}{" "}
           {tab === "products" && (
             <Products
               rows={products}
+              loading={!loaded.products && busy}
               selected={selected}
               setSelected={setSelected}
               bulk={bulk}
@@ -537,15 +617,24 @@ export default function AdminDashboard({
           {tab === "orders" && (
             <Orders
                 rows={orders}
+                loading={!loaded.orders && busy}
                 update={updateOrder}
                 busy={busy}
-                onCreateTest={() => setTestOrderOpen(true)}
+                onCreateTest={async () => {
+                  // The modal needs a product list, and the Orders tab may
+                  // never have loaded one. loadTab returns instantly when the
+                  // rows are already in memory, so this costs nothing in the
+                  // common case and avoids opening an empty picker.
+                  await loadTab("products");
+                  setTestOrderOpen(true);
+                }}
                 onOpenOrder={(id) => setOpenOrderId(id)}
               />
           )}{" "}
           {tab === "customers" && (
             <Customers
               rows={customers}
+              loading={!loaded.customers && busy}
               onEmail={(to) => {
                 setMail((value) => ({ ...value, to }));
                 setTab("mail");
@@ -556,8 +645,9 @@ export default function AdminDashboard({
           {tab === "reviews" && (
             <Reviews
               rows={reviews}
+              loading={!loaded.reviews && busy}
               update={(id, status) =>
-                void mutate("/api/admin/reviews", { id, status })
+                void mutate("/api/admin/reviews", { id, status }, "reviews")
               }
             />
           )}{" "}
@@ -583,7 +673,7 @@ export default function AdminDashboard({
           availableTags={productTagOptions}
           onClose={() => setProductId(null)}
           onSaved={() => {
-            void load();
+            void loadTab("products", true);
             setNotice("Product saved.");
           }}
         />
@@ -608,18 +698,18 @@ export default function AdminDashboard({
           onCreated={() => {
             setCreateProductOpen(false);
             setNotice("Product created successfully.");
-            void load();
+            void loadTab("products", true);
           }}
         />
       )}
       {testOrderOpen && (
         <AdminTestOrderModal
-          products={data.products}
+          products={rows.products}
           onClose={() => setTestOrderOpen(false)}
           onCreated={(message) => {
             setTestOrderOpen(false);
             setNotice(message);
-            void load();
+            void loadTab("orders", true);
           }}
         />
       )}
@@ -871,41 +961,64 @@ function CreateProductModal({
 }
 
 function Overview({
-  data,
+  record,
   onGo,
+  onRecount,
+  recounting,
 }: {
-  data: Data;
+  record: StatsRecord;
   onGo: (tab: "products" | "orders" | "customers" | "reviews") => void;
+  onRecount: () => void;
+  recounting: boolean;
 }) {
+  const summary = record.summary;
   const cards = [
-    ["Paid revenue", inr(data.summary.paidRevenue), CircleDollarSign, "orders"],
-    ["Orders", data.summary.orders, ClipboardList, "orders"],
-    ["Products", data.summary.products, Package, "products"],
-    ["Customers", data.summary.customers, Users, "customers"],
-    ["Low stock", data.summary.lowStock, Sparkles, "products"],
-    ["Reviews", data.summary.reviews, Star, "reviews"],
+    ["Paid revenue", inr(summary.paidRevenue), CircleDollarSign, "orders"],
+    ["Orders", summary.orders, ClipboardList, "orders"],
+    ["Products", summary.products, Package, "products"],
+    ["Customers", summary.customers, Users, "customers"],
+    ["Low stock", summary.lowStock, Sparkles, "products"],
+    ["Reviews", summary.reviews, Star, "reviews"],
   ] as const;
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {cards.map(([label, value, Icon, target], index) => (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#d5e4d7] bg-white/70 px-4 py-3">
+        <p className="text-xs text-[#5f7165]">
+          Saved totals
+          {record.computedAt
+            ? ` · last counted ${new Date(record.computedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}`
+            : ""}
+        </p>
         <button
-          key={label}
-          onClick={() => onGo(target)}
-          className="group relative overflow-hidden rounded-[25px] border border-white/90 bg-white p-5 text-left shadow-[12px_14px_24px_rgba(65,84,70,.14)] transition hover:-translate-y-1"
+          onClick={onRecount}
+          disabled={recounting}
+          className="inline-flex items-center gap-2 rounded-xl bg-[#24563e] px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
         >
-          <div
-            className={`absolute right-0 top-0 h-20 w-20 rounded-bl-[70px] ${index % 2 ? "bg-[#e8bf92]" : "bg-[#c9dfc9]"}`}
-          />
-          <Icon className="relative text-[#296046]" size={22} />
-          <p className="relative mt-7 text-3xl font-bold">{value}</p>
-          <p className="relative mt-1 text-sm text-[#68776d]">{label}</p>
+          {recounting ? "Counting…" : "Recount now"}
         </button>
-      ))}
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {cards.map(([label, value, Icon, target], index) => (
+          <button
+            key={label}
+            onClick={() => onGo(target)}
+            className="group relative overflow-hidden rounded-[25px] border border-white/90 bg-white p-5 text-left shadow-[12px_14px_24px_rgba(65,84,70,.14)] transition hover:-translate-y-1"
+          >
+            <div
+              className={`absolute right-0 top-0 h-20 w-20 rounded-bl-[70px] ${index % 2 ? "bg-[#e8bf92]" : "bg-[#c9dfc9]"}`}
+            />
+            <Icon className="relative text-[#296046]" size={22} />
+            <p className="relative mt-7 text-3xl font-bold">{value}</p>
+            <p className="relative mt-1 text-sm text-[#68776d]">{label}</p>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 function Products({
   rows,
+  loading,
   selected,
   setSelected,
   bulk,
@@ -928,6 +1041,9 @@ function Products({
     );
   return (
     <div className="overflow-hidden rounded-[26px] border border-white bg-white shadow-[12px_14px_24px_rgba(65,84,70,.13)]">
+      {loading && !rows.length ? (
+        <p className="p-10 text-center text-sm text-[#68776d]">Loading products…</p>
+      ) : null}
        <div className="flex flex-wrap items-center gap-3 border-b bg-[#f5f8f4] p-4">
         <label className="flex items-center gap-2 text-xs font-bold text-[#526257]">
           Sort
@@ -1104,12 +1220,14 @@ function Products({
 }
 function Orders({
   rows,
+  loading,
   update,
   busy,
   onCreateTest,
   onOpenOrder,
 }: {
   rows: Order[];
+  loading?: boolean;
   update: (order: Order) => void;
   busy: boolean;
   onCreateTest: () => void;
@@ -1125,17 +1243,19 @@ function Orders({
           Create test order
         </button>
       </div>
-      <OrderTable rows={rows} update={update} busy={busy} onOpenOrder={onOpenOrder} />
+      <OrderTable rows={rows} loading={loading} update={update} busy={busy} onOpenOrder={onOpenOrder} />
     </div>
   );
 }
 function OrderTable({
   rows,
+  loading,
   update,
   busy,
   onOpenOrder,
 }: {
   rows: Order[];
+  loading?: boolean;
   update: (order: Order) => void;
   busy: boolean;
   onOpenOrder?: (id: string) => void;
@@ -1144,6 +1264,9 @@ function OrderTable({
 
   return (
     <div className="overflow-hidden rounded-[26px] border border-white bg-white shadow-[12px_14px_24px_rgba(65,84,70,.13)]">
+      {loading && !rows.length ? (
+        <p className="p-10 text-center text-sm text-[#68776d]">Loading orders…</p>
+      ) : null}
       <div className="max-h-[700px] overflow-auto">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="sticky top-0 bg-white text-[10px] uppercase tracking-wider text-[#78887d]">
@@ -1238,15 +1361,20 @@ function OrderTable({
 }
 function Customers({
   rows,
+  loading,
   onEmail,
   open,
 }: {
   rows: Customer[];
+  loading?: boolean;
   onEmail: (email: string) => void;
   open: (id: string) => void;
 }) {
   return (
     <div className="overflow-hidden rounded-[26px] border border-white bg-white shadow-[12px_14px_24px_rgba(65,84,70,.13)]">
+      {loading && !rows.length ? (
+        <p className="p-10 text-center text-sm text-[#68776d]">Loading customers…</p>
+      ) : null}
       <div className="max-h-[700px] overflow-auto">
         <table className="w-full min-w-[700px] text-left text-sm">
           <thead className="sticky top-0 bg-white text-[10px] uppercase tracking-wider text-[#78887d]">
@@ -1306,11 +1434,19 @@ function Customers({
 }
 function Reviews({
   rows,
+  loading,
   update,
 }: {
   rows: Review[];
+  loading?: boolean;
   update: (id: string, status: string) => void;
 }) {
+  if (loading && !rows.length)
+    return (
+      <p className="rounded-[26px] border border-white bg-white p-10 text-center text-sm text-[#68776d] shadow-[12px_14px_24px_rgba(65,84,70,.13)]">
+        Loading reviews…
+      </p>
+    );
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {rows.map((review) => (

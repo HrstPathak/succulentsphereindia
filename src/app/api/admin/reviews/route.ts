@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
+import { invalidateAdminScopes } from "@/lib/admin-cache";
+import { invalidateProductReviewsCache } from "@/lib/commerce";
 
 export async function PATCH(request: Request) {
   try {
@@ -14,10 +16,16 @@ export async function PATCH(request: Request) {
         { error: "Valid review and status are required." },
         { status: 400 },
       );
-    await getFirebaseDb()
-      .collection("reviews")
-      .doc(String(id))
-      .set({ status, moderatedAt: new Date().toISOString() }, { merge: true });
+    // Read the product id BEFORE the write. Moderation is the case that most
+    // needs a correct invalidation: hiding a review must remove it from the
+    // storefront immediately, and the request body only carries the review id.
+    const ref = getFirebaseDb().collection("reviews").doc(String(id));
+    const existing = await ref.get();
+    await ref.set({ status, moderatedAt: new Date().toISOString() }, { merge: true });
+    // Hiding a review removes it from the storefront immediately, so the
+    // Reviews tab must not keep serving the pre-moderation row.
+    invalidateAdminScopes("reviews");
+    invalidateProductReviewsCache(existing.get("productId"));
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json(
@@ -92,6 +100,8 @@ export async function POST(request: Request) {
       createdByAdmin: true,
     });
     await ref.update({ id: ref.id });
+    invalidateAdminScopes("reviews");
+    invalidateProductReviewsCache(safeProductId);
     return NextResponse.json({ ok: true, id: ref.id });
   } catch (error) {
     return NextResponse.json(

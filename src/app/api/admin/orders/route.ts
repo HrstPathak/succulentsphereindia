@@ -4,6 +4,7 @@ import { getFirebaseDb } from "@/lib/firebase-admin";
 import { sendTrackingEmail } from "@/lib/order-email";
 import { applyWalletOrderCancellationPolicy } from "@/lib/wallet";
 import { buildDelhiveryTrackingUrl } from "@/lib/delhiveryTracking";
+import { invalidateAdminScopes } from "@/lib/admin-cache";
 
 function cleanWaybills(values: unknown) {
   const input = Array.isArray(values) ? values : [values];
@@ -82,6 +83,9 @@ export async function PATCH(request: Request) {
         { status: 400 },
       );
     await orderRef.set(update, { merge: true });
+    // The Orders tab caches its row list, and this edit changed the very columns
+    // that tab renders (fulfillment, financial, tracking).
+    invalidateAdminScopes("orders");
     if (safeTrackingNumber) {
       const shipmentRef = db.collection("shipments").doc(String(id));
       const shipmentSnap = await shipmentRef.get();

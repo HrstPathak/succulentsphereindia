@@ -16,4 +16,16 @@ tmp/product-recovery/
 
 *.tsbuildinfo
 apikey.txt
+
+# Build/verification output. NEXT_DIST_DIR is pointed at .next-verify during
+# release checks, so it lands in the repo root and must never be committed.
+.next-verify/
+
+# Ad-hoc debug leftovers. Nothing in the app reads these.
+probe.json
+srv-out.txt
+srv-err.txt
+tmp-*.cjs
+tmp-*.ps1
+tmp-*.json
 hostinger/upload.local.php

@@ -5,6 +5,7 @@ export {
   ensureUserProfile,
   getAuthenticatedCustomer,
   getAuthenticatedUid,
+  getSessionIdentity,
   requireAuthenticatedUid,
   revokeCurrentSession,
   setSessionCookie,

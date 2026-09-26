@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 type CartItem = {
   id: string;
@@ -44,7 +44,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [items]);
 
-  const addToCart = (item: Omit<CartItem, "quantity">, qty = 1) => {
+  const addToCart = useCallback((item: Omit<CartItem, "quantity">, qty = 1) => {
     setItems((prev) => {
       const found = prev.find((p) => p.id === item.id);
       if (found) {
@@ -84,21 +84,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Do not break cart functionality if analytics push fails.
     }
-  };
+  }, []);
 
-  const removeFromCart = (id: string) => setItems((prev) => prev.filter((p) => p.id !== id));
-  const updateQty = (id: string, qty: number) =>
-    setItems((prev) => prev.map((p) => (p.id === id ? { ...p, quantity: Math.max(1, qty) } : p)));
-  const clear = () => setItems([]);
+  const removeFromCart = useCallback((id: string) => setItems((prev) => prev.filter((p) => p.id !== id)), []);
+  const updateQty = useCallback(
+    (id: string, qty: number) =>
+      setItems((prev) => prev.map((p) => (p.id === id ? { ...p, quantity: Math.max(1, qty) } : p))),
+    [],
+  );
+  const clear = useCallback(() => setItems([]), []);
 
-  const value: CartContextValue = {
-    items,
-    count: items.reduce((s, it) => s + it.quantity, 0),
-    addToCart,
-    removeFromCart,
-    updateQty,
-    clear
-  };
+  // This provider wraps the entire app (see components/Providers.tsx), so the
+  // context value identity decides whether every consumer below it re-renders.
+  // An inline object literal meant a new `value` on every render of this
+  // component - including renders caused by unrelated state - which re-rendered
+  // every useCart() consumer on the page. Memoising the value, the derived count
+  // and the callbacks keeps that identity stable unless the cart actually
+  // changes, so a header cart badge no longer re-renders the whole shop grid.
+  const count = useMemo(() => items.reduce((s, it) => s + it.quantity, 0), [items]);
+
+  const value: CartContextValue = useMemo(
+    () => ({ items, count, addToCart, removeFromCart, updateQty, clear }),
+    [items, count, addToCart, removeFromCart, updateQty, clear],
+  );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

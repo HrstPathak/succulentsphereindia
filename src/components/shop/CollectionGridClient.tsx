@@ -10,6 +10,7 @@ import type { Product } from "../../data/mockProducts";
 import { PRICE_MAX, PRICE_MIN } from "../../context/FilterContext";
 import { resolveCollectionHandle } from "@/lib/productFilters";
 import { useUrlQueryParams } from "@/hooks/useUrlQueryParams";
+import { cachedJson } from "@/lib/cachedFetch";
 import {
   DEFAULT_CATALOG_SORT,
   buildCatalogApiSearchParams,
@@ -253,10 +254,9 @@ export default function CollectionGridClient({
           params.set("tag", requiredTag);
         }
 
-        const res = await fetch(`/api/filters?${params.toString()}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed to fetch facets");
-
-        const json = await res.json();
+        const json = await cachedJson<any>(`/api/filters?${params.toString()}`, {
+          ttlMs: 5 * 60_000,
+        });
         const nextFacets = json?.facets || {};
         const nextMin = Number(nextFacets?.priceRange?.min ?? PRICE_MIN);
         const nextMax = Number(nextFacets?.priceRange?.max ?? PRICE_MAX);
@@ -344,10 +344,9 @@ export default function CollectionGridClient({
         enforcedPriceRange: normalizedEnforcedPriceRange,
       });
 
-      const res = await fetch(`/api/products?${params.toString()}`, { cache: "no-store" });
-      if (!res.ok) throw new Error("Product fetch failed");
-
-      const json = await res.json();
+      const json = await cachedJson<any>(`/api/products?${params.toString()}`, {
+        ttlMs: 60_000,
+      });
       if (requestId !== activeRequestIdRef.current) return;
 
       setResolvedTotalPages(Math.max(1, Number(json?.pagination?.totalPages) || 1));
