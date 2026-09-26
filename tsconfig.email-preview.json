@@ -1,0 +1,19 @@
+{
+  "//": "Compiles the email templates to CommonJS for email-preview/verify.cjs and shoot.cjs. Those two scripts run on plain node, outside Next's bundler, so they need real .js on disk. Extending the root config is what makes the '@/*' path alias resolve here; the root config alone cannot be used because it sets noEmit and module:esnext.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "incremental": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2019",
+    "outDir": "email-preview/render",
+    "isolatedModules": false,
+    "allowImportingTsExtensions": false
+  },
+  "include": [
+    "src/lib/email-templates/emailChrome.ts",
+    "src/lib/email-templates/orderStatus.ts",
+    "src/lib/email-templates/orderConfirmation.ts"
+  ]
+}

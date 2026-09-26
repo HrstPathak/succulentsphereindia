@@ -30,7 +30,41 @@
  *     never the wordmark.
  *   - The tracking panel is omitted for terminal states (delivered/cancelled)
  *     rather than rendered empty.
+ *
+ * Everything this template shares with the order confirmation template — the
+ * wordmark, trust strip, support block, footer, colour tokens and document
+ * shell — lives in ./emailChrome.ts. Only the status-specific parts (the four
+ * state copy entries, the dark hero panel, the tracking panel and the cash
+ * reminder) are declared here.
+ *
+ * The import is relative rather than "@/lib/..." on purpose: email-preview/verify.cjs
+ * and shoot.cjs run this file on plain node after `tsc` has emitted it, and tsc
+ * resolves a path alias for type-checking but emits the specifier verbatim, so
+ * an aliased import compiles to a require("@/lib/...") that node cannot load.
+ * A relative specifier survives the emit. This matches the sibling imports
+ * already used in src/lib (./orderAmounts, ./huggingface).
  */
+
+import {
+  assetBaseUrl,
+  assetUrl,
+  BRAND,
+  cta,
+  DEFAULT_SHOP_PATH,
+  DEFAULT_SUPPORT_PHONE,
+  disc,
+  documentShell,
+  escapeHtml,
+  footer,
+  FONT_SANS,
+  FONT_SERIF,
+  masthead,
+  PREHEADER_PAD,
+  rule,
+  signature,
+  trustStrip,
+  PANEL_WIDTH,
+} from "./emailChrome";
 
 export type OrderStatusEmailStatus =
   | "IN_TRANSIT"
@@ -60,66 +94,6 @@ export type OrderStatusEmail = {
   html: string;
   text: string;
 };
-
-const BRAND = {
-  ink: "#20352A",
-  body: "#3B4B40",
-  muted: "#7C8A7E",
-  page: "#F7F5F1",
-  card: "#FFFFFF",
-  cream: "#F5F3EF",
-  hairline: "#EDE9E1",
-  panel: "#3E5B48",
-  panelDeep: "#2F4D3F",
-  panelLight: "#4A6A55",
-  panelText: "#DCE7DE",
-  panelEyebrow: "#C8D8C9",
-  panelRule: "#8FAE97",
-  /** Add to Cart gradient, flattened to a single colour for Outlook. */
-  pill: "#0a8f6a",
-  button: "#2F4D3F",
-  disc: "#EEF1E9",
-  discBorder: "#DFE4D8",
-  divider: "#E0DCD2",
-  /**
-   * Background of the supplied trust-strip artwork. The strip is rendered
-   * full-bleed, so its own cream is painted on the row too: any rounding
-   * between the image edge and the row would otherwise show as a seam.
-   */
-  trustCream: "#F8F8F3",
-} as const;
-
-const FONT_SERIF = "Georgia,'Times New Roman',serif";
-const FONT_SANS = "Helvetica,Arial,sans-serif";
-
-const DEFAULT_SITE_URL = "https://succulentsphere.com";
-const DEFAULT_SHOP_PATH = "/collections/all-succulents";
-const DEFAULT_SUPPORT_PHONE = "+91 94583 21209";
-
-function escapeHtml(value: unknown) {
-  return String(value ?? "").replace(
-    /[&<>'"]/g,
-    (character) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "'": "&#39;",
-        '"': "&quot;",
-      } as Record<string, string>)[character] || character,
-  );
-}
-
-/** Normalises an env-supplied origin, falling back to the production domain. */
-function origin(value: string | undefined | null, fallback: string) {
-  const raw = String(value || "").trim().replace(/\/+$/, "");
-  if (!raw) return fallback;
-  try {
-    return new URL(raw.startsWith("http") ? raw : `https://${raw}`).origin;
-  } catch {
-    return fallback;
-  }
-}
 
 type StatusCopy = {
   /** Pill text, e.g. IN-TRANSIT. */
@@ -213,36 +187,6 @@ const STATUS_COPY: Record<OrderStatusEmailStatus, StatusCopy> = {
   },
 };
 
-/** Resolves a committed asset in /public/images/email to an absolute URL. */
-function assetUrl(base: string, file: string) {
-  return `${base}/images/email/${file}`;
-}
-
-/** Hidden filler so the inbox snippet is never padded out with the wordmark. */
-const PREHEADER_PAD =
-  "&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;" +
-  "&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;" +
-  "&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;";
-
-/** Wordmark header. No drawn logo mark: the photo already carries the brand. */
-function masthead() {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:620px;margin:0 auto;background:${BRAND.card};border-radius:16px 16px 0 0">
-        <tr>
-          <td style="padding:22px 30px 20px">
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-              <td valign="middle">
-                <div style="font-family:${FONT_SERIF};font-size:22px;line-height:1.1;color:${BRAND.ink}">Succulent Sphere</div>
-                <div style="padding-top:5px;font-family:${FONT_SANS};font-size:9.5px;letter-spacing:2.6px;color:${BRAND.muted}">SMALL PLANTS. BIG JOY.</div>
-              </td>
-              <td align="right" valign="middle" class="ss-hide-sm" style="font-family:${FONT_SANS};font-size:9px;letter-spacing:1.9px;color:#9AA79B;line-height:1.9">
-                SUCCULENTS<br>&bull;&nbsp; INDOOR PLANTS<br>&bull;&nbsp; PLANT DECOR
-              </td>
-            </tr></table>
-          </td>
-        </tr>
-      </table>`;
-}
-
 /** Tracking panel. Emitted only while a parcel is actually moving. */
 function trackingPanel(args: { tracking: string; carrier: string }) {
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0 0;background:${BRAND.cream};border-radius:14px">
@@ -261,35 +205,6 @@ function dueNote(amount: number) {
   return `<p style="margin:20px 0 0;padding:16px;border-radius:12px;background:#fdf6ec;border:1px solid #f0e0c4;font-family:${FONT_SANS};font-size:14px;line-height:1.6;color:#7a5a1e">Please keep <strong style="color:#5c4212">&#8377;${escapeHtml(amount.toFixed(2))}</strong> ready for the delivery agent.</p>`;
 }
 
-/** CTA. Solid ${BRAND.button} under the gradient so Outlook gets a filled button. */
-function cta(args: { label: string; url: string; iconUrl: string }) {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0 0">
-          <tr>
-            <td align="center" bgcolor="${BRAND.button}" style="background-color:${BRAND.button};background-image:linear-gradient(180deg,${BRAND.panel} 0%,${BRAND.button} 100%);border-radius:999px">
-              <a href="${escapeHtml(args.url)}" style="display:inline-block;padding:15px 28px;font-family:${FONT_SANS};font-size:15px;font-weight:bold;color:#FFFFFF;text-decoration:none;border-radius:999px">
-                <img src="${escapeHtml(args.iconUrl)}" width="21" height="15" alt="" style="vertical-align:-3px;padding-right:11px;border-right:1px solid rgba(255,255,255,.34);margin-right:12px" />${escapeHtml(args.label)}&nbsp; <span style="padding-left:2px">&#8594;</span>
-              </a>
-            </td>
-          </tr>
-        </table>`;
-}
-
-
-/** The tinted disc behind the support glyph in the signature block. Never
- *  white, so a blocked image degrades to a deliberate sage chip instead of an
- *  empty hole. */
-function disc(iconUrl: string, width: number, height: number) {
-  return `<td width="44" height="44" align="center" style="width:44px;height:44px;background:${BRAND.disc};border:1px solid ${BRAND.discBorder};border-radius:50%">
-        <img src="${escapeHtml(iconUrl)}" width="${width}" height="${height}" alt="" style="display:block;width:${width}px;height:${height}px;border:0;outline:none;text-decoration:none" />
-      </td>`;
-}
-
-function rule() {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-            <td style="border-top:1px solid ${BRAND.hairline};font-size:0">&nbsp;</td>
-          </tr></table>`;
-}
-
 /**
  * Builds the order status email for one lifecycle state.
  *
@@ -302,10 +217,7 @@ export function buildOrderStatusEmail(input: OrderStatusEmailInput): OrderStatus
   const copy = STATUS_COPY[input.status] || STATUS_COPY.IN_TRANSIT;
   const orderNumber = String(input.orderNumber ?? "").trim() || "-";
   const name = String(input.customerName || "").trim() || "there";
-  const base = origin(
-    input.assetBaseUrl || process.env.ORDER_EMAIL_ASSET_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL,
-    DEFAULT_SITE_URL,
-  );
+  const base = assetBaseUrl(input.assetBaseUrl);
   const shopUrl = String(input.shopUrl || `${base}${DEFAULT_SHOP_PATH}`).trim();
   const tracking = String(input.trackingNumber || "").trim();
   const carrier = String(input.carrier || "Delhivery").trim();
@@ -323,50 +235,27 @@ export function buildOrderStatusEmail(input: OrderStatusEmailInput): OrderStatus
   const amountDue = Number(input.amountDue || 0);
   const subject = `Your Succulent Sphere order #${orderNumber} ${copy.subject}`;
 
-  const html = `<!doctype html>
-<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="x-apple-disable-message-reformatting" />
-    <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no" />
-    <title>${escapeHtml(subject)}</title>
-    <!--[if mso]>
-    <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
-    <![endif]-->
-    <style>
-      /* Progressive enhancement only. Outlook ignores <style>; every rule here
-         has an inline equivalent, so a client that drops this block still
-         renders the intended layout. */
-      body { margin:0; padding:0; width:100% !important; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
-      table { border-collapse:collapse; }
-      img { border:0; outline:none; text-decoration:none; }
-      a { color:inherit; }
-      @media only screen and (max-width:620px) {
-        .ss-pad { padding-left:22px !important; padding-right:22px !important; }
-        .ss-hide-sm { display:none !important; }
-        .ss-hero { padding-left:24px !important; padding-right:24px !important; }
-        /* The photo is baked dark across its whole width so white copy stays
-           legible, and on a phone the copy spans the full panel. Anchoring the
-           crop to the left keeps the heading and subhead over the flat end of
-           the gradient rather than the succulent box. */
-        .ss-hero { background-position:0% center !important; }
-        .ss-hero-copy { display:block !important; width:100% !important; max-width:100% !important; }
-        /* Swap the trust artwork for its text twin — see trustStrip(). */
-        .ss-trust-art { display:none !important; }
-        .ss-trust-text { display:block !important; }
-      }
-    </style>
-  </head>
-  <body style="margin:0;padding:0;background:${BRAND.page}">
-    <!-- Preheader: the inbox snippet. Must be the first thing in the body. -->
-    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${BRAND.page}">Order #${escapeHtml(orderNumber)} ${escapeHtml(copy.preheader)} ${PREHEADER_PAD}</div>
-
-    <div style="background:${BRAND.page};padding:22px 12px 40px">
-      ${masthead()}
+  const html = documentShell({
+    title: subject,
+    mediaCss: [
+      "        .ss-pad { padding-left:22px !important; padding-right:22px !important; }",
+      "        .ss-hide-sm { display:none !important; }",
+      "        .ss-hero { padding-left:24px !important; padding-right:24px !important; }",
+      "        /* The photo is baked dark across its whole width so white copy stays",
+      "           legible, and on a phone the copy spans the full panel. Anchoring the",
+      "           crop to the left keeps the heading and subhead over the flat end of",
+      "           the gradient rather than the succulent box. */",
+      "        .ss-hero { background-position:0% center !important; }",
+      "        .ss-hero-copy { display:block !important; width:100% !important; max-width:100% !important; }",
+      "        /* Swap the trust artwork for its text twin — see trustStrip(). */",
+      "        .ss-trust-art { display:none !important; }",
+      "        .ss-trust-text { display:block !important; }",
+    ].join("\n"),
+    preheaderHtml: `Order #${escapeHtml(orderNumber)} ${escapeHtml(copy.preheader)} ${PREHEADER_PAD}`,
+    bodyHtml: `      ${masthead()}
       ${heroPanel({ copy, heroUrl })}
 
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:620px;margin:0 auto;background:${BRAND.card}">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:${PANEL_WIDTH}px;margin:0 auto;background:${BRAND.card}">
         <tr>
           <td class="ss-pad" style="padding:32px 34px 0">
             <p style="margin:0;font-family:${FONT_SERIF};font-size:21px;color:${BRAND.ink}">Hi ${escapeHtml(name)},</p>
@@ -383,10 +272,8 @@ export function buildOrderStatusEmail(input: OrderStatusEmailInput): OrderStatus
         ${trustStrip({ base })}
         ${signature({ base })}
         ${footer({ orderNumber, phone, siteHost })}
-      </table>
-    </div>
-  </body>
-</html>`;
+      </table>`,
+  });
 
   return { subject, preheader: copy.preheader, html, text: buildPlainText(input, copy) };
 }
@@ -401,10 +288,7 @@ export function buildOrderStatusEmail(input: OrderStatusEmailInput): OrderStatus
 function buildPlainText(input: OrderStatusEmailInput, copy: StatusCopy): string {
   const orderNumber = String(input.orderNumber ?? "").trim() || "-";
   const name = String(input.customerName || "").trim() || "there";
-  const base = origin(
-    input.assetBaseUrl || process.env.ORDER_EMAIL_ASSET_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL,
-    DEFAULT_SITE_URL,
-  );
+  const base = assetBaseUrl(input.assetBaseUrl);
   const shopUrl = String(input.shopUrl || `${base}${DEFAULT_SHOP_PATH}`).trim();
   const tracking = String(input.trackingNumber || "").trim();
   const carrier = String(input.carrier || "Delhivery").trim();
@@ -469,76 +353,6 @@ function buildPlainText(input: OrderStatusEmailInput, copy: StatusCopy): string 
   );
 
   return lines.join("\n");
-}
-
-/**
- * Full-bleed trust strip.
- *
- * This is the supplied EmailFooter artwork rendered as one image rather than
- * four inline glyphs plus captions. One hosted file instead of four is both
- * lighter to send and immune to a client that drops a subset of the <img> tags
- * — the previous build lost every badge in exactly that way.
- *
- * The strip carries its own cream background, so the row is painted the same
- * cream (`BRAND.trustCream`) to hide any rounding at the image edge, and the
- * image spans the full panel with no side padding. The alt text carries the
- * badge wording for blocked-image and screen-reader users.
- */
-function trustStrip(args: { base: string }) {
-  return `<tr>
-            <td class="ss-trust" width="620" bgcolor="${BRAND.trustCream}" style="width:100%;padding:0;background:${BRAND.trustCream}">
-              <!-- DESKTOP: the supplied artwork, full-bleed. -->
-              <div class="ss-trust-art" style="display:block;font-size:0;line-height:0">
-                <img src="${escapeHtml(assetUrl(args.base, "footer-email.jpg"))}" width="620" height="116" alt="Carefully packed, safe and secure delivery, bringing nature closer" style="display:block;width:100%;max-width:620px;height:auto;border:0;outline:none;text-decoration:none" />
-              </div>
-              <!-- PHONE: the same three claims as live text. The artwork is drawn
-                   for a 620px panel, so scaled into a 375px viewport its captions
-                   land near 5px and are unreadable. Real text cannot 404, cannot
-                   be re-scaled into illegibility, and needs no icon files. -->
-              <div class="ss-trust-text" style="display:none;padding:20px 22px;font-family:${FONT_SANS};font-size:10px;letter-spacing:1.6px;line-height:2.2;color:#4A6A55;font-weight:bold;text-align:center">
-                CAREFULLY PACKED &nbsp;&bull;&nbsp; SAFE &amp; SECURE DELIVERY &nbsp;&bull;&nbsp; BRINGING NATURE CLOSER
-              </div>
-            </td>
-          </tr>`;
-}
-
-function signature(args: { base: string }) {
-  return `<tr>
-            <td style="padding:28px 34px 30px">
-              ${rule()}
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:24px"><tr>
-                <td width="46" valign="middle" style="width:46px">
-                  <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-                    ${disc(assetUrl(args.base, "icon-chat.png"), 19, 19)}
-                  </tr></table>
-                </td>
-                <td valign="middle" style="padding-left:15px">
-                  <div style="font-family:${FONT_SERIF};font-size:17px;color:${BRAND.ink}">Questions?</div>
-                  <div style="padding-top:4px;font-family:${FONT_SANS};font-size:12.5px;line-height:1.55;color:${BRAND.muted}">Reply to this email and our plant team will help.</div>
-                </td>
-                <td align="right" valign="middle" class="ss-hide-sm" style="width:150px">
-                  <!-- Serif italic rather than a script font: script faces are
-                       missing on most Android and Windows mail clients and would
-                       silently fall back to a random default. -->
-                  <div style="font-family:${FONT_SERIF};font-style:italic;font-size:19px;line-height:1.25;color:${BRAND.panel}">Happy<br>Planting!</div>
-                  <div style="padding-top:2px;text-align:right;font-size:14px;color:${BRAND.panel}">&#9825;</div>
-                </td>
-              </tr></table>
-            </td>
-          </tr>`;
-}
-
-function footer(args: { orderNumber: string; phone: string; siteHost: string }) {
-  return `<tr>
-            <td align="center" style="padding:26px 34px 30px;background:#FAF9F5;border-top:1px solid ${BRAND.hairline}">
-              <div style="font-family:${FONT_SERIF};font-size:19px;color:${BRAND.ink}">Succulent Sphere</div>
-              <div style="padding-top:7px;font-family:${FONT_SANS};font-size:9px;letter-spacing:2.8px;color:#9AA79B">PLANTS &nbsp;&bull;&nbsp; PEOPLE &nbsp;&bull;&nbsp; A GREENER TOMORROW</div>
-              <div style="padding-top:16px;font-family:${FONT_SANS};font-size:11px;line-height:1.7;color:#A8B3A9">
-                ${escapeHtml(args.siteHost)} &nbsp;&bull;&nbsp; ${escapeHtml(args.phone)}<br>
-                You are receiving this because you placed order #${escapeHtml(args.orderNumber)} with us.
-              </div>
-            </td>
-          </tr>`;
 }
 
 /**

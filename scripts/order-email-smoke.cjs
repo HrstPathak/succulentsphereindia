@@ -67,6 +67,27 @@ const firebaseAdmin = {
   }),
 };
 
+/**
+ * Loads a module from src/lib/email-templates with its sibling chrome module
+ * stubbed in.
+ *
+ * The templates import the shared chrome with a relative "./emailChrome"
+ * specifier (see the note in emailChrome.ts — a path alias would be emitted
+ * verbatim by tsc and then fail to resolve on plain node). Node cannot require
+ * a .ts file, so the chrome is transpiled once here and handed to the template
+ * through the same Module._load interception the aliases use.
+ */
+const emailChrome = loadTypeScript(
+  path.join(process.cwd(), "src", "lib", "email-templates", "emailChrome.ts"),
+);
+
+function loadTemplate(file) {
+  return loadTypeScriptWithMocks(
+    path.join(process.cwd(), "src", "lib", "email-templates", file),
+    { "./emailChrome": emailChrome },
+  );
+}
+
 const orderEmail = loadTypeScriptWithMocks(
   path.join(process.cwd(), "src", "lib", "order-email.ts"),
   {
@@ -76,9 +97,8 @@ const orderEmail = loadTypeScriptWithMocks(
     "@/lib/delhiveryTracking": {
       buildDelhiveryTrackingUrl: (n) => `https://track.delhivery.com/track/package/${n}`,
     },
-    "@/lib/email-templates/orderStatus": loadTypeScript(
-      path.join(process.cwd(), "src", "lib", "email-templates", "orderStatus.ts"),
-    ),
+    "@/lib/email-templates/orderStatus": loadTemplate("orderStatus.ts"),
+    "@/lib/email-templates/orderConfirmation": loadTemplate("orderConfirmation.ts"),
   },
 );
 
@@ -187,6 +207,109 @@ async function testNoProviderConfiguredSkips() {
   }
 }
 
+/**
+ * The partial-COD confirmation, end to end through the real send path.
+ *
+ * This is the one case where being wrong is expensive rather than ugly: the
+ * customer reads the amount due, keeps that much cash ready, and hands it to
+ * the delivery agent. So the assertions are on the actual numbers in the
+ * message that went out, not on the template in isolation.
+ */
+async function testCodConfirmationStatesTheSplit() {
+  reset({});
+  const result = await orderEmail.sendOrderConfirmationEmail({
+    orderId: "o1",
+    orderNumber: 1014,
+    customerName: "Rose maria",
+    customerEmail: "rose@example.com",
+    items: [{ title: "Moonstone", quantity: 3, price: 224.67 }],
+    total: 724,
+    paymentMode: "cod_deposit",
+    codDepositAmount: 100,
+    paymentReceived: 100,
+    codBalance: 624,
+    codFee: 50,
+    address: "Vellookunnel house",
+    city: "Kerala",
+    pincode: "685604",
+  });
+  assert.equal(result.sent, true, "the COD confirmation must deliver");
+  assert.equal(sent.length, 1);
+
+  const message = sent[0];
+  assert.match(message.subject, /#1014/, "the subject must name the order");
+  assert.ok(message.text && message.text.length > 200, "a plain-text part must be sent");
+
+  // The advance and the balance, in the HTML the customer actually receives.
+  assert.ok(message.html.includes("PAID NOW"), "the paid-now figure must be shown");
+  assert.ok(message.html.includes("DUE ON DELIVERY"), "the due-on-delivery figure must be shown");
+  assert.ok(message.html.includes("₹100.00"), "the Rs 100 advance must be printed");
+  assert.ok(message.html.includes("₹624.00"), "the Rs 624 balance must be printed");
+  assert.ok(
+    !message.html.includes("₹724.00 due"),
+    "the total must never be presented as the amount due",
+  );
+
+  // ...and in the text fallback, for the clients that only get that.
+  assert.match(message.text, /Paid now:\s*₹100\.00/);
+  assert.match(message.text, /Due on delivery:\s*₹624\.00/);
+
+  // The admin copy tells the packer the same figure the agent will collect.
+  // ADMIN_EMAILS drives that send, so it is set for the duration of this case
+  // rather than depending on whatever the developer happens to have locally.
+  const previousAdmins = process.env.ADMIN_EMAILS;
+  process.env.ADMIN_EMAILS = "ops@example.com";
+  sent.length = 0;
+  try {
+    await orderEmail.sendOrderConfirmationEmail({
+      orderId: "o3",
+      orderNumber: 1016,
+      customerName: "Rose maria",
+      customerEmail: "rose@example.com",
+      items: [{ title: "Moonstone", quantity: 1, price: 674 }],
+      total: 724,
+      paymentMode: "cod_deposit",
+      codDepositAmount: 100,
+      paymentReceived: 100,
+      codBalance: 624,
+      codFee: 50,
+    });
+  } finally {
+    if (previousAdmins === undefined) delete process.env.ADMIN_EMAILS;
+    else process.env.ADMIN_EMAILS = previousAdmins;
+  }
+  const admin = sent.find((m) => m.idempotencyKey.startsWith("order-admin-notify"));
+  assert.ok(admin, "the admin alert must be sent");
+  assert.ok(admin.html.includes("₹624.00"), "the admin must see the collectable amount");
+  assert.ok(admin.html.includes("Collect on delivery"), "the admin must be told to collect it");
+}
+
+/** A fully-paid order must not promise a collection that will never happen. */
+async function testPrepaidConfirmationMakesNoCollectionClaim() {
+  reset({});
+  const result = await orderEmail.sendOrderConfirmationEmail({
+    orderId: "o2",
+    orderNumber: 1015,
+    customerName: "Rose maria",
+    customerEmail: "rose@example.com",
+    items: [{ title: "Moonstone", quantity: 3, price: 218 }],
+    total: 654,
+    paymentMode: "prepaid",
+    paymentReceived: 654,
+    address: "Vellookunnel house",
+    city: "Kerala",
+    pincode: "685604",
+  });
+  assert.equal(result.sent, true);
+  const message = sent[0];
+  assert.ok(message.html.includes("Prepaid"), "a paid order must read as prepaid");
+  assert.ok(
+    !message.html.includes("DUE ON DELIVERY"),
+    "a prepaid order must not carry a due-on-delivery block",
+  );
+  assert.ok(!message.html.includes("Payable on delivery"), "nor a payable-on-delivery row");
+}
+
 const tests = [
   ["tracking skips when the IN_TRANSIT status email already sent", testTrackingSkipsWhenStatusEmailSent],
   ["IN_TRANSIT skips when the tracking email already sent", testStatusSkipsWhenTrackingEmailSent],
@@ -195,6 +318,8 @@ const tests = [
   ["tracking email still sends when nothing has been sent", testTrackingStillSendsWhenNoPriorEmail],
   ["a previously failed send does not block a retry", testFailedPriorSendDoesNotBlock],
   ["missing provider config skips without throwing", testNoProviderConfiguredSkips],
+  ["COD confirmation states the paid / due split", testCodConfirmationStatesTheSplit],
+  ["prepaid confirmation makes no collection claim", testPrepaidConfirmationMakesNoCollectionClaim],
 ];
 
 (async () => {

@@ -19,15 +19,22 @@
  * Output (all committed to public/images/email/):
  *   hero-email.jpg                     1240x760 JPEG  full-bleed status panel
  *                                                 background (scrim baked in)
+ *   hero-confirmation.jpg              1240x600 JPEG  full-bleed confirmation
+ *                                                 panel background (cream veil
+ *                                                 baked in)
  *   footer-email.jpg                   1240x231 JPEG  full-bleed trust strip
  *   icon-truck.png / icon-chat.png     2x CTA and support glyphs
  *   icon-truck-white.png               2x CTA glyph, recoloured for the button
+ *   icon-user.png / icon-card.png      2x info-card glyphs
+ *   icon-leaf.png                      2x footer leaf mark
+ *   logo-mark.png                      2x circular succulent masthead mark
  *
  * Usage:
  *   node scripts/build-email-assets.cjs
  *   node scripts/build-email-assets.cjs --source path/to/other.webp
  *
- * The source downloads are cached at public/images/email/_source-hero.webp and
+ * The source downloads are cached at public/images/email/_source-hero.webp,
+ * public/images/email/_source-order-confirmation.webp and
  * public/images/email/_source-footer.png.
  */
 
@@ -40,11 +47,14 @@ const ROOT = path.resolve(__dirname, "..");
 const OUT_DIR = path.join(ROOT, "public", "images", "email");
 const SOURCE = path.join(OUT_DIR, "_source-hero.webp");
 const FOOTER_SOURCE = path.join(OUT_DIR, "_source-footer.png");
+const CONFIRMATION_SOURCE = path.join(OUT_DIR, "_source-order-confirmation.webp");
 
 const DEFAULT_SOURCE_URL =
   "https://whitesmoke-cattle-754161.hostingersite.com/sites/images/HomePage/EmailTemplateImage.webp";
 const DEFAULT_FOOTER_SOURCE_URL =
   "https://whitesmoke-cattle-754161.hostingersite.com/sites/images/HomePage/EmailFooter.png";
+const DEFAULT_CONFIRMATION_SOURCE_URL =
+  "https://whitesmoke-cattle-754161.hostingersite.com/sites/images/HomePage/OrderConfirmationImage.webp";
 
 /**
  * Panel geometry. The status panel is 620x380 CSS px in the template, so every
@@ -53,6 +63,15 @@ const DEFAULT_FOOTER_SOURCE_URL =
  */
 const PANEL_W = 620;
 const PANEL_H = 380;
+
+/**
+ * The confirmation hero is a 620x300 CSS px band. It is the same 620px measure
+ * as the status panel so the two templates line up in an inbox, but shorter:
+ * the confirmation copy is a short greeting, not a status headline, and the
+ * extra height went on the order summary below instead of empty photo.
+ */
+const CONFIRMATION_PANEL_W = 620;
+const CONFIRMATION_PANEL_H = 300;
 
 /**
  * Brand forest green. Must stay in sync with BRAND.panelDeep in
@@ -111,11 +130,55 @@ function scrimSvg(w, h) {
 const INK = "#4A6A55";
 
 /**
- * The only glyphs the template still needs are the CTA truck and the support
- * chat bubble. The per-status badge and trust-strip glyphs were dropped when
- * both of those blocks became single images (the hero background and
- * footer-email.jpg), and every extra <img> in an email is another URL that can
- * 404 in someone's inbox.
+ * The confirmation hero is the INVERSE of the status hero and needs the
+ * opposite treatment, so it gets its own scrim function.
+ *
+ * The status panel is a dark, low-key photo that white copy sits on, so it is
+ * sunk under a heavy brand-green scrim. The confirmation hero is the supplied
+ * OrderConfirmationImage: a bright cream wall (rgb 248,244,238) with a potted
+ * succulent on the RIGHT and empty wall on the LEFT, i.e. 3:1 of flat field
+ * reserved for copy. Measured across that field, the darkest pixel is
+ * rgb(235,230,220) — still 10.5:1 against BRAND.ink, four times the WCAG AAA
+ * threshold. So the copy is DARK ink on natural light and the scrim here is a
+ * veil, not a darkener: it can only ever lift the field, never fight it.
+ *
+ * It stays deliberately weak (12% at the very left edge, gone by 70%). That is
+ * insurance, not design: if this artwork is ever re-exported darker or with the
+ * plant's shadow reaching further left, the copy column keeps its headroom
+ * instead of silently dropping to 3:1. Anything heavier would print as a
+ * visible wash over a wall that is already the right colour, and the cream has
+ * to meet the white masthead above it without a seam.
+ */
+const VEIL = "#FBFAF6";
+
+function confirmationVeilSvg(w, h) {
+  return Buffer.from(
+    `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="v" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stop-color="${VEIL}" stop-opacity="0.12"/>
+          <stop offset="36%"  stop-color="${VEIL}" stop-opacity="0.11"/>
+          <stop offset="54%"  stop-color="${VEIL}" stop-opacity="0.07"/>
+          <stop offset="72%"  stop-color="${VEIL}" stop-opacity="0.02"/>
+          <stop offset="100%" stop-color="${VEIL}" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <rect width="${w}" height="${h}" fill="url(#v)"/>
+    </svg>`,
+  );
+}
+
+/**
+ * The glyphs the shipped templates need. The per-status badge and trust-strip
+ * glyphs were dropped when both of those blocks became single images (the hero
+ * background and footer-email.jpg), and every extra <img> in an email is another
+ * URL that can 404 in someone's inbox.
+ *
+ * `vb` is the SVG viewBox the strokes below are authored in. It is stated
+ * explicitly for every glyph because writeIcon() scales by
+ * rendered_px / viewBox_px, so a stroke drawn for one viewBox and reused at
+ * another comes out visibly bolder or thinner. Each stroke-width here is chosen
+ * to land at ~1.5px once displayed at its nominal size in the template.
  *
  * @type {{file: string, w: number, h: number, strokes: string, vb?: string}[]}
  */
@@ -135,7 +198,58 @@ const ICONS = [
     vb: "0 0 24 24",
     strokes: '<path d="M21 12a8 8 0 0 1-8 8H7l-4 2 1.3-4A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14h4"/>',
   },
+  {
+    // Customer card glyph: head + shoulders, the Lucide "user" geometry.
+    file: "icon-user.png",
+    w: 20,
+    h: 20,
+    vb: "0 0 24 24",
+    strokes: '<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c0-4.1 3.4-6.5 7.5-6.5s7.5 2.4 7.5 6.5"/>',
+  },
+  {
+    // Payment card glyph: a card with its magnetic-stripe gap.
+    file: "icon-card.png",
+    w: 20,
+    h: 15,
+    vb: "0 0 24 24",
+    strokes: '<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/>',
+  },
+  {
+    // Footer leaf mark. Same Lucide "leaf" path the site itself renders, so the
+    // emailed wordmark and the website footer are the same drawing.
+    file: "icon-leaf.png",
+    w: 17,
+    h: 17,
+    vb: "0 0 24 24",
+    strokes:
+      '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+  },
 ];
+
+/**
+ * The circular rosette that sits beside the wordmark in the confirmation
+ * masthead.
+ *
+ * Built here as a PNG for the same reason as every other glyph: Gmail strips
+ * inline <svg> outright and Outlook desktop cannot draw it at all, so a logo
+ * shipped as inline markup simply does not appear in a large share of inboxes.
+ * Drawn as five ellipses rotated around a common centre, which reads as a
+ * succulent rosette at 44px without needing the real logo artwork.
+ */
+const LOGO_MARK = {
+  file: "logo-mark.png",
+  w: 44,
+  h: 44,
+  vb: "0 0 48 48",
+  strokes: [
+    '<circle cx="24" cy="24" r="21.5"/>',
+    ...[0, 72, 144, 216, 288].map(
+      (deg) =>
+        `<ellipse cx="24" cy="13.5" rx="4" ry="8" transform="rotate(${deg} 24 24)"/>`,
+    ),
+    '<circle cx="24" cy="24" r="2.4"/>',
+  ].join(""),
+};
 
 function svgFor({ w, h, strokes, vb }, stroke, strokeWidth) {
   const viewBox = vb || `0 0 ${Math.max(48, w * 2)} ${Math.max(32, h * 2)}`;
@@ -243,6 +357,12 @@ async function main() {
     process.stdout.write(`downloading footer source -> ${DEFAULT_FOOTER_SOURCE_URL}\n`);
     await download(DEFAULT_FOOTER_SOURCE_URL, FOOTER_SOURCE);
   }
+  if (!fs.existsSync(CONFIRMATION_SOURCE)) {
+    process.stdout.write(
+      `downloading confirmation hero source -> ${DEFAULT_CONFIRMATION_SOURCE_URL}\n`,
+    );
+    await download(DEFAULT_CONFIRMATION_SOURCE_URL, CONFIRMATION_SOURCE);
+  }
 
   // HERO. It is painted as the status panel's full-bleed background, so the
   // crop is chosen to match the panel's own 620x380 aspect (1.63:1) as closely
@@ -302,9 +422,38 @@ async function main() {
     await writeIcon(icon, INK, 2.2, icon.file);
   }
 
+  // The rosette is drawn on a 48-unit viewBox and displayed at 44px, so it
+  // needs a thinner nominal stroke than the 24-unit glyphs to land at the same
+  // optical weight; 1.7 here is ~1.5px on screen.
+  await writeIcon(LOGO_MARK, INK, 1.7, LOGO_MARK.file);
+
   // CTA glyph is white because it sits on the dark green button.
   const truck = ICONS.find((i) => i.file === "icon-truck.png");
   await writeIcon(truck, "#FFFFFF", 2.8, "icon-truck-white.png");
+
+  // CONFIRMATION HERO. Painted as the confirmation panel's full-bleed
+  // background, so the crop has to satisfy two opposing constraints at once:
+  //   - the left ~330px must stay FLAT, because that is where the copy column
+  //     sits, and
+  //   - the succulent must stay in frame on the right, because it is the whole
+  //     reason the panel is a photo and not a flat colour.
+  // The source is 2172x724 (3:1) and the panel is 620x300 (2.07:1), so
+  // `fit: cover` cannot keep the whole width: it scales to the target height
+  // and crops the width down to ~1496px. `position: "right"` then keeps the
+  // RIGHTMOST 1496px, which is the only anchor that satisfies both rules —
+  // anchoring left would push the plant out of frame, and centre would clip
+  // ~150px off the empty wall the copy needs. What survives is ~990px (66%) of
+  // flat cream on the left and the full plant on the right.
+  const confW = CONFIRMATION_PANEL_W * 2;
+  const confH = CONFIRMATION_PANEL_H * 2;
+  await sharp(CONFIRMATION_SOURCE)
+    .resize(confW, confH, { fit: "cover", position: "right" })
+    .composite([{ input: confirmationVeilSvg(confW, confH), blend: "over" }])
+    .jpeg({ quality: 82, progressive: true, mozjpeg: true })
+    .toFile(path.join(OUT_DIR, "hero-confirmation.jpg"));
+  process.stdout.write(
+    `hero-confirmation.jpg     ${confW}x${confH} jpeg (veiled)\n`,
+  );
 }
 
 main().catch((error) => {
