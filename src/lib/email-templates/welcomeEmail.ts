@@ -265,6 +265,21 @@ function welcomeMasthead(args: {
  * the plant. The lede is 12.5px, the smallest body copy in this template, and
  * it is what the design's own proportions allow at this measure.
  *
+ * The 26px bold headline is the largest that still sets "Succulent Sphere!" on
+ * one line inside that 240px: measured in Georgia bold, that phrase is 245.6px
+ * at 27px but 236.3px at 26px with -0.4px tracking, so 26px clears the column
+ * by under 4px and anything larger breaks the phrase onto its own third line.
+ * Three lines is not merely taller — it pushed the lede down onto the pale
+ * succulent, where the copy stops being readable. The photo-containment check
+ * in shoot-welcome.cjs cannot see that, so the headline width is the real
+ * constraint here, not the box height. Widen HERO_COLUMN past ~250px first, then
+ * the size can go up.
+ *
+ * No scrim or gradient sits under the copy. The photograph's left third is
+ * blown-out wall highlight, and dark ink on it clears contrast comfortably; a
+ * scrim there would flatten the light the image is made of for no legibility
+ * gain, which is the opposite of what a bright, airy hero should do.
+ *
  * The photo is the first block in the card, so it carries the top corners. See
  * the note above heroPanel() in orderConfirmation.ts for why that radius moved
  * off the masthead and onto the hero.
@@ -292,8 +307,8 @@ function heroPanel(args: {
                           <table role="presentation" class="ss-hero-col" cellpadding="0" cellspacing="0" border="0" width="${HERO_COLUMN}" style="width:${HERO_COLUMN}px">
                             <tr>
                               <td>
-                                <p class="ss-hero-hello" style="margin:0;padding:0;font-family:${FONT_SERIF};font-size:27px;line-height:1.14;color:${BRAND.ink};font-weight:normal;letter-spacing:-0.2px">${escapeHtml(args.greeting)}</p>
-                                <h1 class="ss-hero-title" style="margin:11px 0 0;padding:0;font-family:${FONT_SERIF};font-size:30px;line-height:1.12;color:${BRAND.ink};font-weight:normal;letter-spacing:-0.4px">${escapeHtml(args.heading)}</h1>
+                                <p class="ss-hero-hello" style="margin:0;padding:0;font-family:${FONT_SERIF};font-size:18px;line-height:1.2;color:${BRAND.ink};font-weight:normal;letter-spacing:-0.1px">${escapeHtml(args.greeting)}</p>
+                                <h1 class="ss-hero-title" style="margin:9px 0 0;padding:0;font-family:${FONT_SERIF};font-size:26px;line-height:1.16;color:${BRAND.ink};font-weight:bold;letter-spacing:-0.4px">${escapeHtml(args.heading)}</h1>
                                 <p class="ss-hero-lede" style="margin:13px 0 0;padding:0;font-family:${FONT_SANS};font-size:12.5px;line-height:1.62;color:${BRAND.body}">${escapeHtml(args.lede)}</p>
                               </td>
                             </tr>
@@ -396,7 +411,7 @@ const WELCOME_MEDIA_CSS = [
   "        .ss-hero-pull { margin-top:0 !important; }",
   "        .ss-hero-pad { padding:26px 22px 4px 22px !important; }",
   "        .ss-hero-col { width:100% !important; }",
-  "        .ss-hero-hello { font-size:24px !important; line-height:1.16 !important; }",
+  "        .ss-hero-hello { font-size:21px !important; line-height:1.2 !important; }",
   "        .ss-hero-title { font-size:25px !important; line-height:1.16 !important; }",
   "        .ss-hero-lede { font-size:14.5px !important; line-height:1.6 !important; }",
   "        /* The masthead's three links cannot share a 320px row with a 25px",
@@ -459,10 +474,14 @@ export function buildWelcomeEmail(input: WelcomeEmailInput): {
   // The design opens on a small-caps "HELLO THERE!" eyebrow, which put the
   // customer's name in 9.5px type above a 30px headline, so the one thing that
   // makes this a welcome rather than a brochure was the smallest thing on the
-  // page. This greets by name at nearly headline size instead. It is the same
-  // name the plain-text twin greets with, so the two cannot disagree, and an
-  // account with no first name gets the design's own wording rather than a
-  // dangling comma.
+  // page. This greets by name at 18px above a 26px bold headline instead, which
+  // is the hierarchy the design intends: the name is present and readable but
+  // stays subordinate, and the headline is unambiguously the focal text. The
+  // greeting is serif rather than the sans of the old eyebrow because it is
+  // now part of the headline's typographic voice rather than a label above it.
+  // It is the same name the plain-text twin greets with, so the two cannot
+  // disagree, and an account with no first name gets the design's own wording
+  // rather than a dangling comma.
   const greeting = firstName ? `Hi ${firstName},` : "Hi there,";
 
   const html = documentShell({
