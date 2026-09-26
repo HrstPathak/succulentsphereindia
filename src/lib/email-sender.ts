@@ -6,6 +6,13 @@ export type EmailMessage = {
   to: string;
   subject: string;
   html: string;
+  /**
+   * Plain-text alternative. Optional for backwards compatibility, but every
+   * new email should pass it: text-only clients show this instead of raw HTML,
+   * and Gmail's "View entire message" renders it. Resend and Nodemailer both
+   * turn this into a real multipart/alternative message when it is present.
+   */
+  text?: string;
   idempotencyKey?: string;
 };
 export type EmailDelivery = { id: string | null; provider: "resend" | "gmail" };
@@ -46,6 +53,7 @@ export async function sendEmail(message: EmailMessage): Promise<EmailDelivery> {
         to: [message.to],
         subject: message.subject,
         html: message.html,
+        ...(message.text ? { text: message.text } : {}),
       }),
       cache: "no-store",
     });
@@ -74,6 +82,8 @@ export async function sendEmail(message: EmailMessage): Promise<EmailDelivery> {
     to: message.to,
     subject: message.subject,
     html: message.html,
+    // Nodemailer builds a multipart/alternative message when both parts are set.
+    ...(message.text ? { text: message.text } : {}),
   });
   return { id: result.messageId || null, provider: "gmail" };
 }

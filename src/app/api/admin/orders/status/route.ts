@@ -99,6 +99,7 @@ export async function POST(req: Request) {
         trackingUrl: buildDelhiveryTrackingUrl(trackingNumber),
         // Only an open COD balance is still collectable on delivery.
         amountDue: status === "OUT_FOR_DELIVERY" ? payment.codBalance : 0,
+        carrier: data.tracking?.[0]?.company || data.carrier || "Delhivery",
       });
     }
 

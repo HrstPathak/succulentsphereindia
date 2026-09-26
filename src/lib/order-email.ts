@@ -3,6 +3,7 @@ import "server-only";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { configuredEmailProvider, sendEmail } from "@/lib/email-sender";
 import { buildDelhiveryTrackingUrl } from "@/lib/delhiveryTracking";
+import { buildOrderStatusEmail } from "@/lib/email-templates/orderStatus";
 
 type OrderEmailItem = { title?: string; quantity?: number; price?: string; image?: string; imageAlt?: string };
 
@@ -398,48 +399,14 @@ export async function sendOrderConfirmationEmail(
 
 export type OrderLifecycleStatus = "IN_TRANSIT" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED";
 
-const LIFECYCLE_COPY: Record<
-  OrderLifecycleStatus,
-  { subject: string; heading: string; intro: string; detail: string; accent: string; button?: string }
-> = {
-  IN_TRANSIT: {
-    subject: "is on its way",
-    heading: "Your plants have left our studio",
-    intro: "Good news — your plants are on the move.",
-    detail:
-      "We have packed your plants carefully and handed them to the courier. They are now travelling to you.",
-    accent: "#1d573b",
-  },
-  OUT_FOR_DELIVERY: {
-    subject: "is out for delivery",
-    heading: "Your plants are out for delivery today",
-    intro: "Your plants are with the delivery agent and should reach you today.",
-    detail:
-      "Please keep your phone nearby. The agent may call before arriving, and cash on delivery payments are collected at the door.",
-    accent: "#1d573b",
-  },
-  DELIVERED: {
-    subject: "was delivered",
-    heading: "Your plants have arrived",
-    intro: "Your order has been delivered. We hope the plants bring you a lot of joy.",
-    detail:
-      "A little care goes a long way — place succulents in bright, indirect light and water them only when the soil is fully dry.",
-    accent: "#1d4c38",
-  },
-  CANCELLED: {
-    subject: "has been cancelled",
-    heading: "Your order has been cancelled",
-    intro: "We are sorry — your order has been cancelled.",
-    detail:
-      "If you were charged online, the amount is released back to your original payment method and usually reflects in 5–7 business days. Any prepaid amount adjusted against cash on delivery is returned by refund.",
-    accent: "#a3402f",
-  },
-};
-
 /**
  * Sends the lifecycle email for a manual status change made by an admin
  * (in transit, out for delivery, delivered, cancelled). Returns the same shape
  * as the other mail helpers so callers can report sent/skipped/failed.
+ *
+ * The design, copy and plain-text part all come from
+ * src/lib/email-templates/orderStatus.ts. This function only resolves the
+ * order's real values and records the outcome in Firestore.
  */
 export async function sendOrderStatusEmail(input: {
   orderId: string;
@@ -449,33 +416,58 @@ export async function sendOrderStatusEmail(input: {
   status: OrderLifecycleStatus;
   trackingNumber?: string;
   trackingUrl?: string;
+  carrier?: string;
   amountDue?: number;
 }) {
-  const copy = LIFECYCLE_COPY[input.status];
   if (!configuredEmailProvider()) return { sent: false, skipped: true };
 
-  const trackingUrl =
-    input.trackingUrl || (input.trackingNumber ? buildDelhiveryTrackingUrl(input.trackingNumber) : "");
-  const dueNote =
-    input.amountDue && input.amountDue > 0
-      ? `<p style="margin:20px 0 0;padding:16px;border-radius:12px;background:#fdf6ec;border:1px solid #f0e0c4;font-size:14px;color:#7a5a1e">Please keep <strong style="color:#5c4212">${escapeHtml(
-          `₹${Number(input.amountDue).toFixed(2)}`,
-        )}</strong> ready for the delivery agent.</p>`
-      : "";
+  // De-duplicate against the dispatch email, which carries the same IN_TRANSIT
+  // copy. Creating a shipment already tells the customer their plants are moving,
+  // so a later manual IN_TRANSIT must not repeat it. The other three statuses
+  // are genuinely new states and always send.
+  if (input.status === "IN_TRANSIT") {
+    try {
+      const snapshot = await getFirebaseDb().collection("orders").doc(input.orderId).get();
+      const tracking = (snapshot.data() as any)?.trackingEmailStatus;
+      if (String(tracking || "") === "sent") {
+        await getFirebaseDb()
+          .collection("orders")
+          .doc(input.orderId)
+          .set(
+            {
+              statusEmail_IN_TRANSIT: {
+                status: "skipped",
+                reason: "tracking_email_already_sent",
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            { merge: true },
+          );
+        return { sent: false, skipped: true };
+      }
+    } catch {
+      // A read failure must not block the send; fall through and deliver.
+    }
+  }
 
-  const html = `<!doctype html><html><body style="margin:0;background:#f4f6f2;font-family:Arial,sans-serif;color:#20352a"><main style="max-width:620px;margin:28px auto;background:#fff;border:1px solid #e2e8e1;border-radius:20px;overflow:hidden"><header style="padding:30px;background:linear-gradient(135deg,#173c2d,#356649);color:#fff"><p style="margin:0;font-size:11px;font-weight:bold;letter-spacing:2px">SUCCULENT SPHERE</p><h1 style="margin:12px 0 0;font-size:26px">${escapeHtml(copy.heading)}</h1></header><section style="padding:30px"><p style="font-size:16px">Hi ${escapeHtml(
-    input.customerName || "there",
-  )},</p><p>${escapeHtml(copy.intro)}</p><p>Order <strong>#${escapeHtml(input.orderNumber)}</strong> ${escapeHtml(copy.subject)}.</p><p style="color:#607267">${escapeHtml(copy.detail)}</p>${dueNote}${
-    trackingUrl
-      ? `<p style="margin:24px 0"><a href="${escapeHtml(trackingUrl)}" style="display:inline-block;background:${copy.accent};color:#fff;text-decoration:none;padding:13px 20px;border-radius:10px;font-weight:bold">Track your shipment</a></p>`
-      : ""
-  }</section><footer style="padding:18px 30px;background:#f7f9f6;color:#718076;font-size:12px">Questions? Reply to this email and our plant team will help.</footer></main></body></html>`;
+  const trackingNumber = String(input.trackingNumber || "").trim();
+  const email = buildOrderStatusEmail({
+    status: input.status,
+    orderNumber: input.orderNumber,
+    customerName: input.customerName,
+    trackingNumber,
+    trackingUrl:
+      input.trackingUrl || (trackingNumber ? buildDelhiveryTrackingUrl(trackingNumber) : ""),
+    carrier: input.carrier,
+    amountDue: input.amountDue,
+  });
 
   try {
     const delivery = await sendEmail({
       to: input.customerEmail,
-      subject: `Your Succulent Sphere order #${input.orderNumber} ${copy.subject}`,
-      html,
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
       idempotencyKey: `status-${input.orderId}-${input.status}`,
     });
     await getFirebaseDb()
@@ -486,6 +478,7 @@ export async function sendOrderStatusEmail(input: {
           [`statusEmail_${input.status}`]: {
             status: "sent",
             provider: delivery.provider,
+            providerId: delivery.id || "",
             sentAt: new Date().toISOString(),
           },
         },
@@ -510,6 +503,15 @@ export async function sendOrderStatusEmail(input: {
   }
 }
 
+/**
+ * Sends the dispatch email when a shipment is created and a waybill exists.
+ *
+ * This is the same message an admin gets by setting IN_TRANSIT by hand, so it
+ * reuses that template verbatim (IN_TRANSIT copy) rather than maintaining a
+ * second design. To stop the customer receiving two near-identical "your plants
+ * are on the way" emails, the IN_TRANSIT status email is checked first: if one
+ * already went out for this order, this call is skipped.
+ */
 export async function sendTrackingEmail(input: {
   orderId: string;
   orderNumber: number;
@@ -520,17 +522,51 @@ export async function sendTrackingEmail(input: {
   carrier?: string;
 }) {
   if (!configuredEmailProvider()) return { sent: false, skipped: true };
+
+  const db = getFirebaseDb();
+  const trackingNumber = String(input.trackingNumber || "").trim();
   const carrier = input.carrier || "Delhivery";
-  const trackingUrl = input.trackingUrl || buildDelhiveryTrackingUrl(input.trackingNumber);
-  const html = `<!doctype html><html><body style="margin:0;background:#f4f6f2;font-family:Arial,sans-serif;color:#20352a"><main style="max-width:620px;margin:28px auto;background:#fff;border:1px solid #e2e8e1;border-radius:20px;overflow:hidden"><header style="padding:30px;background:linear-gradient(135deg,#173c2d,#356649);color:#fff"><p style="margin:0;font-size:11px;font-weight:bold;letter-spacing:2px">SUCCULENT SPHERE</p><h1 style="margin:12px 0 0;font-size:28px">Your plants are on their way</h1></header><section style="padding:30px"><p style="font-size:16px">Hi ${escapeHtml(input.customerName || "there")},</p><p>Great news — order <strong>#${escapeHtml(input.orderNumber)}</strong> has been handed to ${escapeHtml(carrier)}.</p><div style="margin:24px 0;padding:20px;border-radius:14px;background:#edf6ee;border:1px solid #d7ead9"><p style="margin:0 0 8px;font-size:11px;font-weight:bold;letter-spacing:1px;color:#54705c">TRACKING NUMBER</p><p style="margin:0;font-size:22px;font-weight:bold;color:#1d4a35">${escapeHtml(input.trackingNumber)}</p></div><p style="margin:24px 0"><a href="${escapeHtml(trackingUrl)}" style="display:inline-block;background:#1d573b;color:#fff;text-decoration:none;padding:13px 20px;border-radius:10px;font-weight:bold">Track your shipment</a></p><p style="font-size:13px;line-height:1.6;color:#607267">The tracking page can take a little time to show its first scan after dispatch. Please keep this email for your reference.</p></section><footer style="padding:18px 30px;background:#f7f9f6;color:#718076;font-size:12px">Questions? Reply to this email and our plant team will help.</footer></main></body></html>`;
+
+  // De-duplicate against the manual IN_TRANSIT notification.
+  try {
+    const snapshot = await db.collection("orders").doc(input.orderId).get();
+    const alreadySent = (snapshot.data() as any)?.statusEmail_IN_TRANSIT;
+    if (alreadySent && String(alreadySent.status || "") === "sent") {
+      await db
+        .collection("orders")
+        .doc(input.orderId)
+        .set(
+          {
+            trackingEmailStatus: "skipped",
+            trackingEmailSkipReason: "in_transit_status_email_already_sent",
+            trackingEmailUpdatedAt: new Date().toISOString(),
+          },
+          { merge: true },
+        );
+      return { sent: false, skipped: true };
+    }
+  } catch {
+    // A read failure must not block the send; fall through and deliver.
+  }
+
+  const email = buildOrderStatusEmail({
+    status: "IN_TRANSIT",
+    orderNumber: input.orderNumber,
+    customerName: input.customerName,
+    trackingNumber,
+    trackingUrl: input.trackingUrl || (trackingNumber ? buildDelhiveryTrackingUrl(trackingNumber) : ""),
+    carrier,
+  });
+
   try {
     const delivery = await sendEmail({
       to: input.customerEmail,
-      subject: `Your Succulent Sphere order #${input.orderNumber} is on its way`,
-      html,
-      idempotencyKey: `tracking-${input.orderId}-${input.trackingNumber}`,
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
+      idempotencyKey: `tracking-${input.orderId}-${trackingNumber}`,
     });
-    await getFirebaseDb()
+    await db
       .collection("orders")
       .doc(input.orderId)
       .set(

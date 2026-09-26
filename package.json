@@ -9,7 +9,9 @@
     "lint": "next lint",
     "firebase:auth:smoke": "node --env-file=.env.local scripts/firebase-auth-smoke.cjs",
     "firebase:session:smoke": "node --env-file=.env.local scripts/firebase-session-handoff-smoke.cjs",
-    "delhivery:shipment:test": "node scripts/delhivery-shipment-smoke.cjs"
+    "delhivery:shipment:test": "node scripts/delhivery-shipment-smoke.cjs",
+    "order:email:test": "node scripts/order-email-smoke.cjs",
+    "order:email:verify": "tsc src/lib/email-templates/orderStatus.ts --outDir email-preview/render --module commonjs --target ES2019 --skipLibCheck --lib es2020,dom && node email-preview/verify.cjs"
   },
   "dependencies": {
     "@google/genai": "^2.23.0",

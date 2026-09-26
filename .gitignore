@@ -29,3 +29,16 @@ tmp-*.cjs
 tmp-*.ps1
 tmp-*.json
 hostinger/upload.local.php
+
+# Email preview tooling output. `npm run order:email:verify` recompiles the
+# template into render/orderStatus.js and verify.cjs writes the .html files and
+# screenshots from it, so all of this is reproducible and only bloats the repo.
+email-preview/render/
+
+# Scratch files from scripts/build-email-assets.cjs. _source-hero.webp is a
+# download cache (the script re-fetches it if missing) and the _inspect-* /
+# _icons-sheet JPEGs are one-off review crops. The committed hero-email.jpg and
+# icon-*.png are what the email actually loads.
+public/images/email/_source-hero.webp
+public/images/email/_inspect-*.jpg
+public/images/email/_icons-sheet.jpg
