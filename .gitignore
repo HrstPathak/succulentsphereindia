@@ -40,5 +40,6 @@ email-preview/render/
 # _icons-sheet JPEGs are one-off review crops. The committed hero-email.jpg and
 # icon-*.png are what the email actually loads.
 public/images/email/_source-hero.webp
+public/images/email/_source-footer.png
 public/images/email/_inspect-*.jpg
 public/images/email/_icons-sheet.jpg

@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 /**
- * Renders email-preview/render/<STATUS>.html to a PNG so the layout can be
- * eyeballed without a mail client. Preview tooling only — not shipped.
+ * Renders the order status email to PNGs so the layout can be eyeballed
+ * without a mail client. Preview tooling only — not shipped.
+ *
+ * The HTML is generated here from the SAME compiled template the verifier
+ * checks, rather than read from a checked-in file. An earlier version read
+ * render/<STATUS>.html from disk, which silently screenshotted a stale build
+ * after the template changed — the preview looked fine while the real email
+ * was broken. Nothing is written that is not derived from orderStatus.js.
  *
  * Usage:
- *   npx tsc src/lib/email-templates/orderStatus.ts --outDir email-preview/render \
- *     --module commonjs --target ES2019 --skipLibCheck --lib es2020,dom
+ *   npm run order:email:verify
  *   node email-preview/shoot.cjs
  */
 const fs = require("node:fs");
@@ -16,6 +21,15 @@ const DIR = __dirname;
 const CHROME =
   process.env.CHROME_PATH || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const STATUSES = ["IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"];
+
+/** Must match the fixture in verify.cjs so the preview shows the same email. */
+const BASE = {
+  orderNumber: 1009,
+  customerName: "Harshit Pathak",
+  trackingNumber: "1234567890123",
+  trackingUrl: "https://www.delhivery.com/track/package/1234567890123",
+  carrier: "Delhivery",
+};
 
 /**
  * The rendered HTML points at https://succulentsphere.com/images/email/*.
@@ -29,7 +43,21 @@ function localize(html) {
   );
 }
 
+function buildHtml() {
+  const { buildOrderStatusEmail } = require("./render/orderStatus.js");
+  for (const status of STATUSES) {
+    const { html } = buildOrderStatusEmail({
+      ...BASE,
+      status,
+      amountDue: status === "OUT_FOR_DELIVERY" ? 249 : 0,
+    });
+    fs.writeFileSync(path.join(DIR, "render", `${status}.html`), html);
+  }
+}
+
 (async () => {
+  buildHtml();
+
   const browser = await chromium.launch({ executablePath: CHROME });
 
   // Desktop and phone widths. 390 is the narrowest phone in common use, so a

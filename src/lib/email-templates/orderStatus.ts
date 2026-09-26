@@ -2,22 +2,30 @@
  * Order status email template (Succulent Sphere).
  *
  * Layout contract — this is the approved design: the status panel is a
- * TWO COLUMN band with the copy on the LEFT and the product photo filling the
- * RIGHT column. It is deliberately built as nested tables with inline styles
- * because Outlook renders email through the Word engine, which ignores
- * flexbox, `border-radius`, `linear-gradient` and `object-fit`.
+ * FULL-BLEED band with the photo painted as its background and the copy
+ * layered on top, followed by a full-bleed trust strip image. It is
+ * deliberately built as nested tables with inline styles because Outlook
+ * renders email through the Word engine, which ignores flexbox,
+ * `border-radius`, `linear-gradient` and `object-fit`.
  *
  * Client-safety rules baked into every block below:
  *   - Tables + `role="presentation"`, never <div> layout.
  *   - Every colour that matters is repeated as a `bgcolor` attribute so
  *     Outlook (which drops `background-image`) still paints a solid panel.
+ *   - The status panel sets its photo THREE ways — the `background` attribute,
+ *     a CSS `background-image`, and a VML `<v:rect>` — because each covers a
+ *     different set of clients and no single one is universal. The darkening
+ *     gradient that keeps white copy legible over the photo is BAKED INTO the
+ *     JPEG (see scripts/build-email-assets.cjs): email cannot reliably stack a
+ *     translucent layer above a background image.
  *   - The status pill and the CTA button sit on a solid `bgcolor` that matches
  *     their gradient, so a client without gradient support shows a filled
  *     button instead of white text on a white page.
  *   - Icons are hosted PNGs, not inline <svg>. Gmail strips inline SVG and
  *     Outlook desktop cannot render it at all. See scripts/build-email-assets.cjs.
- *   - The hero is a JPEG, not the source WebP: Outlook 2007-2021 and Windows
- *     Mail cannot decode WebP.
+ *   - The hero and the trust strip are JPEG, not the source WebP/PNG: Outlook
+ *     2007-2021 and Windows Mail cannot decode WebP, and the strip is a
+ *     mostly-flat cream field that mozjpeg compresses far smaller.
  *   - A hidden preheader is the first thing in <body> so the inbox snippet is
  *     never the wordmark.
  *   - The tracking panel is omitted for terminal states (delivered/cancelled)
@@ -73,6 +81,12 @@ const BRAND = {
   disc: "#EEF1E9",
   discBorder: "#DFE4D8",
   divider: "#E0DCD2",
+  /**
+   * Background of the supplied trust-strip artwork. The strip is rendered
+   * full-bleed, so its own cream is painted on the row too: any rounding
+   * between the image edge and the row would otherwise show as a seam.
+   */
+  trustCream: "#F8F8F3",
 } as const;
 
 const FONT_SERIF = "Georgia,'Times New Roman',serif";
@@ -118,10 +132,6 @@ type StatusCopy = {
   ctaLabel: string;
   /** Sentence appended to the order line, e.g. "is on its way". */
   ctaFallback: string;
-  /** Two caption lines for the dynamic middle trust-strip badge. */
-  badgeLines: [string, string];
-  /** Filename in /images/email for the dynamic badge glyph. */
-  badgeIcon: string;
   subject: string;
   preheader: string;
   heroAlt: string;
@@ -147,8 +157,6 @@ const STATUS_COPY: Record<OrderStatusEmailStatus, StatusCopy> = {
       "We have packed your plants carefully and handed them to the courier. They are now travelling to you.",
     ctaLabel: "Track your shipment",
     ctaFallback: "delhivery.com/track/package/",
-    badgeLines: ["ON THE WAY", "TO YOU"],
-    badgeIcon: "icon-truck.png",
     subject: "is on its way",
     preheader: "has left our studio \u2014 track your plants right here.",
     heroAlt: "A box of succulents packed and ready to ship",
@@ -165,8 +173,6 @@ const STATUS_COPY: Record<OrderStatusEmailStatus, StatusCopy> = {
       "The agent may call before arriving, and any cash on delivery amount is collected at the door.",
     ctaLabel: "Track your delivery",
     ctaFallback: "delhivery.com/track/package/",
-    badgeLines: ["ARRIVING", "TODAY"],
-    badgeIcon: "icon-van.png",
     subject: "is out for delivery",
     preheader: "is out for delivery today.",
     heroAlt: "A box of succulents packed and ready to ship",
@@ -183,8 +189,6 @@ const STATUS_COPY: Record<OrderStatusEmailStatus, StatusCopy> = {
       "Place succulents in bright, indirect light and water them only when the soil is fully dry.",
     ctaLabel: "Shop more plants",
     ctaFallback: "succulentsphere.com",
-    badgeLines: ["DELIVERED", "TO YOUR DOOR"],
-    badgeIcon: "icon-check.png",
     subject: "was delivered",
     preheader: "has been delivered. Enjoy your plants!",
     heroAlt: "A box of succulents packed and ready to ship",
@@ -201,8 +205,6 @@ const STATUS_COPY: Record<OrderStatusEmailStatus, StatusCopy> = {
       "If you were charged online, the amount is released back to your original payment method and usually reflects in 5\u20137 business days.",
     ctaLabel: "Browse the collection",
     ctaFallback: "succulentsphere.com",
-    badgeLines: ["REFUND", "ON ITS WAY"],
-    badgeIcon: "icon-box.png",
     subject: "has been cancelled",
     preheader: "has been cancelled. Refund details inside.",
     heroAlt: "A box of succulents packed and ready to ship",
@@ -273,21 +275,13 @@ function cta(args: { label: string; url: string; iconUrl: string }) {
 }
 
 
-/** The tinted disc every trust-strip glyph sits in. Never white, so a blocked
- *  image degrades to a deliberate sage chip instead of an empty hole. */
+/** The tinted disc behind the support glyph in the signature block. Never
+ *  white, so a blocked image degrades to a deliberate sage chip instead of an
+ *  empty hole. */
 function disc(iconUrl: string, width: number, height: number) {
   return `<td width="44" height="44" align="center" style="width:44px;height:44px;background:${BRAND.disc};border:1px solid ${BRAND.discBorder};border-radius:50%">
         <img src="${escapeHtml(iconUrl)}" width="${width}" height="${height}" alt="" style="display:block;width:${width}px;height:${height}px;border:0;outline:none;text-decoration:none" />
       </td>`;
-}
-
-function trustBadge(iconUrl: string, width: number, height: number, lines: [string, string]) {
-  return `<td class="ss-badge" width="25%" align="center" valign="top" style="width:25%;padding:0 6px;text-align:center">
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto"><tr>
-              ${disc(iconUrl, width, height)}
-            </tr></table>
-            <div style="padding-top:11px;font-family:${FONT_SANS};font-size:9px;letter-spacing:1.5px;line-height:1.75;color:#5C6E61;font-weight:bold">${lines[0]}<br>${lines[1]}</div>
-          </td>`;
 }
 
 function rule() {
@@ -351,16 +345,16 @@ export function buildOrderStatusEmail(input: OrderStatusEmailInput): OrderStatus
       @media only screen and (max-width:620px) {
         .ss-pad { padding-left:22px !important; padding-right:22px !important; }
         .ss-hide-sm { display:none !important; }
-        /* display:block is required, not just width:100%. A <td> is a table-cell,
-           and two cells both asking for 100% makes the table layout algorithm
-           hand the second one a computed width of 0 — the photo would vanish. */
-        .ss-hero-text { display:block !important; width:100% !important; max-width:100% !important; }
-        .ss-hero-img  { display:block !important; width:100% !important; max-width:100% !important; }
-        .ss-hero-img img { width:100% !important; max-width:100% !important; height:auto !important; }
-        /* 2x2 grid instead of a single 4-high column: keeps the strip from
-           doubling the email's length on a phone. */
-        .ss-badge { display:inline-block !important; width:50% !important; max-width:50% !important; padding:10px 6px !important; }
-        .ss-vrule { display:none !important; }
+        .ss-hero { padding-left:24px !important; padding-right:24px !important; }
+        /* The photo is baked dark across its whole width so white copy stays
+           legible, and on a phone the copy spans the full panel. Anchoring the
+           crop to the left keeps the heading and subhead over the flat end of
+           the gradient rather than the succulent box. */
+        .ss-hero { background-position:0% center !important; }
+        .ss-hero-copy { display:block !important; width:100% !important; max-width:100% !important; }
+        /* Swap the trust artwork for its text twin — see trustStrip(). */
+        .ss-trust-art { display:none !important; }
+        .ss-trust-text { display:block !important; }
       }
     </style>
   </head>
@@ -370,7 +364,7 @@ export function buildOrderStatusEmail(input: OrderStatusEmailInput): OrderStatus
 
     <div style="background:${BRAND.page};padding:22px 12px 40px">
       ${masthead()}
-      ${heroPanel({ copy, heroUrl, orderNumber })}
+      ${heroPanel({ copy, heroUrl })}
 
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:620px;margin:0 auto;background:${BRAND.card}">
         <tr>
@@ -386,7 +380,7 @@ export function buildOrderStatusEmail(input: OrderStatusEmailInput): OrderStatus
             <p style="margin:12px 0 0;font-family:${FONT_SANS};font-size:11.5px;line-height:1.6;color:#93A096;word-break:break-all">${escapeHtml(ctaUrl)}</p>
           </td>
         </tr>
-        ${trustStrip({ base, copy })}
+        ${trustStrip({ base })}
         ${signature({ base })}
         ${footer({ orderNumber, phone, siteHost })}
       </table>
@@ -460,8 +454,7 @@ function buildPlainText(input: OrderStatusEmailInput, copy: StatusCopy): string 
     `   ${ctaUrl}`,
     "",
     thin,
-    `CAREFULLY PACKED  |  ${copy.badgeLines.join(" ")}  |  SAFE & SECURE DELIVERY`,
-    "BRINGING NATURE CLOSER",
+    "CAREFULLY PACKED  |  SAFE & SECURE DELIVERY  |  BRINGING NATURE CLOSER",
     thin,
     "",
     "Questions? Reply to this email and our plant team will help.",
@@ -478,28 +471,33 @@ function buildPlainText(input: OrderStatusEmailInput, copy: StatusCopy): string 
   return lines.join("\n");
 }
 
-function trustStrip(args: { base: string; copy: StatusCopy }) {
-  const { base, copy } = args;
-  const vrule = `<td class="ss-vrule" width="1" style="width:1px;background:${BRAND.divider};font-size:0">&nbsp;</td>`;
+/**
+ * Full-bleed trust strip.
+ *
+ * This is the supplied EmailFooter artwork rendered as one image rather than
+ * four inline glyphs plus captions. One hosted file instead of four is both
+ * lighter to send and immune to a client that drops a subset of the <img> tags
+ * — the previous build lost every badge in exactly that way.
+ *
+ * The strip carries its own cream background, so the row is painted the same
+ * cream (`BRAND.trustCream`) to hide any rounding at the image edge, and the
+ * image spans the full panel with no side padding. The alt text carries the
+ * badge wording for blocked-image and screen-reader users.
+ */
+function trustStrip(args: { base: string }) {
   return `<tr>
-            <td style="padding:30px 22px 0">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${BRAND.cream};border-radius:14px">
-                <tr>
-                  <td style="padding:22px 8px">
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                      <tr>
-                        ${trustBadge(assetUrl(base, "icon-leaf.png"), 20, 20, ["CAREFULLY", "PACKED"])}
-                        ${vrule}
-                        ${trustBadge(assetUrl(base, copy.badgeIcon), 20, 20, copy.badgeLines)}
-                        ${vrule}
-                        ${trustBadge(assetUrl(base, "icon-shield.png"), 19, 19, ["SAFE &amp; SECURE", "DELIVERY"])}
-                        ${vrule}
-                        ${trustBadge(assetUrl(base, "icon-sprout.png"), 20, 20, ["BRINGING NATURE", "CLOSER"])}
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
+            <td class="ss-trust" width="620" bgcolor="${BRAND.trustCream}" style="width:100%;padding:0;background:${BRAND.trustCream}">
+              <!-- DESKTOP: the supplied artwork, full-bleed. -->
+              <div class="ss-trust-art" style="display:block;font-size:0;line-height:0">
+                <img src="${escapeHtml(assetUrl(args.base, "footer-email.jpg"))}" width="620" height="116" alt="Carefully packed, safe and secure delivery, bringing nature closer" style="display:block;width:100%;max-width:620px;height:auto;border:0;outline:none;text-decoration:none" />
+              </div>
+              <!-- PHONE: the same three claims as live text. The artwork is drawn
+                   for a 620px panel, so scaled into a 375px viewport its captions
+                   land near 5px and are unreadable. Real text cannot 404, cannot
+                   be re-scaled into illegibility, and needs no icon files. -->
+              <div class="ss-trust-text" style="display:none;padding:20px 22px;font-family:${FONT_SANS};font-size:10px;letter-spacing:1.6px;line-height:2.2;color:#4A6A55;font-weight:bold;text-align:center">
+                CAREFULLY PACKED &nbsp;&bull;&nbsp; SAFE &amp; SECURE DELIVERY &nbsp;&bull;&nbsp; BRINGING NATURE CLOSER
+              </div>
             </td>
           </tr>`;
 }
@@ -544,55 +542,66 @@ function footer(args: { orderNumber: string; phone: string; siteHost: string }) 
 }
 
 /**
- * THE HEADLINE BLOCK — copy on the left, product photo on the right.
+ * THE HEADLINE BLOCK — the product photo fills the entire panel and the status
+ * copy sits on top of it.
  *
- * Two sibling <td>s inside one <tr>. The left cell carries the eyebrow, the
- * status pill, the heading and the subhead; the right cell holds the hero and
- * bleeds to the right edge of the card. Fixed pixel widths are set on both
- * cells (and repeated as `width` attributes) because Outlook ignores
- * `max-width` and would otherwise let the photo eat the whole row.
+ * This is a background image, and email has no single attribute that works
+ * everywhere, so the photo is declared three ways:
+ *   1. `background` attribute  — honoured by Outlook 2007+ and Gmail, but
+ *      repeats the image as a tile rather than scaling it.
+ *   2. CSS `background-image` with `background-size:cover` — correct scaling
+ *      in Apple Mail, iOS, Samsung and most webmail clients.
+ *   3. A VML `<v:rect>` inside `<!--[if gte mso 9]>` — `type="frame"` stretches
+ *      the photo to the cell, which is the only way to get a non-repeating
+ *      background into Outlook desktop.
+ * `bgcolor` repeats the panel colour underneath all three, so a client that
+ * supports none of them still shows the intended solid green block.
  *
- * The panel background is repeated as `bgcolor` so Outlook — which drops
- * `background-image` — still paints solid forest green behind the text.
+ * The copy sits in its own 320px-wide table rather than in a full-width cell
+ * with a `width` hint. A lone cell inside a `width:100%` table is simply handed
+ * the whole row, so the hint is ignored and the subhead runs out across the
+ * succulent box; sizing the table is what actually holds the measure.
  */
 function heroPanel(args: {
   copy: StatusCopy;
   heroUrl: string;
-  orderNumber: string;
 }) {
-  const { copy, heroUrl, orderNumber } = args;
+  const { copy, heroUrl } = args;
+  const bg = escapeHtml(heroUrl);
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:620px;margin:0 auto;background:${BRAND.panelDeep}">
         <tr>
-          <td class="ss-hero-text" width="372" valign="top" bgcolor="${BRAND.panel}" style="width:372px;background-color:${BRAND.panel};background-image:linear-gradient(160deg,${BRAND.panelLight} 0%,${BRAND.panel} 45%,${BRAND.panelDeep} 100%);padding:32px 24px 34px 34px">
-            <div style="font-family:${FONT_SANS};font-size:10px;letter-spacing:3.4px;color:${BRAND.panelEyebrow};font-weight:bold">ORDER UPDATE</div>
-            <div style="padding:12px 0 20px 0">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="44"><tr>
-                <td style="border-top:1px solid ${BRAND.panelRule};font-size:0">&nbsp;</td>
-              </tr></table>
-            </div>
-
-            <!-- STATUS PILL. Solid ${BRAND.pill} under the brand gradient so Outlook
-                 and no-gradient clients get a filled emerald chip, not white text
-                 on a white page. -->
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+          <td class="ss-hero" width="620" valign="top" bgcolor="${BRAND.panelDeep}" background="${bg}" style="width:100%;max-width:620px;background-color:${BRAND.panelDeep};background-image:url('${bg}');background-size:cover;background-position:center center;background-repeat:no-repeat;padding:34px 30px 36px">
+            <!--[if gte mso 9]>
+            <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" alt="${escapeHtml(copy.heroAlt)}" style="width:620px;">
+              <v:fill type="frame" src="${bg}" color="${BRAND.panelDeep}" />
+            </v:rect>
+            <![endif]-->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="ss-hero-copy" width="320" style="width:320px">
               <tr>
-                <td align="left" bgcolor="${copy.pill}" style="background-color:${copy.pill};background-image:linear-gradient(135deg,#0a8f6a 0%,#12b981 55%,#0a8f6a 100%);border-radius:999px">
-                  <div style="padding:12px 22px 13px;font-family:${FONT_SANS};font-size:19px;line-height:1;font-weight:bold;letter-spacing:3px;color:#FFFFFF">${escapeHtml(copy.label)}</div>
+                <td valign="top">
+                  <div style="font-family:${FONT_SANS};font-size:10px;letter-spacing:3.4px;color:${BRAND.panelEyebrow};font-weight:bold">ORDER UPDATE</div>
+                  <div style="padding:12px 0 20px 0">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="44"><tr>
+                      <td style="border-top:1px solid ${BRAND.panelRule};font-size:0">&nbsp;</td>
+                    </tr></table>
+                  </div>
+
+                  <!-- STATUS PILL. Solid ${BRAND.pill} under the brand gradient so Outlook
+                       and no-gradient clients get a filled emerald chip, not white text
+                       on a white page. -->
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td align="left" bgcolor="${copy.pill}" style="background-color:${copy.pill};background-image:linear-gradient(135deg,#0a8f6a 0%,#12b981 55%,#0a8f6a 100%);border-radius:999px">
+                        <div style="padding:12px 22px 13px;font-family:${FONT_SANS};font-size:19px;line-height:1;font-weight:bold;letter-spacing:3px;color:#FFFFFF">${escapeHtml(copy.label)}</div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <h1 style="margin:20px 0 0;font-family:${FONT_SERIF};font-size:29px;line-height:1.18;color:#FFFFFF;font-weight:normal">${escapeHtml(copy.heading)}</h1>
+                  <p style="margin:13px 0 0;padding:0;font-family:${FONT_SANS};font-size:14.5px;line-height:1.62;color:#EAF2EC">${escapeHtml(copy.subhead)}</p>
                 </td>
               </tr>
             </table>
-
-            <h1 style="margin:20px 0 0;font-family:${FONT_SERIF};font-size:29px;line-height:1.18;color:#FFFFFF;font-weight:normal">${escapeHtml(copy.heading)}</h1>
-            <p style="margin:13px 0 0;padding:0;font-family:${FONT_SANS};font-size:14.5px;line-height:1.62;color:${BRAND.panelText}">${escapeHtml(copy.subhead)}</p>
-          </td>
-
-          <!-- HERO COLUMN. The forest colour sits behind the photo so a blocked
-               image leaves a clean green block, and alt text still reads.
-               The cell is 248px wide and the photo is 248x334, which matches the
-               rendered height of the copy beside it, so the panel reads as one
-               solid band instead of a photo floating above dead space. -->
-          <td class="ss-hero-img" width="248" valign="top" bgcolor="${BRAND.panelDeep}" style="width:248px;background-color:${BRAND.panelDeep};font-size:0;line-height:0">
-            <img src="${escapeHtml(heroUrl)}" width="248" height="334" alt="${escapeHtml(copy.heroAlt)}" style="display:block;width:100%;max-width:248px;height:auto;border:0;outline:none;text-decoration:none" />
           </td>
         </tr>
       </table>`;

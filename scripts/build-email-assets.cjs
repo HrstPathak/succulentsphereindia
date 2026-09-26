@@ -17,18 +17,18 @@
  *      stay crisp on retina phones.
  *
  * Output (all committed to public/images/email/):
- *   hero-email.jpg                     1200x1200 JPEG   right-hand hero column
- *   icon-truck.png / icon-van.png /
- *   icon-check.png / icon-box.png      2x status badge glyphs
- *   icon-leaf.png / icon-shield.png /
- *   icon-sprout.png / icon-chat.png     2x trust-strip glyphs
- *   icon-truck-white.png               2x CTA glyph
+ *   hero-email.jpg                     1240x760 JPEG  full-bleed status panel
+ *                                                 background (scrim baked in)
+ *   footer-email.jpg                   1240x231 JPEG  full-bleed trust strip
+ *   icon-truck.png / icon-chat.png     2x CTA and support glyphs
+ *   icon-truck-white.png               2x CTA glyph, recoloured for the button
  *
  * Usage:
  *   node scripts/build-email-assets.cjs
  *   node scripts/build-email-assets.cjs --source path/to/other.webp
  *
- * The source download is cached at public/images/email/_source-hero.webp.
+ * The source downloads are cached at public/images/email/_source-hero.webp and
+ * public/images/email/_source-footer.png.
  */
 
 const fs = require("node:fs");
@@ -39,67 +39,94 @@ const sharp = require("sharp");
 const ROOT = path.resolve(__dirname, "..");
 const OUT_DIR = path.join(ROOT, "public", "images", "email");
 const SOURCE = path.join(OUT_DIR, "_source-hero.webp");
+const FOOTER_SOURCE = path.join(OUT_DIR, "_source-footer.png");
 
 const DEFAULT_SOURCE_URL =
   "https://whitesmoke-cattle-754161.hostingersite.com/sites/images/HomePage/EmailTemplateImage.webp";
+const DEFAULT_FOOTER_SOURCE_URL =
+  "https://whitesmoke-cattle-754161.hostingersite.com/sites/images/HomePage/EmailFooter.png";
+
+/**
+ * Panel geometry. The status panel is 620x380 CSS px in the template, so every
+ * baked asset is produced at exactly 2x to stay crisp on retina phones while
+ * keeping the payload small.
+ */
+const PANEL_W = 620;
+const PANEL_H = 380;
+
+/**
+ * Brand forest green. Must stay in sync with BRAND.panelDeep in
+ * src/lib/email-templates/orderStatus.ts — the scrim has to disappear into
+ * the panel colour, otherwise the photo looks like it sits on a green box.
+ */
+const SCRIM = "#2F4D3F";
+
+/**
+ * The scrim is baked into the JPEG instead of layered in CSS because the
+ * status copy is white on top of a photo and email gives us no reliable way
+ * to stack a translucent overlay above a background image:
+ *   - Outlook renders through the Word engine and drops `background-image`
+ *     and every overlay technique except VML.
+ *   - Gmail strips `opacity` on most elements.
+ * So the two gradients below are composited at build time. Everything that
+ * ships is then a single flat JPEG that every client paints identically.
+ *
+ * `h` runs left to right: the copy occupies the left ~55% of the panel on
+ * desktop but the FULL width on a phone, where the status heading and subhead
+ * would otherwise sit on top of the succulent box. So the gradient holds near
+ * full strength across the whole crop and only lifts off at the far right,
+ * where the printed card sits. The photo still reads as a photograph — it just
+ * reads as one taken in low light, which suits the palette.
+ * `v` runs top to bottom: the bottom of the source shot is a pale cream
+ * table surface that would swallow white body copy, so it is sunk back
+ * toward the panel colour as a vignette.
+ */
+function scrimSvg(w, h) {
+  return Buffer.from(
+    `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="h" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stop-color="${SCRIM}" stop-opacity="0.93"/>
+          <stop offset="32%"  stop-color="${SCRIM}" stop-opacity="0.91"/>
+          <stop offset="46%"  stop-color="${SCRIM}" stop-opacity="0.87"/>
+          <stop offset="58%"  stop-color="${SCRIM}" stop-opacity="0.76"/>
+          <stop offset="72%"  stop-color="${SCRIM}" stop-opacity="0.64"/>
+          <stop offset="86%"  stop-color="${SCRIM}" stop-opacity="0.56"/>
+          <stop offset="100%" stop-color="${SCRIM}" stop-opacity="0.54"/>
+        </linearGradient>
+        <linearGradient id="v" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="${SCRIM}" stop-opacity="0.14"/>
+          <stop offset="42%"  stop-color="${SCRIM}" stop-opacity="0"/>
+          <stop offset="78%"  stop-color="${SCRIM}" stop-opacity="0.30"/>
+          <stop offset="100%" stop-color="${SCRIM}" stop-opacity="0.60"/>
+        </linearGradient>
+      </defs>
+      <rect width="${w}" height="${h}" fill="url(#h)"/>
+      <rect width="${w}" height="${h}" fill="url(#v)"/>
+    </svg>`,
+  );
+}
 
 /** Brand ink used for every glyph, matching the preview's #4A6A55. */
 const INK = "#4A6A55";
 
-/** @type {{file: string, w: number, h: number, strokes: string, vb?: string}[]} */
+/**
+ * The only glyphs the template still needs are the CTA truck and the support
+ * chat bubble. The per-status badge and trust-strip glyphs were dropped when
+ * both of those blocks became single images (the hero background and
+ * footer-email.jpg), and every extra <img> in an email is another URL that can
+ * 404 in someone's inbox.
+ *
+ * @type {{file: string, w: number, h: number, strokes: string, vb?: string}[]}
+ */
 const ICONS = [
   {
+    // CTA glyph — also rendered white below, since it sits on the dark button.
     file: "icon-truck.png",
     w: 21,
     h: 15,
     strokes:
       '<path d="M2 7h23v18H2z"/><path d="M25 13h9l7 7v5H25z"/><circle cx="12" cy="27" r="3"/><circle cx="33" cy="27" r="3"/>',
-  },
-  {
-    file: "icon-van.png",
-    w: 20,
-    h: 20,
-    vb: "0 0 24 24",
-    strokes:
-      '<path d="M1.5 16.5V6.8c0-.7.6-1.3 1.3-1.3h11.4c.7 0 1.3.6 1.3 1.3v9.7"/><path d="M15.5 9.5h3.2l2.8 3.4v3.6"/>' +
-      '<circle cx="6.5" cy="17" r="2.2"/><circle cx="17.5" cy="17" r="2.2"/><path d="M8.7 17h6.6"/><path d="M2.5 17h1.8"/>',
-  },
-  {
-    file: "icon-check.png",
-    w: 20,
-    h: 20,
-    vb: "0 0 24 24",
-    strokes: '<circle cx="12" cy="12" r="9.5"/><path d="M7.8 12.2l3 3 5.4-5.6"/>',
-  },
-  {
-    file: "icon-box.png",
-    w: 20,
-    h: 20,
-    vb: "0 0 24 24",
-    strokes:
-      '<path d="M21 8.2v7.6a1.6 1.6 0 0 1-.85 1.41l-7 3.65a1.6 1.6 0 0 1-1.5 0l-7-3.65A1.6 1.6 0 0 1 3.8 15.8V8.2"/>' +
-      '<path d="M3.6 7.6L12 3.2l8.4 4.4L12 12 3.6 7.6z"/><path d="M12 12v9.2"/><path d="M16.4 5.3l-8.8 4.6"/>',
-  },
-  {
-    file: "icon-leaf.png",
-    w: 20,
-    h: 20,
-    vb: "0 0 24 24",
-    strokes: '<path d="M20 3C10 3 4 8 4 15c0 3 1.6 5 1.6 5C8 12 13 9 20 8c0 7-3 12-9 12-2 0-3.5-.6-3.5-.6"/>',
-  },
-  {
-    file: "icon-shield.png",
-    w: 19,
-    h: 19,
-    vb: "0 0 32 32",
-    strokes: '<path d="M16 2 27 6v9c0 7-4.7 12.5-11 15C9.7 27.5 5 22 5 15V6z"/><path d="M11 16.5l3.4 3.4L21.5 12.8"/>',
-  },
-  {
-    file: "icon-sprout.png",
-    w: 20,
-    h: 20,
-    vb: "0 0 24 24",
-    strokes: '<path d="M12 21V11"/><path d="M12 13c0-4 3-7 8-7 0 5-3 8-8 7z"/><path d="M12 16c0-3-2.4-5-6-5 0 3.6 2.4 5.6 6 5z"/>',
   },
   {
     file: "icon-chat.png",
@@ -150,6 +177,56 @@ async function writeIcon(icon, stroke, strokeWidth, file) {
   process.stdout.write(`${file.padEnd(24)} ${icon.w * 2}x${icon.h * 2} png\n`);
 }
 
+/**
+ * Finds the bounding box of the drawn artwork in a flat-background image.
+ *
+ * sharp's own `trim()` cannot be used here: the supplied strip is not a single
+ * exact colour (it carries a faint gradient between #f8f7f3 and #f8f8f3), so
+ * trim measures the whole canvas as content and returns it untouched. Sampling
+ * the corner and taking everything that differs from it by a tolerance gives a
+ * stable box, and keeps the crop correct if the artwork is ever re-exported at
+ * a different size.
+ *
+ * @returns {Promise<{left:number, top:number, width:number, height:number}>}
+ */
+async function contentBox(file, tolerance = 10) {
+  const { data, info } = await sharp(file).raw().toBuffer({ resolveWithObject: true });
+  const ch = info.channels;
+  const at = (x, y) => {
+    const i = (y * info.width + x) * ch;
+    return [data[i], data[i + 1], data[i + 2]];
+  };
+  const [br, bg, bb] = at(0, 0);
+
+  let minX = info.width;
+  let minY = info.height;
+  let maxX = -1;
+  let maxY = -1;
+  for (let y = 0; y < info.height; y += 1) {
+    for (let x = 0; x < info.width; x += 1) {
+      const [r, g, b] = at(x, y);
+      if (
+        Math.abs(r - br) > tolerance ||
+        Math.abs(g - bg) > tolerance ||
+        Math.abs(b - bb) > tolerance
+      ) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) throw new Error(`no artwork found in ${file}`);
+
+  return {
+    left: minX,
+    top: minY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1,
+  };
+}
+
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
@@ -162,24 +239,67 @@ async function main() {
     process.stdout.write(`downloading hero source -> ${DEFAULT_SOURCE_URL}\n`);
     await download(DEFAULT_SOURCE_URL, source);
   }
+  if (!fs.existsSync(FOOTER_SOURCE)) {
+    process.stdout.write(`downloading footer source -> ${DEFAULT_FOOTER_SOURCE_URL}\n`);
+    await download(DEFAULT_FOOTER_SOURCE_URL, FOOTER_SOURCE);
+  }
 
-  // The hero fills a PORTRAIT column on the right of the status panel, next to
-  // a block of text that is roughly 1.35x taller than it is wide. The source is
-  // a 1983x793 landscape shot whose subject (the box) sits on the right, so we
-  // resize with fit:"cover" anchored to the right edge: that keeps the box and
-  // the printed card in frame instead of letterboxing the empty green wall.
-  //
-  // 248x334 is exactly 2x the rendered size in the template, so the photo stays
-  // crisp on retina phones without paying for a larger download.
+  // HERO. It is painted as the status panel's full-bleed background, so the
+  // crop is chosen to match the panel's own 620x380 aspect (1.63:1) as closely
+  // as the source allows. The source is a 1983x793 landscape shot (2.5:1) of
+  // a succulent box against a dark green wall: the subject sits on the RIGHT
+  // and the empty wall on the LEFT, which is exactly where the copy goes.
+  // `position: "right"` therefore keeps the box and the printed card in frame
+  // and trims only dead wall, so `background-size: cover` in the template has
+  // almost nothing left to crop.
+  const heroW = PANEL_W * 2;
+  const heroH = PANEL_H * 2;
   await sharp(source)
-    .resize(496, 668, { fit: "cover", position: "right" })
-    .jpeg({ quality: 78, progressive: true, mozjpeg: true })
+    .resize(heroW, heroH, { fit: "cover", position: "right" })
+    .composite([{ input: scrimSvg(heroW, heroH), blend: "over" }])
+    .jpeg({ quality: 80, progressive: true, mozjpeg: true })
     .toFile(path.join(OUT_DIR, "hero-email.jpg"));
-  process.stdout.write("hero-email.jpg            496x668 jpeg\n");
+  process.stdout.write(`hero-email.jpg            ${heroW}x${heroH} jpeg (scrimmed)\n`);
+
+  // TRUST STRIP. Supplied as a 1600x535 PNG whose artwork only occupies
+  // y145-366 / x111-1540 — the rest is a flat cream field. Shipping it as-is
+  // would add ~50% dead weight to every send, so it is cropped to the art plus
+  // an even margin and emitted as JPEG. JPEG is deliberate: the strip is
+  // mostly one flat cream tone, which mozjpeg compresses to a fraction of the
+  // PNG's size, and the artwork is smooth curves that survive q90 cleanly.
+  //
+  // The margin is the full width of the strip's own side padding plus a little
+  // extra, because the strip is rendered full-bleed: crop any tighter and the
+  // "BRINGING NATURE" caption sits flush against the edge of the panel.
+  const footerW = PANEL_W * 2;
+  const strip = await sharp(FOOTER_SOURCE).metadata();
+  const box = await contentBox(FOOTER_SOURCE);
+  const padX = Math.round(box.width * 0.06);
+  const padY = Math.round(box.height * 0.16);
+  // The offset is clamped first, then the extent is capped against whatever is
+  // left of the canvas — capping the size independently would let the right
+  // or bottom edge run past the image and sharp rejects the whole crop.
+  const left = Math.max(0, box.left - padX);
+  const top = Math.max(0, box.top - padY);
+  const crop = {
+    left,
+    top,
+    width: Math.min(strip.width - left, box.width + padX * 2),
+    height: Math.min(strip.height - top, box.height + padY * 2),
+  };
+  await sharp(FOOTER_SOURCE)
+    .extract(crop)
+    .resize({ width: footerW })
+    .jpeg({ quality: 90, progressive: true, mozjpeg: true })
+    .toFile(path.join(OUT_DIR, "footer-email.jpg"));
+  const footerMeta = await sharp(path.join(OUT_DIR, "footer-email.jpg")).metadata();
+  process.stdout.write(
+    `footer-email.jpg          ${footerMeta.width}x${footerMeta.height} jpeg ` +
+      `(art ${box.width}x${box.height} + margin)\n`,
+  );
 
   for (const icon of ICONS) {
-    const heavy = icon.file === "icon-shield.png" || icon.file === "icon-check.png";
-    await writeIcon(icon, INK, heavy ? 2.1 : 2.2, icon.file);
+    await writeIcon(icon, INK, 2.2, icon.file);
   }
 
   // CTA glyph is white because it sits on the dark green button.
