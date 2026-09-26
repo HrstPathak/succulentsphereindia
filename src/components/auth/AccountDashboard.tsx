@@ -493,12 +493,16 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
           <div className="rounded-2xl bg-[radial-gradient(circle_at_85%_35%,rgba(120,145,118,0.2),transparent_34%),linear-gradient(160deg,rgba(255,255,255,0.7),rgba(255,255,255,0.25))] px-4 py-5 sm:px-6">
             <div className="flex items-start justify-between gap-3">
               <h1 className="font-serif text-4xl text-[var(--color-text)]">My Account</h1>
+              {/* Icon-only was ambiguous: a bare bag glyph reads as "cart", not
+                  "go shopping". The visible label states the action, and the
+                  aria-label is kept for screen readers. */}
               <Link
                 href="/shop"
-                aria-label="Go to shop"
-                className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--auth-border)] bg-white/70 text-[var(--color-text)] transition-colors hover:border-[rgb(var(--ss-brand-rgb)/0.45)] hover:text-[var(--color-brand)]"
+                aria-label="Visit shop"
+                className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-[var(--auth-border)] bg-white/70 px-2.5 py-1.5 text-sm font-medium text-[var(--color-text)] transition-colors hover:border-[rgb(var(--ss-brand-rgb)/0.45)] hover:text-[var(--color-brand)]"
               >
                 <ShoppingBag size={18} strokeWidth={1.8} />
+                <span>Visit shop</span>
               </Link>
             </div>
             <p className="mt-2 text-2xl text-[rgb(var(--ss-text-rgb)/0.9)]">Welcome back, {data.firstName || "Customer"}.</p>
