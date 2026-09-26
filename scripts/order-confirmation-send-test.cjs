@@ -269,12 +269,29 @@ order.orderId = `confirmation-send-test-${Date.now()}`;
 
   if (dryRun) {
     const { buildOrderConfirmationEmail } = loadTemplate("orderConfirmation.ts");
-    const email = buildOrderConfirmationEmail(order);
+    const { buildProductThumbnails } = loadTypeScriptWithMocks(
+      path.join(process.cwd(), "src", "lib", "email-thumbnail.ts"),
+      { "server-only": {} },
+    );
+    // Dry run still runs the real thumbnail pipeline, so it reports the true
+    // payload size the send would produce rather than a guess.
+    const t0 = Date.now();
+    const thumbnailed = await buildProductThumbnails(order.items || []);
+    const email = buildOrderConfirmationEmail({ ...order, items: thumbnailed.items });
+    const bytes = thumbnailed.attachments.reduce((n, a) => n + a.content.length, 0);
     console.log(
       `  ${String(email.html.length / 1024).padStart(6)}KB html  ` +
         `${String(email.text.length)}B text  "${email.subject}"`,
     );
     console.log(`  preheader: ${email.preheader}`);
+    console.log(
+      `  thumbnails: ${thumbnailed.attachments.length} embedded, ` +
+        `${(bytes / 1024).toFixed(1)}KB total, ${thumbnailed.skipped} skipped, ` +
+        `${Date.now() - t0}ms`,
+    );
+    for (const a of thumbnailed.attachments) {
+      console.log(`    cid:${a.cid}  ${(a.content.length / 1024).toFixed(1)}KB  ${a.contentType}`);
+    }
     return;
   }
 
