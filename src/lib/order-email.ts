@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getFirebaseDb } from "@/lib/firebase-admin";
+import { buildProductThumbnails } from "@/lib/email-thumbnail";
 import { configuredEmailProvider, sendEmail } from "@/lib/email-sender";
 import { buildDelhiveryTrackingUrl } from "@/lib/delhiveryTracking";
 import { buildOrderStatusEmail } from "@/lib/email-templates/orderStatus";
@@ -31,17 +32,33 @@ export async function sendOrderConfirmationEmail(
 
   try {
     console.log(`[order-email] attempting send to customer: ${order.customerEmail} (order:${order.orderNumber})`);
+    // Product photos are fetched, re-encoded to a 128px thumbnail and attached
+    // as inline MIME parts before the HTML is built, so the template can point
+    // each row at `cid:product-N`. This has to happen first: the cid is
+    // allocated during thumbnailing and has to be baked into the markup.
+    // Best-effort — a catalogue image that will not load costs the row its
+    // thumbnail, never the email.
+    const thumbnailed = await buildProductThumbnails(order.items || []);
+    if (thumbnailed.skipped) {
+      console.warn(
+        `[order-email] ${thumbnailed.skipped} product image(s) unavailable (order:${order.orderNumber})`,
+      );
+    }
+    const orderWithThumbs = { ...order, items: thumbnailed.items };
     // The template owns its own subject, preheader, HTML and plain-text twin so
     // the customer copy and the text fallback can never drift apart. The
     // idempotency key is deliberately unchanged: altering it would slip past
     // the provider's de-duplication and let a resent confirmation reach the
     // customer twice.
-    const email = buildOrderConfirmationEmail(order);
+    const email = buildOrderConfirmationEmail(orderWithThumbs);
     const delivery = await sendEmail({
       to: order.customerEmail,
       subject: email.subject,
       html: email.html,
       text: email.text,
+      ...(thumbnailed.attachments.length
+        ? { inlineImages: thumbnailed.attachments }
+        : {}),
       idempotencyKey: `order-confirmation-${order.orderId}`,
     });
     console.log(`[order-email] sent to ${order.customerEmail}`, { orderId: order.orderId, provider: delivery.provider, id: delivery.id });
@@ -62,12 +79,18 @@ export async function sendOrderConfirmationEmail(
       const admins = rawAdmins.split(",").map((s) => String(s || "").trim()).filter(Boolean);
       for (const adminEmail of admins) {
         try {
-          const alert = buildAdminOrderAlertEmail(order);
+          const alert = buildAdminOrderAlertEmail(orderWithThumbs);
           const adminDelivery = await sendEmail({
             to: adminEmail,
             subject: alert.subject,
             html: alert.html,
             text: alert.text,
+            // The same thumbnails, attached again under the same cids. The
+            // admin message is built from the same rewritten items, so it
+            // references the identical cid:product-N values.
+            ...(thumbnailed.attachments.length
+              ? { inlineImages: thumbnailed.attachments }
+              : {}),
             idempotencyKey: `order-admin-notify-${order.orderId}-${adminEmail}`,
           });
           await getFirebaseDb().collection("orders").doc(order.orderId).set(

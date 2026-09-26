@@ -121,6 +121,12 @@ const orderEmail = loadTypeScriptWithMocks(
     "server-only": {},
     "@/lib/firebase-admin": firebaseAdmin,
     "@/lib/email-sender": emailSender,
+    // The real thumbnail pipeline, not a stub: this script exists to exercise
+    // the actual fetch, resize and cid-rewrite against live catalogue images.
+    "@/lib/email-thumbnail": loadTypeScriptWithMocks(
+      path.join(process.cwd(), "src", "lib", "email-thumbnail.ts"),
+      { "server-only": {} },
+    ),
     "@/lib/delhiveryTracking": {
       buildDelhiveryTrackingUrl: (n) => `https://www.delhivery.com/track/package/${n}`,
     },

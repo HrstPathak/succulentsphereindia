@@ -486,13 +486,19 @@ function paymentPlanPanel(args: { plan: PaymentPlan }) {
 /**
  * A single line item.
  *
- * The thumbnail is wrapped in a fixed 64px cell with a `bgcolor`, because
- * product images live on whatever host the catalogue happens to point at and
- * cannot be guaranteed to resolve. `alt=""` is deliberate: the product name is
- * printed immediately to the right of the image, so the alt text would be a
- * duplicate for screen readers — and if the image 404s, Outlook renders the
- * alt text *inside* the 64px cell, which shreds the row layout. A blocked or
- * missing image therefore leaves a clean sage square.
+ * The thumbnail accepts a `cid:` reference as well as an https URL. The cid
+ * form is what production uses: the bytes are attached to the message and
+ * referenced as `cid:product-0`, so the image renders without the reader having
+ * to click "Display images", which is the difference between a customer
+ * recognising their plant and a grey box. A remote https URL is still honoured
+ * for callers that have not prepared attachments yet.
+ *
+ * The cell is a fixed 64px with a `bgcolor` and a `border-radius`, so a blocked
+ * or missing image degrades to a clean sage square instead of a torn row.
+ * `alt=""` is deliberate: the product name is printed immediately to the right
+ * of the image, so alt text would be a duplicate for screen readers — and if an
+ * image fails to load, Outlook renders the alt text *inside* the 64px cell,
+ * which shreds the layout.
  */
 function itemRow(args: { item: OrderConfirmationItem }) {
   const { item } = args;
@@ -500,8 +506,10 @@ function itemRow(args: { item: OrderConfirmationItem }) {
   const unit = money(item.price);
   const lineTotal = round2(unit * quantity);
   const title = String(item.title || "Plant").trim();
-  const image = String(item.image || "").trim();
-  const usable = /^https?:\/\//i.test(image) ? image : "";
+  const rawImage = String(item.image || "").trim();
+  // Anything else — a data: URI, a relative path, a typo — is dropped, so the
+  // row renders without a thumbnail rather than with one that can never load.
+  const usable = /^(?:https?:\/\/|cid:)/i.test(rawImage) ? rawImage : "";
 
   const thumb = usable
     ? `<td width="64" valign="top" style="width:64px;padding-right:16px">

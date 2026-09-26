@@ -163,6 +163,50 @@ const BASE = {
  */
 const SCENARIOS = [
   {
+    // The production path: thumbnails arrive already rewritten to cid:
+    // references by buildProductThumbnails, with the bytes attached to the
+    // message. This is the one that has to work, because Gmail will not fetch
+    // a remote image until the reader clicks through.
+    name: "cod_deposit_inline_thumbs",
+    input: {
+      ...BASE,
+      total: 724,
+      paymentMode: "cod_deposit",
+      codDepositAmount: 100,
+      paymentReceived: 100,
+      codBalance: 624,
+      codFee: 50,
+      items: [
+        { ...BASE.items[0], image: "cid:product-0" },
+        { ...BASE.items[1], image: "cid:product-1" },
+      ],
+    },
+    isCod: true,
+    paid: 100,
+    due: 624,
+  },
+  {
+    // A row whose image cannot resolve must render no thumbnail cell at all,
+    // rather than an empty box the reader has to interpret.
+    name: "cod_deposit_unusable_image",
+    input: {
+      ...BASE,
+      total: 724,
+      paymentMode: "cod_deposit",
+      codDepositAmount: 100,
+      paymentReceived: 100,
+      codBalance: 624,
+      codFee: 50,
+      items: [
+        { ...BASE.items[0], image: "data:image/png;base64,AAAA" },
+        { ...BASE.items[1], image: "" },
+      ],
+    },
+    isCod: true,
+    paid: 100,
+    due: 624,
+  },
+  {
     name: "prepaid",
     input: { ...BASE, total: 654, paymentMode: "prepaid", paymentReceived: 654 },
     isCod: false,
@@ -273,6 +317,35 @@ for (const scenario of SCENARIOS) {
   check(`${name}: references assets`, refs.length > 0);
   for (const file of new Set(refs)) {
     check(`${name}: asset exists ${file}`, fs.existsSync(path.join(assetsDir, file)));
+  }
+
+  // --- Product thumbnails ------------------------------------------------
+  // A `cid:` reference is what production sends: Gmail blocks remote images
+  // until the reader clicks through, so the bytes are attached to the message
+  // instead. A raw https URL still has to render, for callers that have not
+  // prepared attachments. Either way exactly one 64px cell per image-bearing
+  // item, and never a cell for an image that cannot resolve.
+  const cids = [...html.matchAll(/src="cid:([^"]+)"/g)].map((m) => m[1]);
+  const imageItems = scenario.input.items.filter((i) =>
+    /^(?:https?:\/\/|cid:)/i.test(String(i.image || "").trim()),
+  );
+  // Count the <img> tags, not the attribute pairs: the 64x64 cell repeats
+  // width/height on both its <td> and its <img>, so matching the raw attribute
+  // string counts every thumbnail twice.
+  const thumbCells = (html.match(/<img\b[^>]*\bwidth="64"[^>]*>/gi) || []).length;
+
+  check(
+    `${name}: one thumbnail cell per image-bearing item`,
+    thumbCells === imageItems.length,
+    `${thumbCells} cells vs ${imageItems.length} image-bearing items`,
+  );
+  check(
+    `${name}: every item image resolves to a cell`,
+    imageItems.length === thumbCells,
+    `${imageItems.length} image items, ${thumbCells} cells`,
+  );
+  for (const cid of new Set(cids)) {
+    check(`${name}: cid is a bare token`, /^[A-Za-z0-9._-]+$/.test(cid), cid);
   }
 
   // The hero must be declared three ways, or one class of client sees no photo.

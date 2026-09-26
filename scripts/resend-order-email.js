@@ -60,7 +60,10 @@ const { sendOrderConfirmationEmail } = require('../src/lib/order-email');
       orderNumber: data.orderNumber,
       customerName: (data.customer?.fullName) || (data.customer?.name) || 'Customer',
       customerEmail: data.customer?.email || data.emailLower || '',
-      items: (data.lineItems || []).map((li) => ({ title: li.title, quantity: li.quantity, price: li.price?.amount || li.price })),
+      // image/imageAlt are passed through: sendOrderConfirmationEmail
+      // thumbnails them into inline MIME parts, and without them the resend
+      // goes out with no product photos at all.
+      items: (data.lineItems || []).map((li) => ({ title: li.title, quantity: li.quantity, price: li.price?.amount || li.price, image: li.image, imageAlt: li.imageAlt })),
       total,
       paymentMode,
       address: data.customer?.address1 || data.customer?.address || '',

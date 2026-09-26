@@ -54,6 +54,36 @@ const emailSender = {
   },
 };
 
+/**
+ * Stands in for the real thumbnail pipeline.
+ *
+ * It reproduces the one behaviour the confirmation email depends on — rewriting
+ * a remote image URL into a `cid:` reference and attaching bytes under that cid
+ * — without touching the network or sharp. The bytes are a stub; the contract
+ * (item.image becomes cid:N, attachment N carries that cid) is what matters.
+ */
+const emailThumbnail = {
+  buildProductThumbnails: async (items) => {
+    const attachments = [];
+    const byUrl = new Map();
+    const out = items.map((item) => {
+      const url = String((item && item.image) || "").trim();
+      if (!/^https?:\/\//i.test(url)) return { ...item, image: "" };
+      if (byUrl.has(url)) return { ...item, image: byUrl.get(url) };
+      const cid = `product-${attachments.length}`;
+      attachments.push({
+        cid,
+        content: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+        contentType: "image/jpeg",
+        filename: `${cid}.jpg`,
+      });
+      byUrl.set(url, `cid:${cid}`);
+      return { ...item, image: `cid:${cid}` };
+    });
+    return { items: out, attachments, skipped: 0 };
+  },
+};
+
 const firebaseAdmin = {
   getFirebaseDb: () => ({
     collection: () => ({
@@ -94,6 +124,7 @@ const orderEmail = loadTypeScriptWithMocks(
     "server-only": {},
     "@/lib/firebase-admin": firebaseAdmin,
     "@/lib/email-sender": emailSender,
+    "@/lib/email-thumbnail": emailThumbnail,
     "@/lib/delhiveryTracking": {
       buildDelhiveryTrackingUrl: (n) => `https://track.delhivery.com/track/package/${n}`,
     },
@@ -222,7 +253,14 @@ async function testCodConfirmationStatesTheSplit() {
     orderNumber: 1014,
     customerName: "Rose maria",
     customerEmail: "rose@example.com",
-    items: [{ title: "Moonstone", quantity: 3, price: 224.67 }],
+    items: [
+      {
+        title: "Moonstone",
+        quantity: 3,
+        price: 224.67,
+        image: "https://cdn.example.com/products/moonstone.jpg",
+      },
+    ],
     total: 724,
     paymentMode: "cod_deposit",
     codDepositAmount: 100,
@@ -253,6 +291,29 @@ async function testCodConfirmationStatesTheSplit() {
   // ...and in the text fallback, for the clients that only get that.
   assert.match(message.text, /Paid now:\s*₹100\.00/);
   assert.match(message.text, /Due on delivery:\s*₹624\.00/);
+
+  // The plant photo has to survive the whole journey as an inline MIME part.
+  // A cid: reference with no matching attachment is worse than no image at
+  // all: the reader sees a broken-image box they cannot click through.
+  assert.equal(
+    (message.inlineImages || []).length,
+    1,
+    "the product photo must be attached inline",
+  );
+  assert.equal(message.inlineImages[0].cid, "product-0");
+  assert.equal(message.inlineImages[0].contentType, "image/jpeg");
+  assert.ok(
+    message.inlineImages[0].content.length > 0,
+    "the inline image must carry bytes",
+  );
+  assert.ok(
+    message.html.includes('src="cid:product-0"'),
+    "the item row must reference the attached image by cid",
+  );
+  assert.ok(
+    !/src="https?:\/\/[^"]*moonstone\.jpg"/.test(message.html),
+    "the remote URL must be replaced, not merely supplemented",
+  );
 
   // The admin copy tells the packer the same figure the agent will collect.
   // ADMIN_EMAILS drives that send, so it is set for the duration of this case

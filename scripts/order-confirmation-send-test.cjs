@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Sends the real order confirmation email to a live inbox.
  *
  * The counterpart to order-email-send-test.cjs, which only covers the four
@@ -66,17 +66,32 @@ const sendAdmin = has("admin");
 const fixtureName = arg("fixture", "cod_deposit").trim();
 
 /**
+ * Real catalogue image URLs, so the send-test exercises the thumbnail pipeline
+ * against the same ~800 KB PNGs production hits rather than a stub. Two rows
+ * deliberately share nothing, and the prepaid fixture reuses pinkMoonstone, so
+ * the dedupe-by-URL path gets a live run too.
+ */
+const IMG = {
+  pinkMoonstone:
+    "https://whitesmoke-cattle-754161.hostingersite.com/products/pink-moonstone-pachyphytum-oviferum-pearl-pink-egg-leaf-succulent/1-Gemini_Generated_Image_5act835act835act.png",
+  whiteMoonstone:
+    "https://whitesmoke-cattle-754161.hostingersite.com/products/moonstone-pachyphytum-oviferum-pearl-white-egg-leaf-succulent/1-moonsone_succulent.jpg",
+  bunnyEar:
+    "https://whitesmoke-cattle-754161.hostingersite.com/products/bunny-ear-yellow-cactus-opuntia-red-polka-dot-decorative-cactus/1-Yello_Bunny_Cactus_in_white_pot.png",
+};
+
+/**
  * Realistic fixtures, one per payment shape the template can render.
  *
  * The COD figures are the ones from the live order this was built against:
- * â‚¹724 total made up of â‚¹674 of plants plus a â‚¹50 COD fee, with the â‚¹100
+ * ₹724 total made up of ₹674 of plants plus a ₹50 COD fee, with the ₹100
  * advance already collected. Paid and due sum to 724, not 674, because the
- * deposit is taken against the order total including the fee â€” which is the
+ * deposit is taken against the order total including the fee — which is the
  * behaviour the real wallet flow depends on, so the fixture has to keep it.
  */
 const FIXTURES = {
   cod_deposit: {
-    label: "COD with â‚¹100 advance (the case this email exists for)",
+    label: "COD with ₹100 advance (the case this email exists for)",
     build: (recipient) => ({
       orderNumber: 1014,
       customerName: "Rose Maria",
@@ -87,8 +102,8 @@ const FIXTURES = {
       state: "Kerala",
       pincode: "685604",
       items: [
-        { title: "Pink Moonstone (Pachyphytum oviferum) - Pearl Pink Egg Leaf", quantity: 3, price: 139 },
-        { title: "Moonstone (Pachyphytum oviferum) - Pearl White Egg Leaf", quantity: 3, price: 79 },
+        { title: "Pink Moonstone (Pachyphytum oviferum) - Pearl Pink Egg Leaf", quantity: 3, price: 139, image: IMG.pinkMoonstone },
+        { title: "Moonstone (Pachyphytum oviferum) - Pearl White Egg Leaf", quantity: 3, price: 79, image: IMG.whiteMoonstone },
       ],
       total: 724,
       paymentMode: "cod_deposit",
@@ -109,7 +124,7 @@ const FIXTURES = {
       state: "Kerala",
       pincode: "685604",
       items: [
-        { title: "Pink Moonstone (Pachyphytum oviferum) - Pearl Pink Egg Leaf", quantity: 3, price: 139 },
+        { title: "Pink Moonstone (Pachyphytum oviferum) - Pearl Pink Egg Leaf", quantity: 3, price: 139, image: IMG.pinkMoonstone },
       ],
       total: 466,
       paymentMode: "prepaid",
@@ -117,7 +132,7 @@ const FIXTURES = {
     }),
   },
   cod: {
-    label: "COD, nothing paid up front â€” the whole amount is due",
+    label: "COD, nothing paid up front — the whole amount is due",
     build: (recipient) => ({
       orderNumber: 1016,
       customerName: "Rose Maria",
@@ -128,7 +143,7 @@ const FIXTURES = {
       state: "Kerala",
       pincode: "685604",
       items: [
-        { title: "Moonstone (Pachyphytum oviferum) - Pearl White Egg Leaf", quantity: 3, price: 79 },
+        { title: "Moonstone (Pachyphytum oviferum) - Pearl White Egg Leaf", quantity: 3, price: 79, image: IMG.whiteMoonstone },
       ],
       total: 287,
       paymentMode: "cod",
@@ -136,7 +151,7 @@ const FIXTURES = {
     }),
   },
   cod_fully_covered: {
-    label: "COD with the balance fully covered by wallet â€” must read as Prepaid",
+    label: "COD with the balance fully covered by wallet — must read as Prepaid",
     build: (recipient) => ({
       orderNumber: 1017,
       customerName: "Rose Maria",
@@ -147,7 +162,7 @@ const FIXTURES = {
       state: "Kerala",
       pincode: "685604",
       items: [
-        { title: "Moonstone (Pachyphytum oviferum) - Pearl White Egg Leaf", quantity: 3, price: 79 },
+        { title: "Moonstone (Pachyphytum oviferum) - Pearl White Egg Leaf", quantity: 3, price: 79, image: IMG.whiteMoonstone },
       ],
       total: 287,
       paymentMode: "cod_deposit",
@@ -220,6 +235,12 @@ const orderEmail = loadTypeScriptWithMocks(
     "server-only": {},
     "@/lib/firebase-admin": firebaseAdmin,
     "@/lib/email-sender": emailSender,
+    // The real thumbnail pipeline, not a stub: this script exists to exercise
+    // the actual fetch, resize and cid-rewrite against live catalogue images.
+    "@/lib/email-thumbnail": loadTypeScriptWithMocks(
+      path.join(process.cwd(), "src", "lib", "email-thumbnail.ts"),
+      { "server-only": {} },
+    ),
     "@/lib/delhiveryTracking": {
       buildDelhiveryTrackingUrl: (n) => `https://www.delhivery.com/track/package/${n}`,
     },
