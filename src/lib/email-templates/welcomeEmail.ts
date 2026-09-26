@@ -8,13 +8,11 @@ import {
   PREHEADER_PAD,
   assetBaseUrl,
   assetUrl,
+  brandFooter,
   cta,
   documentShell,
   escapeHtml,
-  footer,
   origin,
-  signature,
-  trustStrip,
 } from "./emailChrome";
 
 /**
@@ -44,12 +42,40 @@ import {
  * Artwork source. `width`/`height` are the *displayed* box; the 2x re-encode
  * happens in welcome-email-assets.ts. Hard-coding both is what stops the layout
  * jumping while the image decodes.
+ *
+ * The type is stated rather than inferred because `as const` alone is not
+ * enough here: it would make each slot an exact object type, and a slot that
+ * omits `coverPosition` would then not have that property at all, so the
+ * encoder could not read it off any slot other than the ones that set it.
  */
-export const WELCOME_IMAGE_SOURCES = {
+export type WelcomeImageSource = {
+  url: string;
+  width: number;
+  height: number;
+  alt: string;
+  /**
+   * Which edge the `cover` crop anchors to in welcome-email-assets.ts.
+   * Defaults to "centre"; set it only when the source is far enough off the
+   * slot's ratio that centring drops the subject out of frame.
+   */
+  coverPosition?: "centre" | "right";
+};
+
+export const WELCOME_IMAGE_SOURCES: {
+  hero: WelcomeImageSource;
+  mid: WelcomeImageSource;
+  grow: WelcomeImageSource;
+} = {
+  /**
+   * The hero. 620x257, not the 2:1 the source photo happens to be, because the
+   * reference design's hero is 2.42:1 and the copy is positioned as a
+   * proportion of the box — see HERO_TEXT_TOP below. Cropping 1240x620 to
+   * 1240x514 trims wall and table, never the plants, so nothing is lost.
+   */
   hero: {
     url: "https://whitesmoke-cattle-754161.hostingersite.com/sites/images/HomePage/WelcomeEmailHero.webp",
     width: 620,
-    height: 310,
+    height: 257,
     alt: "Three succulents in cream pots on a wooden table, lit by soft afternoon sun.",
   },
   /** The "What You Can Expect" panel, artwork and all. */
@@ -59,13 +85,34 @@ export const WELCOME_IMAGE_SOURCES = {
     height: 226,
     alt: "What you can expect: Premium Plants, Safe and Reliable Delivery, Expert Plant Care Tips, and A Greener Community.",
   },
-  last: {
+  /**
+   * The photograph inside the "Let's Grow Together" panel.
+   *
+   * Squarer than the 2.83:1 the source ships, because the design sets it in a
+   * portrait-ish cell beside the copy rather than as a full-bleed band. The
+   * encode in welcome-email-assets.ts covers onto this ratio from the right,
+   * which is what keeps the pot in frame.
+   *
+   * 292x226 rather than something squarer on purpose: the cell this fills is
+   * 229px wide inside a 620px panel and the copy beside it is ~181px tall, so
+   * 1.29:1 is the ratio at which the photo lands within a few pixels of the
+   * copy's height. Taller still and the photo is left short of the row with a
+   * cream gap under it, which is far more visible than a few pixels the other
+   * way.
+   *
+   * `coverPosition: "right"` is required at this ratio, not cosmetic. The
+   * source is 2.83:1, so covering onto 1.29:1 keeps only ~46% of its width.
+   * Centred, that window lands the pot against the right edge with half of it
+   * cropped off; anchored right, the pot sits centred in the frame.
+   */
+  grow: {
     url: "https://whitesmoke-cattle-754161.hostingersite.com/sites/images/HomePage/WelcomeEmailLastImage.webp",
-    width: 620,
-    height: 219,
-    alt: "A single succulent in a marble pot on a round wooden table.",
+    width: 292,
+    height: 226,
+    coverPosition: "right",
+    alt: "A single succulent in a speckled marble pot on a round wooden table.",
   },
-} as const;
+};
 
 /**
  * Known limitation of the supplied artwork, recorded here so it is not lost.
@@ -127,49 +174,251 @@ function imageRow(args: {
 }
 
 /**
- * The "where to start" row: three links answering the questions a brand-new
- * account actually has.
+ * Hero geometry.
  *
- * Three fixed-width cells rather than flexbox, and real <td>s rather than
- * inline-blocks, so Outlook lays this out without a hack. On a phone the cells
- * go full-width via `.ss-link`; Outlook ignores the media query and 620px is
- * comfortably wide enough for three columns.
+ * The design puts the greeting ON the photograph, which is the one thing in
+ * this template that cannot be a plain full-bleed <img>. The options were:
+ *
+ *   1. CSS `background-image`, plus the `background` attribute and a VML
+ *      <v:rect> — how the order confirmation's hero is built. Works in Apple
+ *      Mail, iOS, Outlook.com, Yahoo and Outlook desktop, and shows NOTHING in
+ *      Gmail, which renders no CSS backgrounds at all. The first thing a new
+ *      customer sees would be a flat cream band.
+ *   2. Bake the words into the JPEG with sharp. Renders everywhere, but the
+ *      text stops being text: not selectable, not searchable, invisible to a
+ *      screen reader, unreachable by a translation pass.
+ *   3. A real <img> with the copy pulled up over it by a negative margin.
+ *
+ * (3) ships. The photo is a `cid:` part so it renders unprompted in Gmail, and
+ * the copy stays live HTML. Outlook may ignore the negative margin, and its
+ * result is the copy stacked under the photo — the previous design, not a
+ * broken one.
+ *
+ * The pull-up is HERO_OVERLAY, and it is set to the full hero height on
+ * purpose. The arithmetic that makes this work: the copy row starts directly
+ * under the photo, the pull-up lifts it by HERO_OVERLAY, and a row can never be
+ * shorter than zero — so any pull-up at or above the copy's own height collapses
+ * the row to nothing and the band is exactly the photo's height. That fixes the
+ * text's position too: it starts HERO_TEXT_TOP below the top of the photo and
+ * ends wherever the copy runs out, and the photo simply shows through below it.
+ *
+ * The slack is whatever is left over, HERO_HEIGHT - HERO_TEXT_TOP - the copy's
+ * own height. At 620px that is ~30px of photo under the last line, and it is
+ * deliberate: it absorbs the lede re-wrapping to an extra line without pushing
+ * a cream strip over the bottom of the photograph. The media query drops the
+ * overlay entirely on a phone, where a 2.4:1 box is far too short for this much
+ * type, so mobile never comes near the limit.
  */
-function startLinks(args: { links: Array<{ label: string; detail: string; url: string }> }) {
-  const cells = args.links
-    .map(
-      (link) => `<td class="ss-link" width="33.33%" valign="top" style="width:33.33%;padding:0 7px">
-            <a href="${escapeHtml(link.url)}" style="display:block;padding:16px 14px;background:${BRAND.panelSoft};border:1px solid ${BRAND.hairline};border-radius:10px;text-decoration:none">
-              <div style="font-family:${FONT_SERIF};font-size:16px;line-height:1.3;color:${BRAND.ink}">${escapeHtml(link.label)}</div>
-              <div style="padding-top:5px;font-family:${FONT_SANS};font-size:12.5px;line-height:1.5;color:${BRAND.muted}">${escapeHtml(link.detail)}</div>
-            </a>
-          </td>`,
-    )
-    .join("\n          <!--[if mso]></td><td><![endif]-->");
+const HERO_HEIGHT = 257;
+const HERO_TEXT_TOP = 50;
+const HERO_OVERLAY = HERO_HEIGHT;
+const HERO_COLUMN = 240;
+
+/**
+ * The masthead: wordmark left, the design's three links right.
+ *
+ * `masthead()` in emailChrome is the order email's header and is left alone —
+ * this is a different component (no tagline, one line of nav), not a variant
+ * of it. `.ss-hide-sm` drops the nav on a phone, where three links and a 25px
+ * wordmark cannot share a 320px row.
+ */
+function welcomeMasthead(args: {
+  base: string;
+  links: Array<{ label: string; url: string }>;
+}) {
+  const links = args.links
+    .map((link, index) => {
+      const bullet =
+        index === 0
+          ? ""
+          : `<span style="padding:0 9px;color:#C3CCC4">&bull;</span>`;
+      return `${bullet}<a href="${escapeHtml(link.url)}" style="color:#5C6B61;text-decoration:none">${escapeHtml(link.label)}</a>`;
+    })
+    .join("");
 
   return `<tr>
-          <td class="ss-pad" style="padding:4px 34px 0">
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-              <tr>
-          ${cells}
-              </tr>
-            </table>
-          </td>
-        </tr>`;
+            <td class="ss-masthead" style="padding:24px 34px 22px;background:${BRAND.card};border-radius:16px 16px 0 0">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+                <td width="52" valign="middle" style="width:52px;padding-right:13px">
+                  <img src="${escapeHtml(assetUrl(args.base, "logo-mark.png"))}" width="40" height="40" alt="" style="display:block;width:40px;height:40px;border:0;outline:none;text-decoration:none" />
+                </td>
+                <td valign="middle" style="font-family:${FONT_SERIF};font-size:25px;line-height:1.1;color:${BRAND.ink}">Succulent Sphere</td>
+                <td align="right" valign="middle" class="ss-hide-sm" style="font-family:${FONT_SANS};font-size:11px;line-height:1.4;letter-spacing:0.4px;color:#5C6B61">${links}</td>
+              </tr></table>
+            </td>
+          </tr>`;
+}
+
+/**
+ * THE HERO BAND.
+ *
+ * A photo row, then a copy row pulled up over it. The copy row contributes
+ * zero net height, so the band is exactly as tall as the photo and the two
+ * cannot drift apart.
+ *
+ * The copy column is 240px rather than half the panel because the photograph's
+ * left side is not empty all the way across: the leftmost succulent starts at
+ * about 47% of the image width, so a wider column would set the lede on top of
+ * the plant. The lede is 12.5px, the smallest body copy in this template, and
+ * it is what the design's own proportions allow at this measure.
+ *
+ * The photo is the first block in the card, so it carries the top corners. See
+ * the note above heroPanel() in orderConfirmation.ts for why that radius moved
+ * off the masthead and onto the hero.
+ */
+function heroPanel(args: {
+  src: string;
+  imageAlt: string;
+  eyebrow: string;
+  heading: string;
+  lede: string;
+}) {
+  return `<tr>
+            <td align="center" bgcolor="${BRAND.cream}" style="padding:0;background:${BRAND.cream};font-size:0;line-height:0">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;max-width:${PANEL_WIDTH}px;margin:0 auto">
+                <tr>
+                  <td style="padding:0;font-size:0;line-height:0">
+                    <img src="${escapeHtml(args.src)}" width="${WELCOME_IMAGE_SOURCES.hero.width}" height="${HERO_HEIGHT}" alt="${escapeHtml(args.imageAlt)}" style="display:block;width:100%;max-width:${PANEL_WIDTH}px;height:auto;border:0;outline:none;text-decoration:none;font-size:0;line-height:0;border-radius:16px 16px 0 0" />
+                  </td>
+                </tr>
+                <tr>
+                  <td class="ss-hero-copy" valign="top" style="padding:0;font-size:0;line-height:0">
+                    <div class="ss-hero-pull" style="margin-top:${-HERO_OVERLAY}px;padding:0">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%"><tr>
+                        <td class="ss-hero-pad" valign="top" style="padding:${HERO_TEXT_TOP}px 34px 0 40px">
+                          <table role="presentation" class="ss-hero-col" cellpadding="0" cellspacing="0" border="0" width="${HERO_COLUMN}" style="width:${HERO_COLUMN}px">
+                            <tr>
+                              <td>
+                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+                                  <td valign="middle" style="font-family:${FONT_SANS};font-size:9.5px;letter-spacing:3.2px;font-weight:bold;color:#6B7F70;white-space:nowrap">${escapeHtml(args.eyebrow)}</td>
+                                  <td valign="middle" style="padding-left:11px;font-size:0;line-height:0">
+                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+                                      <td style="border-top:1px solid #C9C4B8;font-size:0">&nbsp;</td>
+                                    </tr></table>
+                                  </td>
+                                </tr></table>
+                                <h1 class="ss-hero-title" style="margin:15px 0 0;padding:0;font-family:${FONT_SERIF};font-size:30px;line-height:1.12;color:${BRAND.ink};font-weight:normal;letter-spacing:-0.4px">${escapeHtml(args.heading)}</h1>
+                                <p class="ss-hero-lede" style="margin:13px 0 0;padding:0;font-family:${FONT_SANS};font-size:12.5px;line-height:1.62;color:${BRAND.body}">${escapeHtml(args.lede)}</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr></table>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`;
+}
+
+/**
+ * "Let's Grow Together".
+ *
+ * An inset cream card: copy on the left, the photograph filling the right. The
+ * design draws the heading in a handwritten script and this sets it in Georgia
+ * italic instead, for the reason signature() records — script faces are missing
+ * on most Android and Windows mail clients and silently fall back to a random
+ * default, which reads worse than a deliberate serif. The forced <br> keeps the
+ * "Let's / Grow Together" break the design uses.
+ *
+ * The button is NOT in here. The design sets it inside the card, but the
+ * approved button carries a 21px glyph, a 15px label and 28px of side padding —
+ * roughly 300px wide, which will not fit the 284px this column leaves. It sits
+ * centred in its own row directly below instead, unchanged.
+ */
+function growPanel(args: { src: string; alt: string; copy: string }) {
+  return `<tr>
+            <td class="ss-pad" style="padding:30px 34px 0">
+              <table role="presentation" class="ss-grow-card" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${BRAND.cream};border-radius:14px">
+                <tr class="ss-grow-row">
+                  <td class="ss-grow-copy" width="328" valign="middle" style="width:328px;padding:22px 18px 22px 26px">
+                    <div style="font-family:${FONT_SERIF};font-style:italic;font-size:22px;line-height:1.2;color:${BRAND.ink};letter-spacing:-0.2px">Let&rsquo;s<br />Grow Together</div>
+                    <div style="padding-top:8px;width:54px;font-size:0;line-height:0">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="54"><tr>
+                        <td style="border-top:2px solid ${BRAND.ink};font-size:0">&nbsp;</td>
+                      </tr></table>
+                    </div>
+                    <p style="margin:12px 0 0;padding:0;font-family:${FONT_SANS};font-size:13px;line-height:1.6;color:${BRAND.body}">${escapeHtml(args.copy)}</p>
+                  </td>
+                  <td class="ss-grow-art" width="292" valign="top" style="width:292px;padding:0;font-size:0;line-height:0;border-radius:0 14px 14px 0">
+                    <img src="${escapeHtml(args.src)}" width="${WELCOME_IMAGE_SOURCES.grow.width}" height="${WELCOME_IMAGE_SOURCES.grow.height}" alt="${escapeHtml(args.alt)}" style="display:block;width:100%;max-width:${WELCOME_IMAGE_SOURCES.grow.width}px;height:auto;border:0;outline:none;text-decoration:none;font-size:0;line-height:0" />
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`;
+}
+
+/**
+ * "Thank you for choosing Succulent Sphere!" and the leaf rule beneath it.
+ *
+ * The rule is a three-cell table rather than a bordered <p> because Outlook
+ * renders a border on a block element inconsistently, and the leaf has to sit
+ * ON the line, which needs a cell of its own between the two halves.
+ */
+function thanksBlock(args: { base: string }) {
+  return `<tr>
+            <td class="ss-pad" align="center" style="padding:32px 34px 6px;background:${BRAND.card}">
+              <div style="font-family:${FONT_SERIF};font-size:18px;line-height:1.3;color:${BRAND.ink}">Thank you for choosing Succulent Sphere!</div>
+              <div style="padding-top:9px;font-family:${FONT_SANS};font-size:9px;letter-spacing:2.4px;color:#8B988D">HAPPIER HOMES. GREENER TOMORROWS.</div>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:18px auto 0"><tr>
+                <td width="56" align="right" valign="middle" style="width:56px;font-size:0;line-height:0">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+                    <td style="border-top:1px solid #D8D3C9;font-size:0">&nbsp;</td>
+                  </tr></table>
+                </td>
+                <td width="26" align="center" valign="middle" style="width:26px;font-size:0;line-height:0">
+                  <img src="${escapeHtml(assetUrl(args.base, "icon-leaf.png"))}" width="15" height="15" alt="" style="display:block;width:15px;height:15px;border:0;outline:none;text-decoration:none" />
+                </td>
+                <td width="56" align="left" valign="middle" style="width:56px;font-size:0;line-height:0">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+                    <td style="border-top:1px solid #D8D3C9;font-size:0">&nbsp;</td>
+                  </tr></table>
+                </td>
+              </tr></table>
+            </td>
+          </tr>`;
 }
 
 /**
  * Per-template responsive rules. Indentation lines these up inside
  * documentShell's <style> block, as in the other two templates.
+ *
+ * The hero rules are the important ones and they are not a refinement — the
+ * overlay is switched OFF below 620px. A 2.4:1 box at 390px is 160px tall, the
+ * heading alone would wrap to three lines in the remaining width, and the copy
+ * would run off the bottom of the photograph. Stacked, the same markup reads as
+ * a normal hero with the greeting beneath it, which is the design's own mobile
+ * behaviour everywhere else. Every rule here only ever widens or unhides.
  */
 const WELCOME_MEDIA_CSS = [
   "        .ss-pad { padding-left:22px !important; padding-right:22px !important; }",
-  "        /* Three link cards across 375px would be ~110px each, which wraps the",
-  "           labels to three lines. Stack them instead. */",
-  "        .ss-link { display:block !important; width:100% !important; padding:0 0 10px !important; }",
-  "        /* Swap the trust artwork for its text twin — see trustStrip(). */",
-  "        .ss-trust-art { display:none !important; }",
-  "        .ss-trust-text { display:block !important; }",
+  "        .ss-masthead { padding-left:22px !important; padding-right:22px !important; }",
+  "        /* Drop the overlay: no pull-up, full-width copy, normal type sizes.",
+  "           See the note above HERO_OVERLAY for why this is not a tweak. */",
+  "        .ss-hero-pull { margin-top:0 !important; }",
+  "        .ss-hero-pad { padding:26px 22px 4px 22px !important; }",
+  "        .ss-hero-col { width:100% !important; }",
+  "        .ss-hero-title { font-size:25px !important; line-height:1.16 !important; }",
+  "        .ss-hero-lede { font-size:14.5px !important; line-height:1.6 !important; }",
+  "        /* The masthead's three links cannot share a 320px row with a 25px",
+  "           wordmark. */",
+  "        .ss-hide-sm { display:none !important; }",
+  "        /* 'Let's Grow Together': copy and photo stacked, photo first, because",
+  "           a side-by-side pair at 320px leaves each column ~150px. Setting",
+  "           display:block on the cells alone does NOT stack them — the row and",
+  "           the card have to come out of table layout too, or the copy cell is",
+  "           still sized off its width attribute and overflows the viewport by",
+  "           exactly the difference. This is the whole chain, all four rules. */",
+  "        .ss-grow-card, .ss-grow-row { display:block !important; width:100% !important; }",
+  "        .ss-grow-art { display:block !important; width:100% !important; box-sizing:border-box !important; }",
+  "        .ss-grow-art img { max-width:100% !important; border-radius:0 0 14px 14px !important; }",
+  "        /* box-sizing matters here: these cells are content-box by default, so",
+  "           width:100% PLUS 22px of padding a side is 44px wider than the card",
+  "           and overflows the viewport by exactly that much. border-box makes the",
+  "           declared 100% include the padding. */",
+  "        .ss-grow-copy { display:block !important; width:100% !important; box-sizing:border-box !important; padding:22px 22px 6px 22px !important; }",
 ].join("\n");
 
 export function buildWelcomeEmail(input: WelcomeEmailInput): {
@@ -199,7 +448,7 @@ export function buildWelcomeEmail(input: WelcomeEmailInput): {
   const src = {
     hero: input.images?.hero || images.hero.url,
     mid: input.images?.mid || images.mid.url,
-    last: input.images?.last || images.last.url,
+    grow: input.images?.grow || images.grow.url,
   };
 
   const subject = fullName
@@ -210,26 +459,43 @@ export function buildWelcomeEmail(input: WelcomeEmailInput): {
     "Your account is ready. Here is what to expect from us: handpicked " +
     "plants, careful delivery, and real plant-care help whenever you need it.";
 
+  // The design's eyebrow reads "HELLO THERE!" because the design itself is
+  // unpersonalised. Using the customer's first name in that slot is the whole
+  // reason a welcome is not a brochure, and it is the same name the plain-text
+  // twin greets with, so the two cannot disagree. An account with no first name
+  // gets the design's own wording rather than a dangling comma.
+  const eyebrow = firstName ? `HELLO, ${firstName.toUpperCase()}!` : "HELLO THERE!";
+
   const html = documentShell({
     title: subject,
     mediaCss: WELCOME_MEDIA_CSS,
     preheaderHtml: `${escapeHtml(preheader)} ${PREHEADER_PAD}`,
     bodyHtml: `      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:${PANEL_WIDTH}px;margin:0 auto;background:${BRAND.card};border-radius:16px">
-        ${imageRow({
-          src: src.hero,
-          width: images.hero.width,
-          height: images.hero.height,
-          alt: images.hero.alt,
-          radius: "16px 16px 0 0",
+        ${welcomeMasthead({
+          base,
+          links: [
+            { label: "Premium Succulents", url: shopUrl },
+            { label: "Plant Care", url: careUrl },
+            { label: "Happy Homes", url: beginnerUrl },
+          ],
         })}
-        <tr>
-          <td class="ss-pad" style="padding:30px 34px 0">
-            <p style="margin:0;font-family:${FONT_SERIF};font-size:21px;color:${BRAND.ink}">Hi ${escapeHtml(name)},</p>
-            <h1 style="margin:14px 0 0;font-family:${FONT_SERIF};font-size:28px;line-height:1.2;color:${BRAND.ink};font-weight:normal;letter-spacing:-0.4px">Welcome to the family.</h1>
-            <p style="margin:14px 0 0;font-family:${FONT_SANS};font-size:15px;line-height:1.65;color:${BRAND.body}">We are glad you found us. Succulent Sphere is a small studio of plant people. We grow, pack and ship every plant ourselves, and we would far rather help you keep one alive than sell you one you cannot.</p>
-            <p style="margin:12px 0 0;font-family:${FONT_SANS};font-size:15px;line-height:1.65;color:${BRAND.body}">Your account is ready, so orders, addresses and order tracking are all one tap away whenever you need them.</p>
-          </td>
-        </tr>
+        ${heroPanel({
+          src: src.hero,
+          imageAlt: images.hero.alt,
+          eyebrow,
+          heading: "Welcome to Succulent Sphere!",
+          // Three lines, deliberately, and the length below is load-bearing.
+          // The hero photo's lower-left corner is the dark leafy plant, not flat
+          // wall, so a fourth line drops the tail of this copy onto dark green
+          // and costs real legibility. At 240px and 12.5px the measure runs
+          // ~45 characters per line, so three lines is a hard ceiling of about
+          // 125 characters and this is 112. The design's "greener, happier
+          // homes" became "greener homes" to land on three; the sign-off below
+          // the CTA still carries the fuller line.
+          lede:
+            "We\u2019re so happy to have you here. You\u2019ve joined a growing " +
+            "community of plant lovers who believe in greener homes.",
+        })}
         <tr>
           <td style="padding:26px 0 0">
             ${imageRow({
@@ -240,12 +506,12 @@ export function buildWelcomeEmail(input: WelcomeEmailInput): {
             })}
           </td>
         </tr>
-        ${startLinks({
-          links: [
-            { label: "Start here", detail: "Plants that forgive a beginner.", url: beginnerUrl },
-            { label: "Plant care", detail: "Plain-language guides for every plant we send.", url: careUrl },
-            { label: "Your account", detail: "Orders, addresses and wishlist in one place.", url: accountUrl },
-          ],
+        ${growPanel({
+          src: src.grow,
+          alt: images.grow.alt,
+          copy:
+            "Keep an eye on your inbox for plant care tips, exclusive offers, " +
+            "and the latest additions to our collection.",
         })}
         <tr>
           <td class="ss-pad" style="padding:22px 34px 0" align="center">
@@ -258,29 +524,22 @@ export function buildWelcomeEmail(input: WelcomeEmailInput): {
             <p style="margin:12px 0 0;font-family:${FONT_SANS};font-size:11.5px;line-height:1.6;color:#93A096;word-break:break-all">${escapeHtml(shopUrl)}</p>
           </td>
         </tr>
-        <tr>
-          <td style="padding:28px 0 0">
-            ${imageRow({
-              src: src.last,
-              width: images.last.width,
-              height: images.last.height,
-              alt: images.last.alt,
-            })}
-          </td>
-        </tr>
-        <tr>
-          <td class="ss-pad" style="padding:26px 34px 4px">
-            <p style="margin:0;font-family:${FONT_SERIF};font-size:17px;color:${BRAND.ink}">Thanks for joining us.</p>
-            <p style="margin:8px 0 0;font-family:${FONT_SANS};font-size:14px;line-height:1.6;color:${BRAND.body}">If you ever need a hand, just reply to this email. A real person who grows plants will answer.</p>
-          </td>
-        </tr>
-        ${trustStrip({ base })}
-        ${signature({ base })}
-        ${footer({
-          orderNumber: "",
-          phone,
+        ${thanksBlock({ base })}
+        ${brandFooter({
+          siteUrl,
           siteHost,
-          reason: `You are receiving this because you created an account at ${escapeHtml(siteHost)}.`,
+          phone,
+          claims: [
+            { label: "Premium Quality Plants", iconUrl: assetUrl(base, "icon-leaf-white.png"), iconWidth: 17, iconHeight: 17 },
+            { label: "Carefully Packed", iconUrl: assetUrl(base, "icon-shield-white.png"), iconWidth: 18, iconHeight: 18 },
+            { label: "Safe & Reliable Delivery", iconUrl: assetUrl(base, "icon-truck-white.png"), iconWidth: 21, iconHeight: 15 },
+            { label: "Plant Care Support", iconUrl: assetUrl(base, "icon-heart-white.png"), iconWidth: 18, iconHeight: 18 },
+          ],
+          social: [
+            { label: "Instagram", url: "https://www.instagram.com/succulentsphere/", iconUrl: assetUrl(base, "icon-social-instagram.png") },
+            { label: "Facebook", url: "https://www.facebook.com/profile.php?id=61586867373040", iconUrl: assetUrl(base, "icon-social-facebook.png") },
+          ],
+          reason: `You are receiving this because you created an account at ${siteHost}.`,
         })}
       </table>`,
   });
@@ -297,12 +556,13 @@ export function buildWelcomeEmail(input: WelcomeEmailInput): {
  * Plain-text twin.
  *
  * Built from the same resolved URLs as the HTML so the two cannot drift, and
- * carrying the same three starting points: for a text-only reader those links
- * are the entire email, so collapsing them to a single shop URL would throw
- * away most of the message.
+ * carrying every link the HTML does: for a text-only reader those links are the
+ * entire email, so collapsing them to a single shop URL would throw away most
+ * of the message.
  *
  * The four "What You Can Expect" pillars are restated here as live text, which
- * doubles as the accessible copy for artwork that bakes them in as pixels.
+ * doubles as the accessible copy for artwork that bakes them in as pixels — and
+ * so does the footer's four trust claims, for the same reason.
  */
 function buildPlainText(args: {
   name: string;
@@ -313,14 +573,10 @@ function buildPlainText(args: {
 }) {
   return `Hi ${args.name},
 
-Welcome to the family.
+Welcome to Succulent Sphere!
 
-We are glad you found us. Succulent Sphere is a small studio of plant people.
-We grow, pack and ship every plant ourselves, and we would far rather help you
-keep one alive than sell you one you cannot.
-
-Your account is ready, so orders, addresses and order tracking are all one tap
-away whenever you need them.
+We are so happy to have you here. You are now part of a growing community of
+plant lovers who believe in greener, happier homes.
 
 WHAT YOU CAN EXPECT
   Premium Plants            Handpicked, healthy succulents for your home and office.
@@ -328,19 +584,28 @@ WHAT YOU CAN EXPECT
   Expert Plant Care Tips    Easy guides and helpful advice to help your plants thrive.
   A Greener Community       Be part of a community that loves plants as much as you do.
 
-WHERE TO START
-  Start here:   ${args.beginnerUrl}
-  Plant care:   ${args.careUrl}
-  Your account: ${args.accountUrl}
+Let's Grow Together
+
+Keep an eye on your inbox for plant care tips, exclusive offers, and the
+latest additions to our collection.
 
 Explore all succulents: ${args.shopUrl}
 
-Thanks for joining us.
+START HERE
+  Beginner-friendly plants: ${args.beginnerUrl}
+  Plant care guides:         ${args.careUrl}
+  Your account:              ${args.accountUrl}
+
+WHY YOU ARE GETTING THIS
+  Premium quality plants, carefully packed, safe and reliable delivery, and
+  plant care support whenever you need it.
+
+Thank you for choosing Succulent Sphere!
+Happier homes. Greener tomorrows.
 
 If you ever need a hand, just reply to this email. A real person who grows
 plants will answer.
 
-Happy Planting!
 Succulent Sphere
 `;
 }

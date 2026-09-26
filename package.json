@@ -19,6 +19,7 @@
     "order:confirmation:verify": "npm run order:email:build && node email-preview/verify-confirmation.cjs",
     "email:verify": "npm run order:email:verify && npm run order:confirmation:verify",
     "email:preview": "node email-preview/shoot.cjs && node email-preview/shoot-confirmation.cjs",
+    "welcome:email:preview": "node email-preview/shoot-welcome.cjs",
     "email:assets": "node scripts/build-email-assets.cjs",
     "email:thumbnail:test": "node scripts/email-thumbnail-smoke.cjs",
     "email:probe:layout": "node email-preview/probe-layout.cjs",

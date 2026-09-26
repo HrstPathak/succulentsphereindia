@@ -227,6 +227,76 @@ const ICONS = [
 ];
 
 /**
+ * Glyphs that only ever appear in WHITE, because they sit on the dark green
+ * footer band rather than on cream.
+ *
+ * Separate from ICONS rather than an extra colour per entry: none of these are
+ * used on a light surface, and an ink variant that nothing references is an
+ * asset a future change might reach for and get wrong.
+ *
+ * The two trust glyphs complete the footer's four claims. `icon-leaf-white.png`
+ * and `icon-truck-white.png` are already produced in white from ICONS, so only
+ * the shield and the heart are new here.
+ *
+ * @type {{file: string, w: number, h: number, vb?: string, strokes: string}[]}
+ */
+const WHITE_ICONS = [
+  {
+    // "Carefully packed". Shield plus check, the Lucide "shield-check" outline.
+    file: "icon-shield-white.png",
+    w: 18,
+    h: 18,
+    vb: "0 0 24 24",
+    strokes:
+      '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  },
+  {
+    // "Plant care support". Heart, the Lucide "heart" outline.
+    file: "icon-heart-white.png",
+    w: 18,
+    h: 18,
+    vb: "0 0 24 24",
+    strokes:
+      '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  },
+];
+
+/**
+ * Social glyphs for the footer's follow row.
+ *
+ * Only the two networks the brand actually publishes to are drawn. The
+ * reference design shows four circles, but a "YouTube" or "Pinterest" link
+ * aimed at a handle nobody has registered is a dead link in a customer's
+ * inbox, which is worse than a two-icon row. Add a glyph here when the brand
+ * opens an account, and it joins the row automatically.
+ *
+ * @type {{file: string, w: number, h: number, vb?: string, strokes: string}[]}
+ */
+const SOCIAL_ICONS = [
+  {
+    file: "icon-social-instagram.png",
+    w: 16,
+    h: 16,
+    vb: "0 0 24 24",
+    // The single "line" whose two ends coincide is drawn round-capped, so it
+    // renders as the lens dot rather than as nothing.
+    strokes:
+      '<rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.6" y1="6.4" x2="17.6" y2="6.4"/>',
+  },
+  {
+    file: "icon-social-facebook.png",
+    w: 16,
+    h: 16,
+    vb: "0 0 24 24",
+    strokes:
+      '<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>',
+  },
+];
+
+/** Footer glyphs sit on dark green, so they are stroked heavier than the ink set. */
+const FOOTER_STROKE_WIDTH = 1.7;
+
+/**
  * The circular rosette that sits beside the wordmark in the confirmation
  * masthead.
  *
@@ -430,6 +500,11 @@ async function main() {
   // CTA glyph is white because it sits on the dark green button.
   const truck = ICONS.find((i) => i.file === "icon-truck.png");
   await writeIcon(truck, "#FFFFFF", 2.8, "icon-truck-white.png");
+
+  // Dark footer band: trust glyphs and social glyphs, all white.
+  for (const icon of [...WHITE_ICONS, ...SOCIAL_ICONS]) {
+    await writeIcon(icon, "#FFFFFF", FOOTER_STROKE_WIDTH, icon.file);
+  }
 
   // CONFIRMATION HERO. Painted as the confirmation panel's full-bleed
   // background, so the crop has to satisfy two opposing constraints at once:

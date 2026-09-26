@@ -70,6 +70,20 @@ export const BRAND = {
   codBorder: "#F0E0C4",
   codInk: "#7A5A1E",
   codInkStrong: "#5C4212",
+  /**
+   * The dark footer band (brandFooter).
+   *
+   * `footerBg` is `panelDeep` rather than a new green, so the band is provably
+   * the same colour as the CTA button. `footerRule` and `footerRing` are solid
+   * hexes instead of `rgba(255,255,255,.22)` because Outlook's Word engine
+   * drops alpha and would render a transparent hairline — or, worse, a
+   * transparent border around each social chip.
+   */
+  footerInk: "#FFFFFF",
+  footerMuted: "#AEC0B3",
+  footerFaint: "#8AA093",
+  footerRule: "#5A7466",
+  footerRing: "#8FAE97",
 } as const;
 
 export const FONT_SERIF = "Georgia,'Times New Roman',serif";
@@ -313,6 +327,125 @@ export function footer(args: {
               <div style="padding-top:16px;font-family:${FONT_SANS};font-size:11px;line-height:1.7;color:#A8B3A9">
                 ${escapeHtml(args.siteHost)} &nbsp;&bull;&nbsp; ${escapeHtml(args.phone)}<br>
                 ${reason}
+              </div>
+            </td>
+          </tr>`;
+}
+
+/**
+ * THE DARK FOOTER BAND.
+ *
+ * The welcome design closes on a full-bleed dark green band — four trust
+ * claims with white glyphs, a hairline, a follow row, then the small print.
+ * That is a different component from the cream `footer()` above rather than a
+ * restyling of it, so the transactional templates keep the footer they ship
+ * and this one is added beside it.
+ *
+ * Live HTML, not one exported JPEG like footer-email.jpg, and the reason is
+ * that image's two documented faults are exactly the faults this band must not
+ * inherit. Its captions are baked in at a 0.30x reduction and are illegible on
+ * a phone, and it prints "SAFE & SECURE DELIVERY" twice — the truck and the
+ * shield were both captioned with the same line. Real text cannot be
+ * mis-cropped, cannot be re-scaled into illegibility, and lets the follow row
+ * be actual links.
+ *
+ * The claims row is `table-layout:fixed` with the three dividers in their own
+ * 2% columns and the claims at 23.5% each (4 x 23.5 + 3 x 2 = 100). Letting
+ * the content size them instead lets the widest caption, "Safe & Reliable
+ * Delivery", set the width for all four and visibly unbalances the row.
+ *
+ * Glyph sizes are per-claim because the set is deliberately mixed: the truck
+ * is a wide 21x15 mark while the shield and heart are 18x18, and pinning them
+ * all to one square would distort the truck.
+ */
+export function brandFooter(args: {
+  claims: Array<{ label: string; iconUrl: string; iconWidth: number; iconHeight: number }>;
+  social: Array<{ label: string; url: string; iconUrl: string }>;
+  siteUrl: string;
+  siteHost: string;
+  phone: string;
+  /** Why this person is receiving the message. Escaped here, so pass raw text. */
+  reason: string;
+}) {
+  const dividers = args.claims
+    .map((claim, index) => {
+      const divider =
+        index === 0
+          ? ""
+          : `<td width="2%" valign="top" style="width:2%;font-size:0;line-height:0">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+                      <td align="center" valign="top" height="46" style="height:46px;font-size:0;line-height:0">
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="1" align="center"><tr>
+                          <td width="1" height="46" bgcolor="${BRAND.footerRule}" style="width:1px;height:46px;background:${BRAND.footerRule};font-size:0;line-height:0">&nbsp;</td>
+                        </tr></table>
+                      </td>
+                    </tr></table>
+                  </td>`;
+      return `${divider}<td width="23.5%" valign="top" align="center" style="width:23.5%;padding:0 3px">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+                      <td align="center" style="padding:0 0 9px;font-size:0;line-height:0">
+                        <img src="${escapeHtml(claim.iconUrl)}" width="${claim.iconWidth}" height="${claim.iconHeight}" alt="" style="display:block;width:${claim.iconWidth}px;height:${claim.iconHeight}px;border:0;outline:none;text-decoration:none" />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="font-family:${FONT_SANS};font-size:10px;line-height:1.5;letter-spacing:0.3px;font-weight:bold;color:${BRAND.footerInk}">${escapeHtml(claim.label)}</td>
+                    </tr></table>
+                  </td>`;
+    })
+    .join("\n                  ");
+  /**
+   * Social chips.
+   *
+   * Two details are load-bearing and both were found by measuring the render
+   * rather than by reading the markup, because each still *looks* correct in
+   * the source:
+   *
+   * 1. `border-collapse:separate` on the chip's own table. The document-level
+   *    `table { border-collapse:collapse }` in the head otherwise wins, and
+   *    under collapsing borders Chrome drops `border-radius` on the cell
+   *    entirely — the chips rendered as rounded rectangles at every viewport.
+   * 2. The wrapping table is 36px wide while the cell is 34px. The cell is
+   *    content-box, so its 1px border is outside the 34px and makes it 36px
+   *    overall; at `width="34"` the table squeezed the cell to 33px and it
+   *    stopped being square, so `50%` resolved to an ellipse.
+   */
+  const socials = args.social
+    .map(
+      (link) => `<td align="center" valign="top" style="padding:0 7px">
+                    <a href="${escapeHtml(link.url)}" style="display:inline-block;text-decoration:none">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="36" align="center" style="border-collapse:separate"><tr>
+                        <td width="34" height="34" align="center" valign="middle" bgcolor="${BRAND.panelDeep}" style="width:34px;height:34px;background:${BRAND.panelDeep};border:1px solid ${BRAND.footerRing};border-radius:50%">
+                          <img src="${escapeHtml(link.iconUrl)}" width="16" height="16" alt="${escapeHtml(link.label)}" style="display:block;width:16px;height:16px;border:0;outline:none;text-decoration:none" />
+                        </td>
+                      </tr></table>
+                    </a>
+                  </td>`,
+    )
+    .join("\n                  ");
+
+  return `<tr>
+            <td align="center" bgcolor="${BRAND.panelDeep}" style="padding:30px 26px 28px;background:${BRAND.panelDeep};border-radius:0 0 16px 16px">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="table-layout:fixed">
+                <tr>${dividers}</tr>
+              </table>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+                <td style="padding:24px 0 0;font-size:0;line-height:0">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+                    <td style="border-top:1px solid ${BRAND.footerRule};font-size:0">&nbsp;</td>
+                  </tr></table>
+                </td>
+              </tr></table>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+                <td align="center" style="padding:22px 0 0">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr>${socials}</tr></table>
+                </td>
+              </tr></table>
+              <div style="padding-top:22px;font-family:${FONT_SANS};font-size:10.5px;line-height:1.7;color:${BRAND.footerMuted}">
+                <a href="${escapeHtml(args.siteUrl)}" style="color:${BRAND.footerMuted};text-decoration:underline">${escapeHtml(args.siteHost)}</a>
+                &nbsp;&bull;&nbsp; ${escapeHtml(args.phone)}
+              </div>
+              <div style="padding-top:7px;font-family:${FONT_SANS};font-size:9.5px;line-height:1.7;color:${BRAND.footerFaint}">
+                ${escapeHtml(args.reason)}
               </div>
             </td>
           </tr>`;

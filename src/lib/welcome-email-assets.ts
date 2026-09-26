@@ -84,17 +84,21 @@ async function encode(
   source: Buffer,
   displayWidth: number,
   displayHeight: number,
+  position: "centre" | "right",
 ): Promise<Buffer | null> {
   // Imported lazily: sharp is native, and a runtime that cannot load it should
   // send the welcome without embedded artwork rather than not send it at all.
   const { default: sharp } = await import("sharp");
   return sharp(source)
     .rotate()
-    // "cover" onto the exact display ratio. The sources are already close to
-    // the slots they fill, so this trims a few pixels rather than letterboxing.
+    // "cover" onto the exact display ratio. This is not always a few pixels: the
+    // "Let's Grow Together" photo is 2.83:1 in the source and fills a 1.29:1
+    // cell, so it keeps under half its width and the anchor decides what
+    // survives. `position` is set per slot for that reason; everything else is
+    // close enough to its box that centring is fine.
     .resize(displayWidth * SCALE, displayHeight * SCALE, {
       fit: "cover",
-      position: "centre",
+      position,
     })
     .jpeg({ quality: QUALITY, mozjpeg: true })
     .toBuffer();
@@ -127,7 +131,12 @@ export async function buildWelcomeImages(): Promise<PreparedWelcomeImages> {
         skipped.push(key);
         continue;
       }
-      const content = await encode(source, slot.width, slot.height);
+      const content = await encode(
+        source,
+        slot.width,
+        slot.height,
+        slot.coverPosition ?? "centre",
+      );
       if (!content) {
         skipped.push(key);
         continue;

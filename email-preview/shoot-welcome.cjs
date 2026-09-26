@@ -14,6 +14,12 @@
  *
  * Usage:
  *   node email-preview/shoot-welcome.cjs
+ *   npm run welcome:email:preview
+ *
+ * Exits non-zero when a layout assertion fails, so it can gate a commit. Three
+ * checks beyond the screenshots, each for a regression that shipped looking
+ * fine in a PNG: horizontal overflow, the hero lede escaping the photograph at
+ * desktop, and the social chips not being geometrically circular.
  */
 const fs = require("node:fs");
 const path = require("node:path");
@@ -129,6 +135,7 @@ const VARIANTS = [
     { name: "narrow", width: 320, height: 1600 },
   ];
 
+  let failed = 0;
   for (const viewport of VIEWPORTS) {
     const page = await browser.newPage({
       viewport: { width: viewport.width, height: viewport.height },
@@ -148,8 +155,109 @@ const VARIANTS = [
           document.documentElement.scrollWidth -
           document.documentElement.clientWidth,
       );
+
+      // The other two failure modes a screenshot hides, for the same reason.
+      // All three shipped once and none was visible by eye: the chips were
+      // 33x35 (an ellipse at 50%), the hero overlay was 30px shorter than the
+      // photo and clipped its own lede, and the grow photo left a 52px gap
+      // under it. Each is a few pixels of geometry, so each is asserted.
+      const geometry = await page.evaluate(() => {
+        const round = (n) => Math.round(n);
+        const box = (el) => {
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return { top: round(r.top), bottom: round(r.bottom), w: round(r.width), h: round(r.height) };
+        };
+
+        // The hero <img> is in the row before the copy row, which is pulled up
+        // over it, so walk back out of .ss-hero-copy to reach it.
+        const heroCopy = document.querySelector(".ss-hero-copy");
+        const heroImg = heroCopy
+          ? heroCopy.closest("tr").previousElementSibling?.querySelector("img")
+          : null;
+        const ledeEl = document.querySelector(".ss-hero-lede");
+        const lede = box(ledeEl);
+        const hero = box(heroImg);
+
+        // Every social chip, not just the first. Two separate things have to
+        // hold for a chip to actually draw as a circle, and only asserting the
+        // box was not enough: they measured a perfect 35x35 square while still
+        // rendering as rounded rectangles.
+        //
+        //  - the cell must be square, or `50%` resolves to an ellipse. The
+        //    wrapping table is 36px and the cell 34px + a 1px border, so a
+        //    mismatch here is a real squeeze rather than a rounding artefact;
+        //  - the chip's own table must not be in collapsing-border mode. The
+        //    document-level `table { border-collapse:collapse }` otherwise wins
+        //    and Chrome drops border-radius on the cell entirely.
+        //
+        // getComputedStyle still reports "50%" when the radius is not honoured,
+        // so the collapse mode is what gets asserted, not the radius string.
+        //
+        // The shorthand is read rather than the longhand `borderCollapseStyle`
+        // on purpose: on this Chromium build the longhand comes back
+        // undefined, so a longhand comparison is false for every table and the
+        // check flags good chips forever. The shorthand resolves.
+        //
+        // `a > table` rather than `a table`: these links are also used for the
+        // footer's social row, and a descendant selector would match that
+        // table too, which has nothing to do with the chips.
+        const chips = Array.from(
+          document.querySelectorAll(
+            'a[href*="instagram"] > table, a[href*="facebook"] > table',
+          ),
+        ).map((t) => {
+          const td = t.querySelector("td");
+          const r = td.getBoundingClientRect();
+          return {
+            w: round(r.width),
+            h: round(r.height),
+            collapse:
+              getComputedStyle(t).getPropertyValue("border-collapse"),
+            circle:
+              getComputedStyle(t).getPropertyValue("border-collapse") ===
+                "separate" &&
+              Math.abs(r.width - r.height) < 0.5,
+          };
+        });
+
+        return {
+          // On a phone the media query drops the overlay and stacks the copy
+          // under the photo on purpose, so containment is a desktop-only rule.
+          hero: { img: hero, lede },
+          heroContained: hero && lede ? lede.bottom <= hero.bottom + 0.5 : null,
+          chips,
+          chipsCircle:
+            chips.length > 0 && chips.every((c) => c.circle),
+          grow: {
+            art: box(document.querySelector(".ss-grow-art")),
+            img: box(document.querySelector(".ss-grow-art img")),
+          },
+        };
+      });
+
+      // Stacked on a phone, so the grow row only has to match at desktop.
+      const stacked = viewport.width < 600;
+      const growDelta = stacked || !geometry.grow.art || !geometry.grow.img
+        ? null
+        : Math.abs(geometry.grow.art.h - geometry.grow.img.h);
+      const growAligned = growDelta === null || growDelta <= 8;
+
+      const failures = [];
+      if (overflow > 0) failures.push(`overflow ${overflow}px`);
+      // Containment is a desktop rule: the phone media query drops the overlay
+      // and stacks the copy under the photo deliberately, so there the lede is
+      // meant to sit below the image and this check would always fail.
+      if (!stacked && geometry.heroContained === false) {
+        failures.push("hero lede clipped");
+      }
+      if (!geometry.chipsCircle) failures.push("social chip not circular");
+      if (!growAligned) failures.push(`grow photo off by ${growDelta}px`);
+
+      if (failures.length) failed += 1;
       console.log(
-        `  ${viewport.name.padEnd(8)} ${variant.name.padEnd(7)} ${overflow <= 0 ? "no overflow" : `OVERFLOW ${overflow}px`}`,
+        `  ${viewport.name.padEnd(8)} ${variant.name.padEnd(7)} ` +
+          (failures.length ? `FAIL ${failures.join(", ")}` : "clean"),
       );
     }
     await page.close();
@@ -157,4 +265,9 @@ const VARIANTS = [
 
   await browser.close();
   console.log(`\nwrote screenshots to ${OUT}`);
+  // Non-zero so this can gate a commit, not just be read.
+  if (failed) {
+    console.error(`\n${failed} viewport/variant combination(s) failed`);
+    process.exit(1);
+  }
 })();
