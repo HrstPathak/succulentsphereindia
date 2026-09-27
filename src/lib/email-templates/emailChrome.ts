@@ -515,12 +515,28 @@ export function brandFooter(args: {
 }
 
 /** CTA. Solid BRAND.button under the gradient so Outlook gets a filled button. */
-export function cta(args: { label: string; url: string; iconUrl: string }) {
+/**
+ * The pill button.
+ *
+ * `iconWidth`/`iconHeight` default to the truck's 21x15, which is what every
+ * transactional call site wants. A call site with a different glyph must state
+ * its own dimensions rather than have them pinned here: the markup below
+ * hardcodes the box, so rendering an 18x18 shield into 21x15 would stretch it.
+ */
+export function cta(args: {
+  label: string;
+  url: string;
+  iconUrl: string;
+  iconWidth?: number;
+  iconHeight?: number;
+}) {
+  const iconWidth = args.iconWidth || 21;
+  const iconHeight = args.iconHeight || 15;
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0 0">
           <tr>
             <td align="center" bgcolor="${BRAND.button}" style="background-color:${BRAND.button};background-image:linear-gradient(180deg,${BRAND.panel} 0%,${BRAND.button} 100%);border-radius:999px">
               <a href="${escapeHtml(args.url)}" style="display:inline-block;padding:15px 28px;font-family:${FONT_SANS};font-size:15px;font-weight:bold;color:#FFFFFF;text-decoration:none;border-radius:999px">
-                <img src="${escapeHtml(args.iconUrl)}" width="21" height="15" alt="" style="vertical-align:-3px;padding-right:11px;border-right:1px solid rgba(255,255,255,.34);margin-right:12px" />${escapeHtml(args.label)}&nbsp; <span style="padding-left:2px">&#8594;</span>
+                <img src="${escapeHtml(args.iconUrl)}" width="${iconWidth}" height="${iconHeight}" alt="" style="vertical-align:-3px;padding-right:11px;border-right:1px solid rgba(255,255,255,.34);margin-right:12px" />${escapeHtml(args.label)}&nbsp; <span style="padding-left:2px">&#8594;</span>
               </a>
             </td>
           </tr>

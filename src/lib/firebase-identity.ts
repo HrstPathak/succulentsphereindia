@@ -17,5 +17,4 @@ async function identityRequest(endpoint: string, body: Record<string, unknown>) 
 
 export function signUpWithPassword(email: string, password: string) { return identityRequest("accounts:signUp", { email, password, returnSecureToken: true }); }
 export function signInWithPassword(email: string, password: string) { return identityRequest("accounts:signInWithPassword", { email, password, returnSecureToken: true }); }
-export function sendPasswordReset(email: string, continueUrl: string) { return identityRequest("accounts:sendOobCode", { requestType: "PASSWORD_RESET", email, continueUrl, canHandleCodeInApp: false }); }
 export function confirmPasswordReset(oobCode: string, newPassword: string) { return identityRequest("accounts:resetPassword", { oobCode, newPassword }); }
