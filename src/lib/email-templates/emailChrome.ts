@@ -251,33 +251,96 @@ export function disc(iconUrl: string, width: number, height: number) {
 /**
  * Full-bleed trust strip.
  *
- * This is the supplied EmailFooter artwork rendered as one image rather than
- * four inline glyphs plus captions. One hosted file instead of four is both
- * lighter to send and immune to a client that drops a subset of the <img> tags
- * — an earlier build lost every badge in exactly that way.
+ * This was the supplied EmailFooter artwork rendered as one image, and it is
+ * now three live claims. The change was forced by two faults in that artwork,
+ * both of which were already documented on the dark band below (see
+ * brandFooter) and both of which this block had to not inherit:
  *
- * The strip carries its own cream background, so the row is painted the same
- * cream (`BRAND.trustCream`) to hide any rounding at the image edge, and the
- * image spans the full panel with no side padding. The alt text carries the
- * badge wording for blocked-image and screen-reader users.
+ *   1. It printed "SAFE & SECURE DELIVERY" twice. The truck and the shield were
+ *      both captioned with the same line, so two of the four columns said the
+ *      same thing while the plain-text part of the same email said only three
+ *      claims — the image and the text contradicted each other.
+ *   2. Its captions are baked at a 0.30x reduction. Scaled into a 375px
+ *      viewport they land near 5px and are unreadable on a phone. The old
+ *      markup worked around this with a media query that swapped the image for
+ *      a text twin, which left the desktop and phone versions as two
+ *      hand-maintained copies of the same three claims.
+ *
+ * Live text fixes both at once: the captions cannot duplicate, cannot be
+ * re-scaled into illegibility, and the rendered claims are generated from one
+ * TRUST_CLAIMS table, so the strip and the plain-text part cannot drift apart.
+ *
+ * The tradeoff the single-image design bought — one hosted URL instead of
+ * three, and immunity to a client that drops a subset of <img> tags — is
+ * weaker than it looks. A blocked strip cost all three captions; here a dropped
+ * glyph costs only the glyph, because every claim keeps its caption as text.
+ * That is the same structure brandFooter() already ships in the welcome email.
+ *
+ * The columns use the same fixed-width geometry as that band: the dividers sit
+ * in their own 2% columns and the claims share the rest, so the widest caption
+ * cannot set the width for the others and unbalance the row.
+ *
+ * Glyph widths are per-claim because the set is deliberately mixed: the truck
+ * is a wide 21x15 mark while the leaf and sprout are 17x17 and 18x18, and
+ * pinning them all to one square would distort the truck.
  */
+const TRUST_CLAIMS = [
+  { label: "Carefully Packed", icon: "icon-leaf.png", w: 17, h: 17 },
+  { label: "Safe & Secure Delivery", icon: "icon-truck.png", w: 21, h: 15 },
+  { label: "Bringing Nature Closer", icon: "icon-sprout.png", w: 18, h: 18 },
+];
+
 export function trustStrip(args: { base: string }) {
+  // 3 claims x 32% + 2 dividers x 2% = 100%.
+  const claimWidth = 32;
+  const cells = TRUST_CLAIMS.map((claim, index) => {
+    const divider =
+      index === 0
+        ? ""
+        : `<td width="2%" valign="top" style="width:2%;font-size:0;line-height:0">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+              <td align="center" valign="top" height="40" style="height:40px;font-size:0;line-height:0">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="1" align="center"><tr>
+                  <td width="1" height="40" bgcolor="${BRAND.hairline}" style="width:1px;height:40px;background:${BRAND.hairline};font-size:0;line-height:0">&nbsp;</td>
+                </tr></table>
+              </td>
+            </tr></table>
+          </td>`;
+    return `${divider}<td width="${claimWidth}%" valign="top" align="center" style="width:${claimWidth}%;padding:0 4px">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+              <td align="center" style="padding:0 0 9px;font-size:0;line-height:0">
+                <img src="${escapeHtml(assetUrl(args.base, claim.icon))}" width="${claim.w}" height="${claim.h}" alt="" style="display:block;width:${claim.w}px;height:${claim.h}px;border:0;outline:none;text-decoration:none" />
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="font-family:${FONT_SANS};font-size:10px;line-height:1.5;letter-spacing:0.6px;font-weight:bold;color:${BRAND.panelLight}">${escapeHtml(claim.label.toUpperCase())}</td>
+            </tr></table>
+          </td>`;
+  }).join("\n                ");
+
   return `<tr>
             <td class="ss-trust" width="${PANEL_WIDTH}" bgcolor="${BRAND.trustCream}" style="width:100%;padding:0;background:${BRAND.trustCream}">
-              <!-- DESKTOP: the supplied artwork, full-bleed. -->
-              <div class="ss-trust-art" style="display:block;font-size:0;line-height:0">
-                <img src="${escapeHtml(assetUrl(args.base, "footer-email.jpg"))}" width="${PANEL_WIDTH}" height="116" alt="Carefully packed, safe and secure delivery, bringing nature closer" style="display:block;width:100%;max-width:${PANEL_WIDTH}px;height:auto;border:0;outline:none;text-decoration:none" />
-              </div>
-              <!-- PHONE: the same three claims as live text. The artwork is
-                   drawn for a 620px panel, so scaled into a 375px viewport its
-                   captions land near 5px and are unreadable. Real text cannot
-                   404, cannot be re-scaled into illegibility, and needs no
-                   icon files. -->
-              <div class="ss-trust-text" style="display:none;padding:20px 22px;font-family:${FONT_SANS};font-size:10px;letter-spacing:1.6px;line-height:2.2;color:${BRAND.panelLight};font-weight:bold;text-align:center">
-                CAREFULLY PACKED &nbsp;&bull;&nbsp; SAFE &amp; SECURE DELIVERY &nbsp;&bull;&nbsp; BRINGING NATURE CLOSER
-              </div>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="table-layout:fixed"><tr>
+                <td style="padding:22px 18px 20px">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="table-layout:fixed"><tr>
+                ${cells}
+                  </tr></table>
+                </td>
+              </tr></table>
             </td>
           </tr>`;
+}
+
+/**
+ * The same claims as the strip, as one plain-text line.
+ *
+ * Derived from TRUST_CLAIMS rather than typed out, so the strip and the text
+ * part of the same email can never disagree about what the store promises —
+ * which is exactly how the shipped artwork came to print one claim twice while
+ * the text beside it listed three.
+ */
+export function trustClaimsLine() {
+  return TRUST_CLAIMS.map((claim) => claim.label.toUpperCase()).join("  |  ");
 }
 
 export function signature(args: { base: string }) {

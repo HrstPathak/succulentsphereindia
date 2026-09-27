@@ -63,6 +63,7 @@ import {
   rule,
   signature,
   trustStrip,
+  trustClaimsLine,
   PANEL_WIDTH,
 } from "./emailChrome";
 
@@ -247,9 +248,6 @@ export function buildOrderStatusEmail(input: OrderStatusEmailInput): OrderStatus
       "           the gradient rather than the succulent box. */",
       "        .ss-hero { background-position:0% center !important; }",
       "        .ss-hero-copy { display:block !important; width:100% !important; max-width:100% !important; }",
-      "        /* Swap the trust artwork for its text twin — see trustStrip(). */",
-      "        .ss-trust-art { display:none !important; }",
-      "        .ss-trust-text { display:block !important; }",
     ].join("\n"),
     preheaderHtml: `Order #${escapeHtml(orderNumber)} ${escapeHtml(copy.preheader)} ${PREHEADER_PAD}`,
     bodyHtml: `      ${masthead()}
@@ -338,7 +336,7 @@ function buildPlainText(input: OrderStatusEmailInput, copy: StatusCopy): string 
     `   ${ctaUrl}`,
     "",
     thin,
-    "CAREFULLY PACKED  |  SAFE & SECURE DELIVERY  |  BRINGING NATURE CLOSER",
+    trustClaimsLine(),
     thin,
     "",
     "Questions? Reply to this email and our plant team will help.",

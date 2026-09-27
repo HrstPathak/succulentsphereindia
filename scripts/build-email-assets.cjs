@@ -22,20 +22,24 @@
  *   hero-confirmation.jpg              1240x600 JPEG  full-bleed confirmation
  *                                                 panel background (cream veil
  *                                                 baked in)
- *   footer-email.jpg                   1240x231 JPEG  full-bleed trust strip
  *   icon-truck.png / icon-chat.png     2x CTA and support glyphs
  *   icon-truck-white.png               2x CTA glyph, recoloured for the button
  *   icon-user.png / icon-card.png      2x info-card glyphs
- *   icon-leaf.png                      2x footer leaf mark
+ *   icon-leaf.png / icon-sprout.png    2x trust-strip plant glyphs
  *   logo-mark.png                      2x circular succulent masthead mark
+ *
+ * The trust strip is no longer an exported image. It was the supplied
+ * EmailFooter artwork cropped to a JPEG, but that artwork printed one of its
+ * claims twice and baked its captions small enough to be unreadable on a
+ * phone, and both faults are unfixable in a picture. The strip is now live
+ * text in trustStrip() (emailChrome.ts), so it needs no asset here.
  *
  * Usage:
  *   node scripts/build-email-assets.cjs
  *   node scripts/build-email-assets.cjs --source path/to/other.webp
  *
- * The source downloads are cached at public/images/email/_source-hero.webp,
- * public/images/email/_source-order-confirmation.webp and
- * public/images/email/_source-footer.png.
+ * The source downloads are cached at public/images/email/_source-hero.webp and
+ * public/images/email/_source-order-confirmation.webp.
  */
 
 const fs = require("node:fs");
@@ -46,13 +50,10 @@ const sharp = require("sharp");
 const ROOT = path.resolve(__dirname, "..");
 const OUT_DIR = path.join(ROOT, "public", "images", "email");
 const SOURCE = path.join(OUT_DIR, "_source-hero.webp");
-const FOOTER_SOURCE = path.join(OUT_DIR, "_source-footer.png");
 const CONFIRMATION_SOURCE = path.join(OUT_DIR, "_source-order-confirmation.webp");
 
 const DEFAULT_SOURCE_URL =
   "https://whitesmoke-cattle-754161.hostingersite.com/sites/images/HomePage/EmailTemplateImage.webp";
-const DEFAULT_FOOTER_SOURCE_URL =
-  "https://whitesmoke-cattle-754161.hostingersite.com/sites/images/HomePage/EmailFooter.png";
 const DEFAULT_CONFIRMATION_SOURCE_URL =
   "https://whitesmoke-cattle-754161.hostingersite.com/sites/images/HomePage/OrderConfirmationImage.webp";
 
@@ -169,10 +170,12 @@ function confirmationVeilSvg(w, h) {
 }
 
 /**
- * The glyphs the shipped templates need. The per-status badge and trust-strip
- * glyphs were dropped when both of those blocks became single images (the hero
- * background and footer-email.jpg), and every extra <img> in an email is another
- * URL that can 404 in someone's inbox.
+ * The glyphs the shipped templates need. The per-status badge was dropped when
+ * that block became a single image (the hero background), and every extra <img>
+ * in an email is another URL that can 404 in someone's inbox. The three
+ * trust-strip glyphs are live rather than baked because the strip's captions
+ * have to be real text — see trustStrip() in emailChrome.ts for why the
+ * supplied footer-email.jpg could not be kept.
  *
  * `vb` is the SVG viewBox the strokes below are authored in. It is stated
  * explicitly for every glyph because writeIcon() scales by
@@ -223,6 +226,22 @@ const ICONS = [
     vb: "0 0 24 24",
     strokes:
       '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+  },
+  {
+    // Trust-strip "bringing nature closer" glyph. The Lucide "sprout" outline.
+    //
+    // The strip's third claim needs its own plant mark: icon-leaf.png already
+    // carries "carefully packed", and reusing it would print the same drawing
+    // twice, which is the very fault this strip was rebuilt to remove. The white
+    // set cannot fill the gap either — the shield and heart are white-only by
+    // design because the strip is cream, and an ink variant that nothing
+    // references is an asset a future change might reach for and get wrong.
+    file: "icon-sprout.png",
+    w: 18,
+    h: 18,
+    vb: "0 0 24 24",
+    strokes:
+      '<path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>',
   },
 ];
 
@@ -361,56 +380,6 @@ async function writeIcon(icon, stroke, strokeWidth, file) {
   process.stdout.write(`${file.padEnd(24)} ${icon.w * 2}x${icon.h * 2} png\n`);
 }
 
-/**
- * Finds the bounding box of the drawn artwork in a flat-background image.
- *
- * sharp's own `trim()` cannot be used here: the supplied strip is not a single
- * exact colour (it carries a faint gradient between #f8f7f3 and #f8f8f3), so
- * trim measures the whole canvas as content and returns it untouched. Sampling
- * the corner and taking everything that differs from it by a tolerance gives a
- * stable box, and keeps the crop correct if the artwork is ever re-exported at
- * a different size.
- *
- * @returns {Promise<{left:number, top:number, width:number, height:number}>}
- */
-async function contentBox(file, tolerance = 10) {
-  const { data, info } = await sharp(file).raw().toBuffer({ resolveWithObject: true });
-  const ch = info.channels;
-  const at = (x, y) => {
-    const i = (y * info.width + x) * ch;
-    return [data[i], data[i + 1], data[i + 2]];
-  };
-  const [br, bg, bb] = at(0, 0);
-
-  let minX = info.width;
-  let minY = info.height;
-  let maxX = -1;
-  let maxY = -1;
-  for (let y = 0; y < info.height; y += 1) {
-    for (let x = 0; x < info.width; x += 1) {
-      const [r, g, b] = at(x, y);
-      if (
-        Math.abs(r - br) > tolerance ||
-        Math.abs(g - bg) > tolerance ||
-        Math.abs(b - bb) > tolerance
-      ) {
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-      }
-    }
-  }
-  if (maxX < 0) throw new Error(`no artwork found in ${file}`);
-
-  return {
-    left: minX,
-    top: minY,
-    width: maxX - minX + 1,
-    height: maxY - minY + 1,
-  };
-}
-
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
@@ -422,10 +391,6 @@ async function main() {
   if (!fs.existsSync(source)) {
     process.stdout.write(`downloading hero source -> ${DEFAULT_SOURCE_URL}\n`);
     await download(DEFAULT_SOURCE_URL, source);
-  }
-  if (!fs.existsSync(FOOTER_SOURCE)) {
-    process.stdout.write(`downloading footer source -> ${DEFAULT_FOOTER_SOURCE_URL}\n`);
-    await download(DEFAULT_FOOTER_SOURCE_URL, FOOTER_SOURCE);
   }
   if (!fs.existsSync(CONFIRMATION_SOURCE)) {
     process.stdout.write(
@@ -450,43 +415,6 @@ async function main() {
     .jpeg({ quality: 80, progressive: true, mozjpeg: true })
     .toFile(path.join(OUT_DIR, "hero-email.jpg"));
   process.stdout.write(`hero-email.jpg            ${heroW}x${heroH} jpeg (scrimmed)\n`);
-
-  // TRUST STRIP. Supplied as a 1600x535 PNG whose artwork only occupies
-  // y145-366 / x111-1540 — the rest is a flat cream field. Shipping it as-is
-  // would add ~50% dead weight to every send, so it is cropped to the art plus
-  // an even margin and emitted as JPEG. JPEG is deliberate: the strip is
-  // mostly one flat cream tone, which mozjpeg compresses to a fraction of the
-  // PNG's size, and the artwork is smooth curves that survive q90 cleanly.
-  //
-  // The margin is the full width of the strip's own side padding plus a little
-  // extra, because the strip is rendered full-bleed: crop any tighter and the
-  // "BRINGING NATURE" caption sits flush against the edge of the panel.
-  const footerW = PANEL_W * 2;
-  const strip = await sharp(FOOTER_SOURCE).metadata();
-  const box = await contentBox(FOOTER_SOURCE);
-  const padX = Math.round(box.width * 0.06);
-  const padY = Math.round(box.height * 0.16);
-  // The offset is clamped first, then the extent is capped against whatever is
-  // left of the canvas — capping the size independently would let the right
-  // or bottom edge run past the image and sharp rejects the whole crop.
-  const left = Math.max(0, box.left - padX);
-  const top = Math.max(0, box.top - padY);
-  const crop = {
-    left,
-    top,
-    width: Math.min(strip.width - left, box.width + padX * 2),
-    height: Math.min(strip.height - top, box.height + padY * 2),
-  };
-  await sharp(FOOTER_SOURCE)
-    .extract(crop)
-    .resize({ width: footerW })
-    .jpeg({ quality: 90, progressive: true, mozjpeg: true })
-    .toFile(path.join(OUT_DIR, "footer-email.jpg"));
-  const footerMeta = await sharp(path.join(OUT_DIR, "footer-email.jpg")).metadata();
-  process.stdout.write(
-    `footer-email.jpg          ${footerMeta.width}x${footerMeta.height} jpeg ` +
-      `(art ${box.width}x${box.height} + margin)\n`,
-  );
 
   for (const icon of ICONS) {
     await writeIcon(icon, INK, 2.2, icon.file);

@@ -59,6 +59,7 @@ import {
   PREHEADER_PAD,
   signature,
   trustStrip,
+  trustClaimsLine,
 } from "./emailChrome";
 
 export type OrderConfirmationItem = {
@@ -160,9 +161,6 @@ const CONFIRMATION_MEDIA_CSS = [
   "        .ss-thumb-img { width:56px !important; height:56px !important; }",
   "        .ss-item-title { font-size:14px !important; overflow-wrap:break-word !important; word-break:break-word !important; }",
   "        .ss-item-total { font-size:13px !important; }",
-  "        /* Swap the trust artwork for its text twin — see trustStrip(). */",
-  "        .ss-trust-art { display:none !important; }",
-  "        .ss-trust-text { display:block !important; }",
 ].join("\n");
 
 /**
@@ -1001,7 +999,7 @@ function buildPlainText(
     `   ${accountUrl}`,
     "",
     thin,
-    "CAREFULLY PACKED  |  SAFE & SECURE DELIVERY  |  BRINGING NATURE CLOSER",
+    trustClaimsLine(),
     thin,
     "",
     "Questions? Reply to this email and our plant team will help.",
