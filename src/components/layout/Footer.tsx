@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { Facebook, Instagram, Mail, Phone, Pin } from "lucide-react";
+import { AtSign, Facebook, Instagram, Mail, MessageCircle, Phone } from "lucide-react";
 import NewsletterSignup from "./NewsletterSignup";
 
 export default function Footer() {
   const supportEmail = "support@succulentsphere.com";
   const supportPhone = "+91 94583 21209";
+  const whatsappHref =
+    "https://wa.me/919458321209?text=Hi%20Succulent%20Sphere,%20I%20need%20help%20regarding%20your%20plants.";
 
   return (
     <footer className="mt-20 bg-[var(--color-bg)] text-[var(--color-text)]" aria-labelledby="footer-heading">
@@ -53,33 +55,42 @@ export default function Footer() {
                 Premium succulents and plant decor for modern homes. Discover indoor plants designed to elevate calm
                 living.
               </p>
-              <div className="mt-5 flex items-center gap-3">
+              <div className="mt-5 flex items-center gap-3" aria-label="Social media links">
                 <a
-                  href="https://instagram.com"
+                  href="https://www.instagram.com/succulentsphere/"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   aria-label="Succulent Sphere on Instagram"
                   className="rounded-xl p-2 transition-colors hover:bg-[rgb(var(--ss-accent-rgb)/0.2)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
                 >
-                  <Instagram size={18} strokeWidth={1.8} />
+                  <Instagram size={18} strokeWidth={1.8} aria-hidden="true" />
                 </a>
                 <a
-                  href="https://pinterest.com"
+                  href="https://www.facebook.com/profile.php?id=61586867373040"
                   target="_blank"
-                  rel="noreferrer"
-                  aria-label="Succulent Sphere on Pinterest"
-                  className="rounded-xl p-2 transition-colors hover:bg-[rgb(var(--ss-accent-rgb)/0.2)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
-                >
-                  <Pin size={18} strokeWidth={1.8} />
-                </a>
-                <a
-                  href="https://facebook.com"
-                  target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   aria-label="Succulent Sphere on Facebook"
                   className="rounded-xl p-2 transition-colors hover:bg-[rgb(var(--ss-accent-rgb)/0.2)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
                 >
-                  <Facebook size={18} strokeWidth={1.8} />
+                  <Facebook size={18} strokeWidth={1.8} aria-hidden="true" />
+                </a>
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Chat with Succulent Sphere on WhatsApp"
+                  className="rounded-xl p-2 transition-colors hover:bg-[rgb(var(--ss-accent-rgb)/0.2)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
+                >
+                  <MessageCircle size={18} strokeWidth={1.8} aria-hidden="true" />
+                </a>
+                <a
+                  href="https://www.threads.net/@succulentsphere"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Succulent Sphere on Threads"
+                  className="rounded-xl p-2 transition-colors hover:bg-[rgb(var(--ss-accent-rgb)/0.2)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
+                >
+                  <AtSign size={18} strokeWidth={1.8} aria-hidden="true" />
                 </a>
               </div>
             </div>
