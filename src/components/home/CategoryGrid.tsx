@@ -30,8 +30,10 @@ const categories = [
     img: mediaAsset("sites/images/CategoryComboSection.webp"),
     imgPosition: "50% 35%",
     spanMobile: true,
+    // The "Free Delivery" artwork is printed into this image, and the badge
+    // pill was landing right on top of it. Drop the pill for this card only.
+    hideBadge: true,
     subtitle: "Explore collection",
-    badge: "Featured",
   },
   {
     title: "Cacti Collection",
@@ -89,9 +91,11 @@ export default function CategoryGrid({ excludeHrefs = [], className = "" }: Cate
              href={c.href}
              className={`group relative overflow-hidden rounded-2xl border border-black/5 bg-white/90 shadow-[0_14px_30px_rgba(12,20,14,0.12)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_46px_rgba(12,20,14,0.2)] dark:border-white/10 dark:bg-[#0b1722]/90 ${c.spanMobile ? "col-span-2 md:col-span-1" : ""}`}
            >
-             <div className="absolute left-4 top-4 z-10 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-700 backdrop-blur-sm dark:border-white/10 dark:bg-black/30 dark:text-slate-200">
-              {c.badge ?? "Featured"}
-             </div>
+              {!c.hideBadge && (
+                <div className="absolute left-4 top-4 z-10 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-700 backdrop-blur-sm dark:border-white/10 dark:bg-black/30 dark:text-slate-200">
+                  {c.badge ?? "Featured"}
+                </div>
+              )}
             <div className="relative h-44 md:h-52 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-700">
               <Image
                 src={c.img}
