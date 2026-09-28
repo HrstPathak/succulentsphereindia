@@ -30,7 +30,7 @@ const categories = [
   {
     title: "Cacti Collection",
     href: "/collections/cactus",
-    img: mediaAsset("sites/images/6f121b8fe3-Category_CactusCollection.webp"),
+    img: mediaAsset("sites/images/CategoryCactiCollection.webp"),
     imgPosition: "50% 30%",
     subtitle: "Explore collection",
     badge: "Featured",
