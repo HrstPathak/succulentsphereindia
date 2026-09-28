@@ -15,6 +15,12 @@ const categories = [
     title: "Succulents at ₹39",
     href: "/collections/succulents-under-40",
     img: mediaAsset("sites/images/Category39Collection.webp"),
+    // The "39Rs" price is printed on the left of the artwork. The card image
+    // box is near-square on mobile (2-col grid) while the source is 4:3, so
+    // object-fit:cover crops the sides and sliced the price in half. Anchor to
+    // the left so the price stays whole; the plants on the right are the part
+    // that survives being cropped.
+    imgPosition: "0% 50%",
     subtitle: "Budget-friendly succulent picks under ₹40",
     badge: "Succulents at ₹39",
   },
