@@ -7,7 +7,7 @@ const categories = [
   {
     title: "Succulent Plants",
     href: "/collections/succulents",
-    img: mediaAsset("sites/images/9379385ad4-Category_SucculentPlant.png"),
+    img: mediaAsset("sites/images/CategorySucculentCollection.webp"),
     subtitle: "Explore collection",
     badge: "Featured",
   },
