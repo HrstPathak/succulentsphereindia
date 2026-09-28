@@ -21,7 +21,7 @@ const categories = [
   {
     title: "Combo Offer",
     href: "/combo",
-    img: mediaAsset("sites/images/77f60e9fdc-Succulent_combo_set_with_free_delivery.png"),
+    img: mediaAsset("sites/images/CategoryComboSection.webp"),
     imgPosition: "50% 35%",
     spanMobile: true,
     subtitle: "Explore collection",
