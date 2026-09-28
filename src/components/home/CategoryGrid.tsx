@@ -14,7 +14,7 @@ const categories = [
   {
     title: "Succulents at ₹39",
     href: "/collections/succulents-under-40",
-    img: "/images/succulent-collection.webp",
+    img: mediaAsset("sites/images/Category39Collection.webp"),
     subtitle: "Budget-friendly succulent picks under ₹40",
     badge: "Succulents at ₹39",
   },
