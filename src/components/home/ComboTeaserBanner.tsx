@@ -11,105 +11,81 @@ const COMBO_BANNER_IMAGE = mediaAsset("sites/images/271c9484fa-Combo_Builder.png
 /**
  * Decorative plant glyphs for the "Pick any 4" orbs.
  *
- * These are hand-drawn inline SVG rather than lucide-react icons: the pinned
- * version (0.408) has no succulent or cactus glyph - its closest options are
- * `Sprout`/`Leaf`, which read as generic seedlings rather than the rosettes and
- * spiky archetypes this shop actually sells. Stroke-based to match lucide's
- * line style, so they sit on the cream orb gradient without looking pasted on.
+ * Hand-drawn inline SVG rather than lucide-react icons: the pinned version
+ * (0.408) has no succulent or cactus glyph, and its Sprout/Leaf read as generic
+ * seedlings rather than the plants this shop actually sells.
+ *
+ * All four are solid silhouettes. An outlined treatment turned to mush at 28px
+ * - overlapping petal outlines read as speckle rather than as a plant - so each
+ * glyph is a single filled shape that stays legible inside a 28px orb.
  */
 
-function RosetteGlyph() {
-  // Echeveria-style top view: two offset rings of petals around a centre pip.
+function SucculentGlyph() {
+  // A potted succulent - three upright leaves in a small pot. This is the one
+  // glyph that cannot be confused with the flower, cactus or rosette beside it.
+  const leaf = "M12 15.8C10.2 13.2 10.3 8.8 12 5.6c1.7 3.2 1.8 7.6 0 10.2Z";
   return (
     <>
-      {[...Array(8)].map((_, i) => (
-        <ellipse key={`outer-${i}`} cx="12" cy="7.4" rx="2.6" ry="4.6" transform={`rotate(${45 * i} 12 12)`} />
+      <path d={leaf} transform="rotate(-34 12 15.8)" />
+      <path d={leaf} transform="rotate(34 12 15.8)" />
+      <path d={leaf} />
+      <rect x="5.8" y="14.4" width="12.4" height="2.4" rx="1.2" />
+      <path d="M7.2 16.8 8.6 21.4a1 1 0 0 0 1 .8h4.8a1 1 0 0 0 1-.8L16.8 16.8Z" />
+    </>
+  );
+}
+
+function FlowerGlyph() {
+  // Five rounded petals around a solid centre.
+  return (
+    <>
+      {[...Array(5)].map((_, i) => (
+        <ellipse key={i} cx="12" cy="6.2" rx="3.3" ry="3.9" transform={`rotate(${72 * i} 12 12)`} />
       ))}
+      <circle cx="12" cy="12" r="2.9" />
+    </>
+  );
+}
+
+function CactusGlyph() {
+  // Three rounded stems joined at the base. Traced as a single outline this
+  // silhouette came out as thin sticks with staircase joints, and elbowed arms
+  // read as a bracket glyph. Three equal prongs on a shared base are chunky and
+  // unambiguous, which is what actually survives a 28px orb.
+  const stem = 4;
+  return (
+    <>
+      <rect x="4.5" y="8" width={stem} height="13" rx={stem / 2} />
+      <rect x="15.5" y="8" width={stem} height="13" rx={stem / 2} />
+      <rect x="10" y="3" width={stem} height="18" rx={stem / 2} />
+      <rect x="4.5" y="17" width="15" height={stem} rx={stem / 2} />
+    </>
+  );
+}
+
+function EcheveriaGlyph() {
+  // Top-down rosette of six broad paddle leaves. The leaves are wide enough to
+  // nearly meet, which is what makes this read as a chunky succulent rather than
+  // as a second flower - slim leaves just look like the flower glyph again.
+  const leaf = "M12 12.2C8.8 10.8 8.4 6 10.9 3.5c.7-.7 1.5-.7 2.2 0 2.5 2.5 2.1 7.3-1.1 8.7Z";
+  return (
+    <>
       {[...Array(6)].map((_, i) => (
-        <ellipse key={`inner-${i}`} cx="12" cy="9" rx="2.1" ry="3" transform={`rotate(${60 * i + 24} 12 12)`} />
+        <path key={i} d={leaf} transform={`rotate(${60 * i} 12 12)`} />
       ))}
-      <circle cx="12" cy="12" r="1.35" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.7" />
     </>
   );
 }
 
-function AgaveGlyph() {
-  // Aloe/agave: sharp upright spikes fanning out from a shared base.
-  return (
-    <>
-      {[...Array(7)].map((_, i) => (
-        <path key={i} d="M10.7 3.8 L12 12.2 L13.3 3.8" transform={`rotate(${(360 / 7) * i} 12 12)`} />
-      ))}
-    </>
-  );
-}
+const GLYPHS = [SucculentGlyph, FlowerGlyph, CactusGlyph, EcheveriaGlyph];
 
-function BarrelGlyph() {
-  // Barrel cactus: ribbed body with spines radiating the whole way round. The
-  // full ring of spines is what stops it reading as a plain striped ball.
-  const cx = 12;
-  const cy = 12.6;
-  const rx = 6.2;
-  const ry = 6.8;
-  const spine = 8.5;
-
-  // Radial spines, one every 30 degrees.
-  const spines = [...Array(12)].map((_, i) => {
-    const a = (Math.PI * 2 * i) / 12;
-    const [cos, sin] = [Math.cos(a), Math.sin(a)];
-    return `M${(cx + ry * cos).toFixed(2)} ${(cy + ry * sin).toFixed(2)}L${(cx + spine * cos).toFixed(2)} ${(cy + spine * sin).toFixed(2)}`;
-  });
-
-  // Ribs bowed outward, each trimmed to land exactly on the body ellipse.
-  const ribs = [...Array(5)].map((_, i) => {
-    const x = 7.8 + i * 2.1;
-    const half = ry * Math.sqrt(Math.max(0, 1 - ((x - cx) / rx) ** 2));
-    const bow = x < cx ? -0.7 : x > cx ? 0.7 : 0;
-    return `M${x} ${(cy - half).toFixed(2)}Q${(x + bow).toFixed(2)} ${cy} ${x} ${(cy + half).toFixed(2)}`;
-  });
-
-  return (
-    <>
-      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} />
-      <path d={ribs.join("")} />
-      <path d={spines.join("")} />
-    </>
-  );
-}
-
-const PEARLS = [
-  [5.4, 7.2],
-  [7.6, 9.8],
-  [10.4, 11.9],
-  [13.6, 12.7],
-  [16.8, 12],
-  [19.4, 9.9],
-];
-
-function PearlsGlyph() {
-  // String of pearls: a trailing stem with beads that shrink toward the tip.
-  return (
-    <>
-      <path d="M5.4 7.2 L7.6 9.8 L10.4 11.9 L13.6 12.7 L16.8 12 L19.4 9.9" />
-      {PEARLS.map(([cx, cy], i) => (
-        <circle key={i} cx={cx} cy={cy} r={1.95 - i * 0.12} fill="currentColor" stroke="none" />
-      ))}
-    </>
-  );
-}
-
-const GLYPHS = [RosetteGlyph, AgaveGlyph, BarrelGlyph, PearlsGlyph];
-
-function SucculentGlyph({ index, className }: { index: number; className?: string }) {
+function PlantGlyph({ index, className }: { index: number; className?: string }) {
   const Glyph = GLYPHS[index % GLYPHS.length];
   return (
     <svg
       viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill="currentColor"
       className={className}
       aria-hidden="true"
       focusable="false"
@@ -169,7 +145,7 @@ export default function ComboTeaserBanner() {
                 className="combo-pick-orb grid h-14 w-14 place-items-center rounded-full border border-white/95 bg-[radial-gradient(circle_at_35%_30%,#ffffff,#f1e7d9_55%,#e2d6c6_100%)] shadow-[0_10px_20px_rgba(15,24,20,0.16)]"
                 style={{ animationDelay: `${index * 160}ms` }}
               >
-                <SucculentGlyph index={index} className="h-7 w-7 text-emerald-800" />
+                <PlantGlyph index={index} className="h-7 w-7 text-emerald-800" />
               </div>
             ))}
           </div>
