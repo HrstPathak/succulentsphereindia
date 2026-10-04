@@ -1,6 +1,5 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 const items = [
@@ -38,7 +37,6 @@ export default function Testimonials() {
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
   const cursorRef = useRef(0);
 
-  const [active, setActive] = useState(0);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -71,9 +69,8 @@ export default function Testimonials() {
       if (!target) return;
       rail.scrollTo({ left: target.offsetLeft, behavior: smooth ? "smooth" : "auto" });
       cursorRef.current = clamped;
-      setActive(clamped % total);
     },
-    [total],
+    [],
   );
 
   const advance = useCallback(
@@ -117,9 +114,6 @@ export default function Testimonials() {
     const id = window.setInterval(() => advance(1), AUTO_SCROLL_MS);
     return () => window.clearInterval(id);
   }, [paused, total, advance]);
-
-  const arrowClass =
-    "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-[var(--color-text)] shadow-[0_8px_20px_rgba(52,78,65,0.10)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(52,78,65,0.16)] dark:border-gray-700 dark:bg-gray-900";
 
   return (
     <section
@@ -183,33 +177,6 @@ export default function Testimonials() {
             );
           })}
         </div>
-      </div>
-
-      {/* Controls live outside the rail so the loop copies never duplicate them
-          and the buttons stay out of the scroll area. */}
-      <div className="mt-8 flex items-center justify-center gap-4">
-        <button type="button" onClick={() => advance(-1)} aria-label="Previous review" className={arrowClass}>
-          <ChevronLeft size={18} />
-        </button>
-
-        <div className="flex items-center gap-2">
-          {items.map((item, index) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => scrollToCursor(total + index, true)}
-              aria-label={`Show review ${index + 1} of ${total}`}
-              aria-current={index === active}
-              className={`h-2 rounded-full transition-all ${
-                index === active ? "w-6 bg-[var(--color-text)]" : "w-2 bg-gray-300 dark:bg-gray-600"
-              }`}
-            />
-          ))}
-        </div>
-
-        <button type="button" onClick={() => advance(1)} aria-label="Next review" className={arrowClass}>
-          <ChevronRight size={18} />
-        </button>
       </div>
     </section>
   );
