@@ -37,7 +37,9 @@ const COLLECTIONS: CollectionCard[] = [
     id: "succulents",
     name: "Succulent Plants",
     description: "Handpicked premium succulents to enrich your home and workspace.",
-    image: "/images/succulent-collection.webp",
+    // Same artwork the home page CategoryGrid uses for its "Succulent Plants"
+    // card, so both pages show identical imagery for this collection.
+    image: mediaAsset("sites/images/CategorySucculentCollection.webp"),
     color: "#577a66",
     vibe: "Calm and sculptural",
   },
@@ -74,10 +76,16 @@ const COLLECTIONS: CollectionCard[] = [
     id: "cacti",
     name: "Cacti Collection",
     description: "Unique desert cacti with stunning shapes and colors.",
-    image: "/images/Cactus-Collection.webp",
+    // Same artwork + crop anchor as the home page CategoryGrid cacti card, so
+    // both pages show identical imagery for this collection.
+    image: mediaAsset("sites/images/CategoryCactiCollection.webp"),
     color: "#8fa366",
     vibe: "Bold and architectural",
     href: "/collections/cactus",
+    // Mirrors the home page: this card box is taller than the 3:2 source, so a
+    // centered cover-crop trims the sides and clips the tall column cactus.
+    // Bias upward to keep the full plant in frame.
+    imgPosition: "50% 30%",
   },
   {
     id: "beginner-friendly",
