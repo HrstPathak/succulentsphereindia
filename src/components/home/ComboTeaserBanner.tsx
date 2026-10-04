@@ -8,6 +8,117 @@ import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
 const COMBO_BANNER_IMAGE = mediaAsset("sites/images/271c9484fa-Combo_Builder.png");
 
+/**
+ * Decorative plant glyphs for the "Pick any 4" orbs.
+ *
+ * These are hand-drawn inline SVG rather than lucide-react icons: the pinned
+ * version (0.408) has no succulent or cactus glyph - its closest options are
+ * `Sprout`/`Leaf`, which read as generic seedlings rather than the rosettes and
+ * spiky archetypes this shop actually sells. Stroke-based to match lucide's
+ * line style, so they sit on the cream orb gradient without looking pasted on.
+ */
+
+function RosetteGlyph() {
+  // Echeveria-style top view: two offset rings of petals around a centre pip.
+  return (
+    <>
+      {[...Array(8)].map((_, i) => (
+        <ellipse key={`outer-${i}`} cx="12" cy="7.4" rx="2.6" ry="4.6" transform={`rotate(${45 * i} 12 12)`} />
+      ))}
+      {[...Array(6)].map((_, i) => (
+        <ellipse key={`inner-${i}`} cx="12" cy="9" rx="2.1" ry="3" transform={`rotate(${60 * i + 24} 12 12)`} />
+      ))}
+      <circle cx="12" cy="12" r="1.35" fill="currentColor" stroke="none" />
+    </>
+  );
+}
+
+function AgaveGlyph() {
+  // Aloe/agave: sharp upright spikes fanning out from a shared base.
+  return (
+    <>
+      {[...Array(7)].map((_, i) => (
+        <path key={i} d="M10.7 3.8 L12 12.2 L13.3 3.8" transform={`rotate(${(360 / 7) * i} 12 12)`} />
+      ))}
+    </>
+  );
+}
+
+function BarrelGlyph() {
+  // Barrel cactus: ribbed body with spines radiating the whole way round. The
+  // full ring of spines is what stops it reading as a plain striped ball.
+  const cx = 12;
+  const cy = 12.6;
+  const rx = 6.2;
+  const ry = 6.8;
+  const spine = 8.5;
+
+  // Radial spines, one every 30 degrees.
+  const spines = [...Array(12)].map((_, i) => {
+    const a = (Math.PI * 2 * i) / 12;
+    const [cos, sin] = [Math.cos(a), Math.sin(a)];
+    return `M${(cx + ry * cos).toFixed(2)} ${(cy + ry * sin).toFixed(2)}L${(cx + spine * cos).toFixed(2)} ${(cy + spine * sin).toFixed(2)}`;
+  });
+
+  // Ribs bowed outward, each trimmed to land exactly on the body ellipse.
+  const ribs = [...Array(5)].map((_, i) => {
+    const x = 7.8 + i * 2.1;
+    const half = ry * Math.sqrt(Math.max(0, 1 - ((x - cx) / rx) ** 2));
+    const bow = x < cx ? -0.7 : x > cx ? 0.7 : 0;
+    return `M${x} ${(cy - half).toFixed(2)}Q${(x + bow).toFixed(2)} ${cy} ${x} ${(cy + half).toFixed(2)}`;
+  });
+
+  return (
+    <>
+      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} />
+      <path d={ribs.join("")} />
+      <path d={spines.join("")} />
+    </>
+  );
+}
+
+const PEARLS = [
+  [5.4, 7.2],
+  [7.6, 9.8],
+  [10.4, 11.9],
+  [13.6, 12.7],
+  [16.8, 12],
+  [19.4, 9.9],
+];
+
+function PearlsGlyph() {
+  // String of pearls: a trailing stem with beads that shrink toward the tip.
+  return (
+    <>
+      <path d="M5.4 7.2 L7.6 9.8 L10.4 11.9 L13.6 12.7 L16.8 12 L19.4 9.9" />
+      {PEARLS.map(([cx, cy], i) => (
+        <circle key={i} cx={cx} cy={cy} r={1.95 - i * 0.12} fill="currentColor" stroke="none" />
+      ))}
+    </>
+  );
+}
+
+const GLYPHS = [RosetteGlyph, AgaveGlyph, BarrelGlyph, PearlsGlyph];
+
+function SucculentGlyph({ index, className }: { index: number; className?: string }) {
+  const Glyph = GLYPHS[index % GLYPHS.length];
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <Glyph />
+    </svg>
+  );
+}
+
 export default function ComboTeaserBanner() {
   return (
     <div className="relative overflow-hidden rounded-[36px] border border-white/80 bg-[radial-gradient(120%_120%_at_10%_0%,#fff8ef_0%,#f6f1e6_42%,#e8efe8_100%)] px-6 py-12 text-[#2a2f2b] shadow-[0_30px_70px_rgba(35,40,34,0.18)] md:px-12 lg:px-16">
@@ -55,9 +166,11 @@ export default function ComboTeaserBanner() {
             {Array.from({ length: 4 }).map((_, index) => (
               <div
                 key={`combo-circle-${index}`}
-                className="combo-pick-orb h-14 w-14 rounded-full border border-white/95 bg-[radial-gradient(circle_at_35%_30%,#ffffff,#f1e7d9_55%,#e2d6c6_100%)] shadow-[0_10px_20px_rgba(15,24,20,0.16)]"
+                className="combo-pick-orb grid h-14 w-14 place-items-center rounded-full border border-white/95 bg-[radial-gradient(circle_at_35%_30%,#ffffff,#f1e7d9_55%,#e2d6c6_100%)] shadow-[0_10px_20px_rgba(15,24,20,0.16)]"
                 style={{ animationDelay: `${index * 160}ms` }}
-              />
+              >
+                <SucculentGlyph index={index} className="h-7 w-7 text-emerald-800" />
+              </div>
             ))}
           </div>
           <div className="mt-4 text-xs text-emerald-900/60">Curated, packed, and delivered with care.</div>
