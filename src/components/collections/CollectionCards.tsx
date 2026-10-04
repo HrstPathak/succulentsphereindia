@@ -13,7 +13,25 @@ type CollectionItem = {
   color: string;
   vibe: string;
   href?: string;
+  /** object-position anchor so cropped artwork keeps its printed details. */
+  imgPosition?: string;
+  /**
+   * Drop the coloured vibe pill. Use when the pill would overlap text that is
+   * printed into the artwork itself.
+   */
+  hideVibe?: boolean;
 };
+
+// Only collections backed by a real listing route are linked; anything else
+// renders as an inert "Coming Soon" button.
+const LIVE_COLLECTION_IDS = new Set([
+  "succulents",
+  "succulents-under-40",
+  "combo",
+  "cacti",
+  "beginner-friendly",
+  "pots",
+]);
 
 export default function CollectionCards({ collections }: { collections: CollectionItem[] }) {
   function handleComingSoonClick() {
@@ -23,11 +41,7 @@ export default function CollectionCards({ collections }: { collections: Collecti
   return (
     <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
       {collections.map((collection, idx) => {
-        const isLive =
-          collection.id === "succulents" ||
-          collection.id === "cacti" ||
-          collection.id === "beginner-friendly" ||
-          collection.id === "pots";
+        const isLive = LIVE_COLLECTION_IDS.has(collection.id);
         const collectionHref = collection.href || `/collections/${collection.id}`;
         const cardClassName =
           "group relative overflow-hidden rounded-2xl border border-black/5 bg-white shadow-[0_14px_28px_rgba(9,20,14,0.12)] transition duration-500 hover:-translate-y-1 hover:shadow-[0_24px_44px_rgba(9,20,14,0.18)] dark:border-white/10 dark:bg-[#0b1722] dark:shadow-[0_14px_28px_rgba(0,0,0,0.5)]";
@@ -40,15 +54,18 @@ export default function CollectionCards({ collections }: { collections: Collecti
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 20vw"
               unoptimized={shouldBypassImageOptimization(collection.image)}
-              className="object-cover transition-transform duration-700 group-hover:scale-110"
+              style={{ objectFit: "cover", objectPosition: collection.imgPosition ?? "center" }}
+              className="transition-transform duration-700 group-hover:scale-110"
             />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,11,9,0.14)_0%,rgba(7,11,9,0.34)_48%,rgba(7,11,9,0.78)_100%)]" />
-            <div
-              className="absolute left-4 top-4 rounded-full border border-white/40 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-white/90 backdrop-blur"
-              style={{ backgroundColor: `${collection.color}99` }}
-            >
-              {collection.vibe}
-            </div>
+            {!collection.hideVibe && (
+              <div
+                className="absolute left-4 top-4 rounded-full border border-white/40 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-white/90 backdrop-blur"
+                style={{ backgroundColor: `${collection.color}99` }}
+              >
+                {collection.vibe}
+              </div>
+            )}
             {!isLive && (
               <div className="absolute right-4 top-4 rounded-full border border-white/40 bg-black/35 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white backdrop-blur">
                 Coming Soon

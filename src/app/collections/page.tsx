@@ -15,7 +15,24 @@ export const metadata: Metadata = {
   },
 };
 
-const COLLECTIONS = [
+type CollectionCard = {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  color: string;
+  vibe: string;
+  href?: string;
+  /** object-position anchor so cropped artwork keeps its printed details. */
+  imgPosition?: string;
+  /**
+   * Drop the coloured vibe pill. Use when the pill would overlap text that is
+   * printed into the artwork itself.
+   */
+  hideVibe?: boolean;
+};
+
+const COLLECTIONS: CollectionCard[] = [
   {
     id: "succulents",
     name: "Succulent Plants",
@@ -23,6 +40,35 @@ const COLLECTIONS = [
     image: "/images/succulent-collection.webp",
     color: "#577a66",
     vibe: "Calm and sculptural",
+  },
+  {
+    id: "succulents-under-40",
+    name: "39rs Succulent Collection",
+    description: "Budget-friendly succulents priced at ₹39 for desks, gifting, and first plant buys.",
+    image: mediaAsset("sites/images/Category39Collection.webp"),
+    color: "#7a8f5f",
+    vibe: "Budget-friendly and easy",
+    href: "/collections/succulents-under-40",
+    // Mirrors the home page: the "39Rs" price is printed on the left of the
+    // artwork, so anchor left to keep the whole price visible after cropping.
+    imgPosition: "0% 50%",
+  },
+  {
+    id: "combo",
+    name: "Combo Collection",
+    description: "Curated plant combos bundled together for ready-made greenery and extra savings.",
+    image: mediaAsset("sites/images/CategoryComboSection.webp"),
+    color: "#8b6f4e",
+    vibe: "Bundled and value-packed",
+    href: "/combo",
+    // The truck + "Free Delivery" lockup is baked into the top-left of the
+    // 4:3 artwork. A centered cover-crop sliced the "F" and the "D", so anchor
+    // left (like the ₹39 card) and bias upward to keep the whole badge in frame.
+    imgPosition: "0% 35%",
+    // The vibe pill renders at left-4/top-4, which sits on top of the printed
+    // truck graphic. Hide it so "Free Delivery" reads cleanly - same trade-off
+    // the home page already makes with `hideBadge` for this artwork.
+    hideVibe: true,
   },
   {
     id: "cacti",
@@ -49,14 +95,6 @@ const COLLECTIONS = [
     image: "/images/pots-Collection.webp",
     color: "#8e8068",
     vibe: "Minimal and modern",
-  },
-  {
-    id: "gift-collection",
-    name: "Gift Collection",
-    description: "Ready-to-gift plant combos and curated green hampers.",
-    image: "/images/gift-collection.webp",
-    color: "#6f7f66",
-    vibe: "Celebratory and warm",
   },
   {
     id: "air-purifier",
@@ -136,9 +174,9 @@ export default function CollectionsPage() {
             </p>
             <p className="mt-4 text-sm leading-7 text-[rgb(var(--ss-text-rgb)/0.85)] md:text-base">
               Whether you're a first-time plant parent or a seasoned collector, every collection at Succulent Sphere is selected for
-              health, shape, and shelf appeal. From low-maintenance beginner-friendly succulents to bold architectural cacti - each
-              plant is packed for safe doorstep delivery across India. Explore our gifting sets for ready-to-gift green hampers, or
-              shop elegant pots designed specifically for succulent styling.
+              health, shape, and shelf appeal. From budget-friendly succulents at ₹39 and low-maintenance beginner-friendly picks to
+              bold architectural cacti - each plant is packed for safe doorstep delivery across India. Grab a ready-made combo bundle
+              for instant greenery, or shop elegant pots designed specifically for succulent styling.
             </p>
           </div>
 
