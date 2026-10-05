@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { AlertTriangle, Droplets, ShoppingBag, Star, SunMedium } from "lucide-react";
 import QuantitySelector from "./QuantitySelector";
@@ -72,6 +72,11 @@ function extractLightAndWater(product: any) {
 
 export default function ProductInfo({ product, tabsSlot }: { product: any; tabsSlot?: ReactNode }) {
   const [qty, setQty] = useState(1);
+  // Tracks the mobile sticky CTA. Once the reviews section has been scrolled
+  // into view we hide the bar (the reviews are the last thing buyers read), and
+  // bring it straight back the moment they scroll up towards the buy button.
+  const [stickyCtaHidden, setStickyCtaHidden] = useState(false);
+  const reviewsAnchorRef = useRef<HTMLDivElement | null>(null);
   const { addToCart } = useCart();
   const careSignals = useMemo(() => extractLightAndWater(product), [product]);
   const reviewCount = Number(product?.reviewCount || 0);
@@ -104,20 +109,75 @@ export default function ProductInfo({ product, tabsSlot }: { product: any; tabsS
     available: !isOutOfStock,
   };
 
-  // The mobile sticky CTA is always visible now, so keep the floating
-  // widgets (chatbot / WhatsApp) lifted above it on small screens.
+  // The mobile sticky CTA hides itself once the reviews section is reached, so
+  // the floating widgets (chatbot / WhatsApp) only need lifting above it while
+  // it is actually on screen.
   useEffect(() => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
     const media = window.matchMedia("(max-width: 767px)");
     const applyOffset = () => {
-      root.style.setProperty("--sticky-cta-offset", media.matches ? "160px" : "0px");
+      const needsLift = media.matches && !stickyCtaHidden;
+      root.style.setProperty("--sticky-cta-offset", needsLift ? "160px" : "0px");
     };
     applyOffset();
     media.addEventListener("change", applyOffset);
     return () => {
       media.removeEventListener("change", applyOffset);
       root.style.removeProperty("--sticky-cta-offset");
+    };
+  }, [stickyCtaHidden]);
+
+  // Hide the sticky CTA on the way down once the reviews enter the viewport,
+  // and reveal it again on any upward scroll towards the buy button.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const DEAD_ZONE = 4; // px — ignore sub-pixel jitter from momentum scrolling
+    let lastY = window.scrollY;
+    let frame = 0;
+
+    const evaluate = () => {
+      const currentY = window.scrollY;
+      const delta = currentY - lastY;
+      lastY = currentY;
+
+      if (Math.abs(delta) < DEAD_ZONE) return;
+
+      // Any upward scroll reveals the bar again; downward only hides it.
+      if (delta < 0) {
+        setStickyCtaHidden(false);
+        return;
+      }
+
+      const anchor = reviewsAnchorRef.current;
+      if (!anchor) return;
+      // A product without a reviews section renders an empty anchor; keep the
+      // bar pinned in that case rather than hiding it at the end of the page.
+      if (anchor.offsetHeight === 0) return;
+
+      // Reviews count as "reached" once their top edge is inside the lower
+      // quarter of the viewport, so the bar clears before they cover content.
+      const anchorTop = anchor.getBoundingClientRect().top;
+      if (anchorTop <= window.innerHeight * 0.6) {
+        setStickyCtaHidden(true);
+      }
+    };
+
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        evaluate();
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
     };
   }, []);
 
@@ -200,9 +260,20 @@ export default function ProductInfo({ product, tabsSlot }: { product: any; tabsS
         </button>
       </div>
 
-      {/* Mobile sticky CTA — always visible so the buy action stays one tap away */}
-      <div className="fixed bottom-4 left-1/2 z-50 w-[min(92vw,420px)] -translate-x-1/2 md:hidden">
-          <div className="relative overflow-hidden rounded-2xl border border-white/70 bg-[linear-gradient(135deg,#ffffff_0%,#f7f4ed_45%,#eef6f1_100%)] p-3 shadow-[0_28px_70px_rgba(7,20,14,0.45)] ring-1 ring-emerald-200/40 backdrop-blur-xl">
+      {/* Mobile sticky CTA — stays one tap away, but retreats once the reviews
+          section is scrolled into view and returns on the way back up. */}
+      <div
+        className={`fixed bottom-4 left-1/2 z-50 w-[min(92vw,420px)] -translate-x-1/2 transition-[opacity,transform] duration-300 ease-out will-change-[opacity,transform] md:hidden ${
+          stickyCtaHidden
+            ? "pointer-events-none translate-y-6 opacity-0"
+            : "translate-y-0 opacity-100"
+        }`}
+        aria-hidden={stickyCtaHidden}
+      >
+        <div
+          inert={stickyCtaHidden}
+          className="relative overflow-hidden rounded-2xl border border-white/70 bg-[linear-gradient(135deg,#ffffff_0%,#f7f4ed_45%,#eef6f1_100%)] p-3 shadow-[0_28px_70px_rgba(7,20,14,0.45)] ring-1 ring-emerald-200/40 backdrop-blur-xl"
+        >
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(140px_90px_at_12%_0%,rgba(10,143,106,0.22),transparent_60%),radial-gradient(180px_120px_at_100%_0%,rgba(247,231,205,0.55),transparent_60%)]" />
             <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-emerald-200/35 blur-2xl" />
             <div className="pointer-events-none absolute -left-12 bottom-6 h-20 w-20 rounded-full bg-[#f6d7b5]/40 blur-2xl" />
@@ -324,15 +395,19 @@ export default function ProductInfo({ product, tabsSlot }: { product: any; tabsS
         </div>
       </aside>
 
-      {product?.id && product?.handle ? (
-        <ProductReviewsSection
-          productId={String(product.id)}
-          productHandle={String(product.handle)}
-          initialReviews={Array.isArray(product?.reviews) ? product.reviews : []}
-          initialReviewCount={reviewCount}
-          initialRating={ratingValue}
-        />
-      ) : null}
+      {/* Scroll anchor for the mobile sticky CTA — it hides once the reviews
+          section reaches the lower part of the viewport. */}
+      <div ref={reviewsAnchorRef} className="scroll-mt-24">
+        {product?.id && product?.handle ? (
+          <ProductReviewsSection
+            productId={String(product.id)}
+            productHandle={String(product.handle)}
+            initialReviews={Array.isArray(product?.reviews) ? product.reviews : []}
+            initialReviewCount={reviewCount}
+            initialRating={ratingValue}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }
