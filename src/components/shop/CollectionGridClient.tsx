@@ -155,6 +155,12 @@ export default function CollectionGridClient({
   );
 
   const currentPage = parsedQueryState.page;
+  // Read back by `doSearch` when its response lands. Next.js commits the RSC
+  // payload before the history write that updates `?page=`, so there is a window
+  // where a fetch started from the stale page value is still in flight; this ref
+  // lets that response recognise it is obsolete and drop out.
+  const currentPageRef = useRef(currentPage);
+  currentPageRef.current = currentPage;
   const desiredFiltersFromQuery = useMemo(
     () =>
       normalizeCatalogFilters(parsedQueryState.filters, {
@@ -336,6 +342,7 @@ export default function CollectionGridClient({
 
   const doSearch = useCallback(async () => {
     const requestId = ++activeRequestIdRef.current;
+    const requestedPage = currentPage;
     if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
 
     loadingTimerRef.current = setTimeout(() => {
@@ -358,11 +365,17 @@ export default function CollectionGridClient({
         ttlMs: 60_000,
       });
       if (requestId !== activeRequestIdRef.current) return;
+      // App Router commits the RSC payload *before* the history write, so this
+      // query can be issued from a page value the address bar has already moved
+      // past. Dropping it stops a late page-N response from overwriting the
+      // page-(N+1) products the server just rendered.
+      if (requestedPage !== currentPageRef.current) return;
 
       setResolvedTotalPages(Math.max(1, Number(json?.pagination?.totalPages) || 1));
       setDisplayProducts(mapProducts(json.results));
     } catch {
       if (requestId !== activeRequestIdRef.current) return;
+      if (requestedPage !== currentPageRef.current) return;
       setDisplayProducts(normalizedProducts);
       setResolvedTotalPages(Math.max(1, totalPages));
     } finally {
