@@ -317,7 +317,17 @@ export default function CollectionGridClient({
     [desiredFiltersFromQuery, parsedQueryState.sort]
   );
 
+  // `searchParams` gets a fresh identity on every navigation, so
+  // `desiredFiltersFromQuery` is rebuilt even when a page turn left the sort and
+  // the filters untouched. Keying the sync on the serialized value lets those
+  // renders bail out instead of pushing an equal-but-new filters object through
+  // context and re-rendering the whole grid for nothing.
+  const appliedQueryStateKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
+    if (appliedQueryStateKeyRef.current === queryStateKey) return;
+    appliedQueryStateKeyRef.current = queryStateKey;
+
     setQueryStateReady(false);
     setSort(parsedQueryState.sort);
     setFilters(desiredFiltersFromQuery);
