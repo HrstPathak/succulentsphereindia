@@ -1,12 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import SafeProductImage from "@/components/shared/SafeProductImage";
 import { formatCurrency } from "@/lib/currency";
 import { getDiscountPercent } from "@/lib/discount";
-import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
-import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
 export type BestSellerProduct = {
   id: string;
@@ -64,16 +62,11 @@ export default function BestSellerGrid({ products }: { products: BestSellerProdu
             className="bg-white dark:bg-[#0a1420] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:-translate-y-1"
           >
             <div className="relative h-48 md:h-56 bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-700 overflow-hidden group">
-              <Image
+              <SafeProductImage
                 src={p.image || "/assets/product-1.jpg"}
                 alt={p.imageAlt || p.title}
-                fill
-                style={{ objectFit: "cover" }}
                 sizes="(max-width: 768px) 50vw, 25vw"
-                loading="lazy"
-                placeholder="blur"
-                blurDataURL={SHIMMER_BLUR_DATA_URL}
-                unoptimized={shouldBypassImageOptimization(p.image)}
+                style={{ objectFit: "cover" }}
                 className="group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute top-3 right-3 bg-[var(--color-brand)] text-white px-3 py-1 rounded-full text-xs font-semibold ring-2 ring-white/80">

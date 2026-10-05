@@ -115,8 +115,17 @@ export async function handleAdminProductCreate(request: Request) {
     if (!"active,draft,archived,unlisted,sold out".split(",").includes(status)) return NextResponse.json({ error: "Status must be active, draft, archived, unlisted, or sold out." }, { status: 400 });
 const db = getFirebaseDb();
     const productRef = db.collection("products").doc();
-    const gallery = [...new Set([...(list(input.images || input.image), uploadedImage ? [uploadedImage] : []), clean(input.image)].filter(Boolean))];
-    const normalizedImage = gallery[0] || uploadedImage || clean(input.image);
+    // The admin submits `images` already in drag order, so that order is kept and
+    // the primary is simply the first entry. Appending `image` at the end (as
+    // this used to) demoted the chosen main photo to a gallery slot and made an
+    // arbitrary entry the storefront hero. `uploadedImage` is kept as a trailing
+    // safety net so a file-only upload can never end up with an empty gallery.
+    const gallery = [
+      ...new Set(
+        [clean(input.image), ...list(input.images || input.image), uploadedImage].filter(Boolean),
+      ),
+    ];
+    const normalizedImage = gallery[0] || clean(input.image);
     const productTags = list(input.tags).slice(0, 100);
     const productData = {
       id: productRef.id,

@@ -10,10 +10,10 @@ import { showSuccessToast } from "../../lib/toast";
 import WishlistButton from "../wishlist/WishlistButton";
 import { FREE_SHIPPING_TAGS } from "@/lib/pricing";
 import { resolveProductImageAlt } from "@/lib/imageAlt";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import SafeProductImage from "@/components/shared/SafeProductImage";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 import PriceWithDiscount from "@/components/shared/PriceWithDiscount";
 import { getDiscountPercent } from "@/lib/discount";
-import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
 
 export default function ProductCard({
   product,
@@ -130,16 +130,11 @@ export default function ProductCard({
           className="relative w-full overflow-hidden bg-[radial-gradient(circle_at_25%_22%,rgba(163,177,138,0.28),transparent_50%),linear-gradient(160deg,#f8f4ef_0%,#eee4d8_100%)] dark:bg-[radial-gradient(circle_at_25%_22%,rgba(143,191,148,0.18),transparent_50%),linear-gradient(160deg,#0d1a24_0%,#0a141d_100%)]"
           style={{ paddingTop: "100%" }}
         >
-          <Image
+          <SafeProductImage
             src={productImage}
             alt={resolveProductImageAlt((product as { imageAlt?: string }).imageAlt)}
-            fill
             style={{ objectFit: "cover" }}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            loading="lazy"
-            placeholder="blur"
-            blurDataURL={SHIMMER_BLUR_DATA_URL}
-            unoptimized={shouldBypassImageOptimization(productImage)}
             className="transition-transform duration-500 md:group-hover:scale-110"
           />
 

@@ -23,6 +23,8 @@ import {
   X,
 } from "lucide-react";
 import AdminTestOrderModal from "./AdminTestOrderModal";
+import ImageOrderEditor from "./ImageOrderEditor";
+import CollectionPicker from "./CollectionPicker";
 import AdminBlogSection from "./AdminBlogSection";
 import AdminAutomationSection from "./AdminAutomationSection";
 import ErrorBoundary from "./ErrorBoundary";
@@ -154,16 +156,6 @@ const syncPrimaryImage = (images: string[], fallback = "") => {
   };
 };
 
-const moveGalleryItem = (items: string[], fromIndex: number, toIndex: number) => {
-  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= items.length || toIndex >= items.length) {
-    return items;
-  }
-  const nextItems = [...items];
-  const [moved] = nextItems.splice(fromIndex, 1);
-  nextItems.splice(toIndex, 0, moved);
-  return nextItems;
-};
-
 const tagSuggestions = [
   "best seller",
   "featured",
@@ -238,6 +230,13 @@ export default function AdminDashboard({
   const productTagOptions = useMemo(() => {
     const createdTags = (rows.products || []).flatMap((product) => product.tags || []);
     return [...new Set([...tagSuggestions, ...createdTags.map((tag) => tag.trim()).filter(Boolean)])].sort((left, right) => left.localeCompare(right));
+  }, [rows.products]);
+
+  // Collections already in use across the catalog, so the picker can offer real
+  // choices instead of making the admin retype (and misspell) a handle.
+  const collectionOptions = useMemo(() => {
+    const created = (rows.products || []).flatMap((product) => product.collections || []);
+    return [...new Set(created.map((entry) => String(entry).trim()).filter(Boolean))].sort((left, right) => left.localeCompare(right));
   }, [rows.products]);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [testOrderOpen, setTestOrderOpen] = useState(false);
@@ -671,6 +670,7 @@ export default function AdminDashboard({
         <ProductEditor
           id={productId}
           availableTags={productTagOptions}
+          availableCollections={collectionOptions}
           onClose={() => setProductId(null)}
           onSaved={() => {
             void loadTab("products", true);
@@ -694,6 +694,7 @@ export default function AdminDashboard({
       {createProductOpen && (
         <CreateProductModal
           availableTags={productTagOptions}
+          availableCollections={collectionOptions}
           onClose={() => setCreateProductOpen(false)}
           onCreated={() => {
             setCreateProductOpen(false);
@@ -722,10 +723,12 @@ export default function AdminDashboard({
 
 function CreateProductModal({
   availableTags,
+  availableCollections,
   onClose,
   onCreated,
 }: {
   availableTags: string[];
+  availableCollections: string[];
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -742,7 +745,7 @@ function CreateProductModal({
     careLevel: "Easy",
     indoorOutdoor: "Indoor",
     tags: "",
-    collections: "",
+    collections: [] as string[],
     image: "",
     images: [] as string[],
     imageAlt: "",
@@ -768,6 +771,12 @@ function CreateProductModal({
       const data = new FormData();
       Object.entries(form).forEach(([key, value]) => {
         if (key === "images") return;
+        if (key === "collections") {
+          // Arrays cannot go through String(); the API expects CSV text.
+          const list = (value as string[]).filter(Boolean);
+          if (list.length) data.append("collections", list.join(","));
+          return;
+        }
         if (value !== null && value !== undefined) data.append(key, String(value));
       });
       const images = normalizeImageList(form.images);
@@ -881,10 +890,17 @@ function CreateProductModal({
                   ))}
                 </datalist>
               </label>
-              <label className="sm:col-span-2">
-                Collections
-                <input className={field} value={form.collections} onChange={(e) => setForm({ ...form, collections: e.target.value })} placeholder="succulents, office-plants" />
-              </label>
+              <div className="sm:col-span-2">
+                <span className="text-sm">Collections</span>
+                <CollectionPicker
+                  options={availableCollections}
+                  value={form.collections}
+                  onChange={(next) => setForm({ ...form, collections: next })}
+                />
+                <p className="mt-1 text-xs text-[#617366]">
+                  Tick this product into any collection. It will appear on that collection&apos;s page.
+                </p>
+              </div>
             </div>
           </section>
         </div>
@@ -902,30 +918,22 @@ function CreateProductModal({
                 className="mt-2 block w-full text-sm text-[#35543f] file:mr-3 file:rounded-xl file:border-0 file:bg-[#24563e] file:px-3 file:py-2 file:text-sm file:font-bold file:text-white"
               />
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {normalizeImageList(form.images).map((url: string, index: number) => (
-                <div key={`${url}-${index}`} className="relative overflow-hidden rounded-lg border border-[#d7e0d9]">
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, image: url })}
-                    className={`block w-full ${form.image === url ? "ring-2 ring-[#dfece2] ring-offset-1" : ""}`}
-                  >
-                    <img src={url} alt="Product preview" className="h-16 w-full object-cover" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const nextImages = normalizeImageList((form.images || []).filter((entry) => entry !== url));
-                      setForm({ ...form, images: nextImages, image: nextImages[0] || "" });
-                    }}
-                    className="absolute right-1 top-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white"
-                    aria-label={`Remove ${url}`}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
+            <p className="mt-1 text-xs text-[#617366]">
+              Drag to reorder. Image <strong>1</strong> is the main image shown across the site.
+            </p>
+            {normalizeImageList(form.images).length ? (
+              <div className="mt-3">
+                <ImageOrderEditor
+                  images={normalizeImageList(form.images)}
+                  tileHeightClass="h-16"
+                  onChange={(next) => setForm({ ...form, images: next, image: next[0] || "" })}
+                />
+              </div>
+            ) : (
+              <p className="mt-3 rounded-xl border border-dashed border-[#c9d5cb] bg-[#f7faf6] p-3 text-xs text-[#617366]">
+                No images yet. Upload a file or paste an image URL below.
+              </p>
+            )}
             <div className="mt-3 flex gap-2">
               <input className={field} value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} placeholder="Add image URL" />
               <button type="button" onClick={addImageFromUrl} className="rounded-xl bg-[#24563e] px-3 py-2 text-sm font-bold text-white">Add</button>
@@ -1572,11 +1580,13 @@ function Modal({
 function ProductEditor({
   id,
   availableTags,
+  availableCollections,
   onClose,
   onSaved,
 }: {
   id: string;
   availableTags: string[];
+  availableCollections: string[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -1586,7 +1596,6 @@ function ProductEditor({
   const [busy, setBusy] = useState(false);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [reviewDraft, setReviewDraft] = useState({ authorName: "", authorEmail: "", title: "", content: "", rating: 5, verifiedPurchase: false });
 
   const addGalleryUrl = () => {
@@ -1598,20 +1607,8 @@ function ProductEditor({
     setNewImageUrl("");
   };
 
-  const removeGalleryImage = (url: string) => {
-    const nextImages = normalizeImageList((form?.images || []).filter((entry: string) => entry !== url));
-    const synced = syncPrimaryImage(nextImages, form?.image || "");
-    setForm({ ...form, ...synced });
-  };
-
-  const onGalleryDragStart = (index: number) => setDraggedIndex(index);
-  const onGalleryDrop = (targetIndex: number) => {
-    if (draggedIndex === null || draggedIndex === targetIndex || !form?.images) return;
-    const reordered = moveGalleryItem(form.images, draggedIndex, targetIndex);
-    const synced = syncPrimaryImage(reordered, form.image || "");
-    setForm({ ...form, ...synced });
-    setDraggedIndex(null);
-  };
+  // The editor is now the single source of truth for image order; the inline
+  // drag state that used to live here moved into <ImageOrderEditor />.
   useEffect(() => {
     fetch(`/api/admin/products/${encodeURIComponent(id)}`)
       .then(async (r) => {
@@ -1630,7 +1627,7 @@ function ProductEditor({
           image: p.product.image || productImages[0] || "",
           images: productImages,
           tags: p.product.tags.join(", "),
-          collections: p.product.collections.join(", "),
+          collections: [...p.product.collections],
         });
       })
       .catch((e) => setNotice(e.message));
@@ -1646,6 +1643,12 @@ function ProductEditor({
         const formData = new FormData();
         Object.entries(form).forEach(([key, value]) => {
           if (key === "images") return;
+          if (key === "collections") {
+            // Arrays cannot go through String(); the API expects CSV text.
+            const list = (value as string[]).filter(Boolean);
+            if (list.length) formData.append("collections", list.join(","));
+            return;
+          }
           if (value !== null && value !== undefined && value !== "") formData.append(key, String(value));
         });
         formData.append("images", normalizeImageList(form.images).join(","));
@@ -1657,7 +1660,7 @@ function ProductEditor({
           image: form.image || normalizeImageList(form.images)[0] || "",
           images: normalizeImageList(form.images),
           tags: toList(form.tags),
-          collections: toList(form.collections),
+          collections: (form.collections || []).map((entry: string) => String(entry).trim()).filter(Boolean),
         });
         requestHeaders = { "Content-Type": "application/json" };
       }
@@ -1843,16 +1846,17 @@ function ProductEditor({
                   ))}
                 </datalist>
               </label>
-              <label>
-                Collections
-                <input
-                  className={input}
-                  value={form.collections}
-                  onChange={(e) =>
-                    setForm({ ...form, collections: e.target.value })
-                  }
+              <div className="sm:col-span-2">
+                <span className="text-sm">Collections</span>
+                <CollectionPicker
+                  options={availableCollections}
+                  value={form.collections || []}
+                  onChange={(next) => setForm({ ...form, collections: next })}
                 />
-              </label>
+                <p className="mt-1 text-xs text-[#617366]">
+                  Tick this product into any collection. It will appear on that collection&apos;s page.
+                </p>
+              </div>
               <label>
                 Product type
                 <input
@@ -1926,39 +1930,22 @@ function ProductEditor({
                 className="mt-3 aspect-square w-full rounded-xl object-cover"
               />
             ) : null}
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <p className="mt-1 text-xs text-[#617366]">
+              Drag to reorder. Image <strong>1</strong> is the main image shown across the site.
+            </p>
+            <div className="mt-3">
               {galleryImages.length ? (
-                galleryImages.map((url: string, index: number) => (
-                  <div
-                    key={`${url}-${index}`}
-                    draggable
-                    onDragStart={() => onGalleryDragStart(index)}
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={() => onGalleryDrop(index)}
-                    className="relative overflow-hidden rounded-lg border border-[#d7e0d9]"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const synced = syncPrimaryImage(galleryImages, url);
-                        setForm({ ...form, ...synced });
-                      }}
-                      className={`block w-full ${primaryImage === url ? "ring-2 ring-[#dfece2] ring-offset-1" : ""}`}
-                    >
-                      <img src={url} alt="Product thumbnail" className="h-20 w-full object-cover" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeGalleryImage(url)}
-                      className="absolute right-1 top-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white"
-                      aria-label={`Remove ${url}`}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))
+                <ImageOrderEditor
+                  images={galleryImages}
+                  onChange={(next) => {
+                    const synced = syncPrimaryImage(next, form.image || "");
+                    setForm({ ...form, ...synced });
+                  }}
+                />
               ) : (
-                <p className="col-span-3 text-xs text-[#617366]">No gallery images yet.</p>
+                <p className="rounded-xl border border-dashed border-[#c9d5cb] bg-[#f7faf6] p-3 text-xs text-[#617366]">
+                  No gallery images yet. Add one below.
+                </p>
               )}
             </div>
             <div className="mt-3 flex gap-2">

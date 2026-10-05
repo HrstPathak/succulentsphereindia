@@ -7,8 +7,27 @@ const number = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) 
 const list = (value: unknown) => Array.isArray(value) ? value.map((item) => text(item)).filter(Boolean) : [];
 const statuses = new Set(["active", "draft", "archived", "unlisted", "sold out"]);
 
+/**
+ * Normalizes a stored image field into an ordered list of plain URLs.
+ *
+ * Order matters: `images[0]` is what the storefront renders as the hero shot on
+ * the product card, the gallery hero and the best-seller tiles. This used to
+ * append the primary `image` last, which meant a product's designated main
+ * photo was saved as a secondary image and the FIRST gallery entry became the
+ * hero instead. The primary is now hoisted to the front, and any remaining
+ * entry that duplicates it is dropped, so the admin's drag order is the single
+ * source of truth for image order.
+ */
+function orderedImagesFrom(data: Record<string, unknown>) {
+  const entries = (Array.isArray(data.images) ? data.images : [])
+    .map((entry) => (typeof entry === "object" && entry ? text((entry as Record<string, unknown>).url) : text(entry)))
+    .filter(Boolean);
+  const primary = text(data.image);
+  return Array.from(new Set([primary, ...entries].filter(Boolean)));
+}
+
 function productPayload(id: string, data: Record<string, unknown>) {
-  const images = Array.from(new Set([...(Array.isArray(data.images) ? data.images : []), text(data.image)] .map((entry) => text(entry)).filter(Boolean)));
+  const images = orderedImagesFrom(data);
   return {
     id,
     title: text(data.title), handle: text(data.handle), description: text(data.description),
@@ -74,7 +93,9 @@ export async function handleAdminProductUpdate(request: Request, id: string) {
         }
         return "";
       }))).filter(Boolean);
-      const images = [...new Set([...(Array.isArray(input.images) ? input.images : []), ...text(input.images || "").split(",").map((entry) => entry.trim()).filter(Boolean), ...uploadedImages, text(input.image)])].filter(Boolean);
+      // Keep the submitted order, then append any freshly uploaded files at the
+      // end so an upload never reshuffles the images the admin already ordered.
+      const images = [...new Set([...(Array.isArray(input.images) ? input.images : []), ...text(input.images || "").split(",").map((entry) => entry.trim()).filter(Boolean), ...uploadedImages])].filter(Boolean);
       input.images = images;
     } else {
       input = await request.json();
@@ -90,8 +111,15 @@ const title = text(input.title).slice(0, 250);
     const compareAtPrice = input.compareAtPrice === "" || input.compareAtPrice == null ? null : number(input.compareAtPrice, -1);
     if (compareAtPrice !== null && compareAtPrice < 0) return NextResponse.json({ error: "Compare-at price must be a valid amount." }, { status: 400 });
 
-    // Only update images if they were explicitly provided in the request
-    const images = [...new Set([...(Array.isArray(input.images) ? input.images : []), ...text(input.images || "").split(",").map((entry) => entry.trim()).filter(Boolean), text(input.image)].filter(Boolean))];
+    // Only update images if they were explicitly provided in the request.
+    // The admin submits `images` already in drag order, so it is preserved as-is
+    // and the primary is simply its first entry. Previously `image` was appended
+    // last, which silently demoted the chosen main photo to a gallery slot.
+    const submitted = [
+      ...(Array.isArray(input.images) ? input.images : []),
+      ...text(input.images || "").split(",").map((entry) => entry.trim()),
+    ].filter(Boolean);
+    const images = [...new Set([text(input.image), ...submitted].filter(Boolean))];
     const primaryImage = images[0] || text(input.image);
     const orderedImages = images.length ? images : [primaryImage].filter(Boolean);
 
