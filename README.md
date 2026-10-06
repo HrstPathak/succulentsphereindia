@@ -46,3 +46,17 @@ npm run delhivery:shipment:test
 npx tsc --noEmit
 npm run build
 ```
+
+## Troubleshooting
+
+If a page shows a stale error (e.g. `ReferenceError: ... is not defined`) or
+old data after a fix, reset the local state in this order:
+
+1. Stop all dev/prod servers (`Ctrl+C` in each terminal, or
+   `taskkill /F /IM node.exe`), and confirm the ports are free:
+   `netstat -ano | findstr :3000` and `findstr :3112`.
+2. Delete the build cache: remove the `.next` folder completely.
+3. Restart with `npm run dev` and wait for the routes to compile.
+4. In the browser, hard refresh (`Ctrl+Shift+R`) or open an Incognito window —
+   cached chunks, service workers and old tabs will keep serving the previous
+   bundle otherwise.

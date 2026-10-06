@@ -4,8 +4,6 @@ import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
 import { mediaAsset } from "@/lib/media";
 import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
-
-
 const COMBO_BANNER_IMAGE = mediaAsset("sites/images/271c9484fa-Combo_Builder.png");
 
 /**

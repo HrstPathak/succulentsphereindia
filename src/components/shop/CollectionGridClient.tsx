@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FilterDrawer from "./FilterDrawer";
+import QuickFilterChips from "./QuickFilterChips";
 import { useFilters } from "../../context/FilterContext";
 import SortDropdown from "./SortDropdown";
 import ProductCard from "./ProductCard";
@@ -105,7 +106,6 @@ export default function CollectionGridClient({
   const SKELETON_DELAY_MS = 350;
   const SKELETON_COUNT = 8;
   const [showSkeleton, setShowSkeleton] = useState(false);
-  const hideComboTag = productBasePath === "products" && !collectionHandle && !requiredTag;
 
   const normalizedEnforcedPriceRange = useMemo(() => {
     if (!enforcedPriceRange) return null;
@@ -220,6 +220,7 @@ export default function CollectionGridClient({
         careLevel: nextParams.get("careLevel") || null,
         potSize: nextParams.get("potSize") || null,
         potMaterial: nextParams.get("potMaterial") || null,
+        chips: nextParams.get("chips") || null,
         availability: nextParams.get("availability") || null,
         minPrice: nextParams.get("minPrice") || null,
         maxPrice: nextParams.get("maxPrice") || null,
@@ -407,23 +408,38 @@ export default function CollectionGridClient({
       !filters.careLevel.length &&
       !filters.potSize.length &&
       !filters.potMaterial.length &&
+      !(filters.chips || []).length &&
       !filters.availability &&
       filters.priceRange.min === effectivePriceRangeBounds.min &&
       filters.priceRange.max === effectivePriceRangeBounds.max
     );
   }, [defaultSort, effectivePriceRangeBounds.max, effectivePriceRangeBounds.min, filters, sort]);
 
+  // `products` is whatever the server rendered for the URL this page was opened
+  // with, and chip/filter changes only rewrite history via replaceState (no RSC
+  // refetch), so the prop never changes while the component is mounted. Remember
+  // the query string the server saw: the short-circuit below may only trust the
+  // prop while the URL still matches it. Otherwise, clearing a chip from a deep
+  // link (/shop?chips=combo -> /shop) lands back in "default" state and would
+  // keep showing the old server-rendered (filtered) list instead of refetching.
+  const serverRenderedSearchRef = useRef<string | null>(null);
+  if (serverRenderedSearchRef.current === null && typeof window !== "undefined") {
+    serverRenderedSearchRef.current = window.location.search;
+  }
+  const urlMatchesServerRender =
+    searchParams.toString() === (serverRenderedSearchRef.current || "").replace(/^\?/, "");
+
   useEffect(() => {
     if (!queryStateReady) return;
 
-    if (isDefaultState && currentPage === page) {
+    if (isDefaultState && currentPage === page && urlMatchesServerRender) {
       setDisplayProducts(normalizedProducts);
       setResolvedTotalPages(Math.max(1, totalPages));
       return;
     }
 
     doSearch();
-  }, [currentPage, doSearch, isDefaultState, normalizedProducts, page, queryStateReady, totalPages]);
+  }, [currentPage, doSearch, isDefaultState, normalizedProducts, page, queryStateReady, totalPages, urlMatchesServerRender]);
 
   const handleFiltersChange = useCallback(
     (nextFilters: CatalogFiltersState) => {
@@ -439,6 +455,15 @@ export default function CollectionGridClient({
       syncUrlState(nextSort, filters, 1);
     },
     [filters, syncUrlState]
+  );
+
+  const handleChipsChange = useCallback(
+    (nextChips: string[]) => {
+      const next: CatalogFiltersState = { ...filters, chips: nextChips };
+      setFilters(next);
+      syncUrlState(sort, next, 1);
+    },
+    [filters, setFilters, sort, syncUrlState]
   );
 
   // Delayed skeleton trigger: only show shimmer if loading persists.
@@ -493,6 +518,10 @@ export default function CollectionGridClient({
         </div>
       </div>
 
+      {/* Quick-pick chips: below the filter bar, above the grid. Multi-select,
+          OR-ed server side so pagination totals stay honest. */}
+      <QuickFilterChips selected={filters.chips || []} onChange={handleChipsChange} />
+
       {/* Delayed skeleton grid: only when fetch is genuinely slow (>350ms).
           Fast renders keep showing current products -> zero flash, max perf. */}
       {showSkeleton ? (
@@ -522,7 +551,7 @@ export default function CollectionGridClient({
       <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 pb-12 items-stretch auto-rows-fr">
         {displayProducts.map((product) => (
           <div key={product.id} className="h-full">
-            <ProductCard product={product} collectionHandle={collectionHandle} productBasePath={productBasePath} hideComboTag={hideComboTag} />
+            <ProductCard product={product} collectionHandle={collectionHandle} productBasePath={productBasePath} />
           </div>
         ))}
       </div>

@@ -26,6 +26,7 @@ const EMPTY_FILTERS: SearchFilters = {
   careLevel: [],
   potSize: [],
   potMaterial: [],
+  chips: [],
   availability: false,
   priceRange: { min: PRICE_MIN, max: PRICE_MAX },
 };
@@ -125,6 +126,7 @@ export default function FilterDrawer({
     localFilters.careLevel.length +
     localFilters.potSize.length +
     localFilters.potMaterial.length +
+    (localFilters.chips || []).length +
     (localFilters.availability ? 1 : 0) +
     (localFilters.priceRange.min !== sliderMin || localFilters.priceRange.max !== sliderMax ? 1 : 0)
   );

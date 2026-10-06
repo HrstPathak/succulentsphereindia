@@ -11,6 +11,8 @@ export interface SearchFilters {
   careLevel: string[];
   potSize: string[];
   potMaterial: string[];
+  /** Quick-pick chips (Succulent / Cactus / 39Rs / Combo). Multi-select, OR-ed. */
+  chips: string[];
   availability: boolean;
   priceRange: {
     min: number;
@@ -32,6 +34,7 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
     careLevel: [],
     potSize: [],
     potMaterial: [],
+    chips: [],
     availability: false,
     priceRange: { min: PRICE_MIN, max: PRICE_MAX },
   });

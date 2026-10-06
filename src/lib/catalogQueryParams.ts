@@ -1,4 +1,5 @@
 import { resolveCollectionHandle } from "@/lib/productFilters";
+import { CATALOG_CHIPS_PARAM, parseCatalogChips } from "@/lib/catalogChips";
 
 export const DEFAULT_CATALOG_SORT = "featured" as const;
 
@@ -23,6 +24,7 @@ export type CatalogFiltersState = {
   careLevel: string[];
   potSize: string[];
   potMaterial: string[];
+  chips: string[];
   availability: boolean;
   priceRange: CatalogPriceRange;
 };
@@ -144,6 +146,7 @@ export function parseCatalogQueryState(source: QueryParamSource, options: ParseC
       careLevel: parseCsvParam(getFirstQueryValue(source, "careLevel")),
       potSize: parseCsvParam(getFirstQueryValue(source, "potSize")),
       potMaterial: parseCsvParam(getFirstQueryValue(source, "potMaterial")),
+      chips: parseCatalogChips(getFirstQueryValue(source, CATALOG_CHIPS_PARAM)),
       availability: String(getFirstQueryValue(source, "availability") || "").trim().toLowerCase() === "true",
       priceRange: {
         min: parseNumberParam(getFirstQueryValue(source, "minPrice"), defaultPriceRange.min),
@@ -180,6 +183,7 @@ export function normalizeCatalogFilters(
     careLevel: Array.isArray(filters.careLevel) ? filters.careLevel.filter(Boolean) : [],
     potSize: Array.isArray(filters.potSize) ? filters.potSize.filter(Boolean) : [],
     potMaterial: Array.isArray(filters.potMaterial) ? filters.potMaterial.filter(Boolean) : [],
+    chips: parseCatalogChips(filters.chips),
     availability: Boolean(filters.availability),
     priceRange: {
       min: Math.min(boundedMin, boundedMax),
@@ -214,6 +218,9 @@ export function buildCatalogBrowserSearchParams(options: BuildCatalogBrowserSear
   }
   if (normalizedFilters.potMaterial.length > 0) {
     params.set("potMaterial", normalizedFilters.potMaterial.join(","));
+  }
+  if (normalizedFilters.chips.length > 0) {
+    params.set(CATALOG_CHIPS_PARAM, normalizedFilters.chips.join(","));
   }
   if (normalizedFilters.availability) {
     params.set("availability", "true");
@@ -269,6 +276,9 @@ export function buildCatalogApiSearchParams(options: BuildCatalogApiSearchParams
   if (normalizedFilters.potMaterial.length > 0) {
     params.set("potMaterial", normalizedFilters.potMaterial.join(","));
   }
+  if (normalizedFilters.chips.length > 0) {
+    params.set(CATALOG_CHIPS_PARAM, normalizedFilters.chips.join(","));
+  }
   if (normalizedFilters.availability) {
     params.set("availability", "true");
   }
@@ -286,6 +296,7 @@ export function hasCatalogQueryParams(source: QueryParamSource) {
     "careLevel",
     "potSize",
     "potMaterial",
+    CATALOG_CHIPS_PARAM,
     "availability",
     "minPrice",
     "maxPrice",

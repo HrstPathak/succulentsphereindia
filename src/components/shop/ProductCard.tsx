@@ -20,15 +20,12 @@ export default function ProductCard({
   collectionHandle = "",
   productBasePath = "collections",
   wishlistPlacement = "image",
-  hideComboTag = false,
 }: {
   product: Product;
   collectionHandle?: string;
   productBasePath?: "collections" | "products";
   wishlistPlacement?: "image" | "meta" | "none";
-  hideComboTag?: boolean;
 }) {
-  void hideComboTag;
   const [adding, setAdding] = useState(false);
   const { addToCart } = useCart();
   const stableProductId = String(product.id || product.handle || "").trim();

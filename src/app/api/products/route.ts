@@ -9,6 +9,7 @@ import {
   resolveCollectionHandle,
 } from "../../../lib/productFilters";
 import { normalizeCatalogSortValue, toCatalogApiSortValue } from "@/lib/catalogQueryParams";
+import { parseCatalogChips, productMatchesCatalogChips } from "@/lib/catalogChips";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -116,6 +117,7 @@ export async function GET(req: Request) {
     const potSizes = potSizeParam.map((value) => value.toLowerCase());
     const potMaterials = potMaterialParam.map((value) => value.toLowerCase());
     const inStockOnly = availabilityParam === "true";
+    const chipIds = parseCatalogChips(searchParams.get("chips"));
     const { sortKey, reverse } = toSortConfig(sort);
     const items = await fetchAllProductsList({ sortKey, reverse });
     const baseScoped =
@@ -148,7 +150,10 @@ export async function GET(req: Request) {
       .filter((item: any) => {
         const priceValue = Number(item?.price ?? 0);
         return priceValue >= safeMinPrice && priceValue <= safeMaxPrice;
-      });
+      })
+      // Quick-pick chips (Succulent / Cactus / 39Rs / Combo) are OR-ed with each
+      // other and AND-ed with every filter above, so `total` below stays correct.
+      .filter((item: any) => productMatchesCatalogChips(item, chipIds));
     const sortedItems = sortByCatalogTags(filteredItems, sort);
     const shouldPushPotsToEnd = !scopedCollection && collectionsParam.length === 0 && !tagParam;
     const orderedItems = shouldPushPotsToEnd
