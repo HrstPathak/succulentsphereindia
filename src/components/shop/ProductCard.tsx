@@ -14,6 +14,7 @@ import SafeProductImage from "@/components/shared/SafeProductImage";
 import { normalizeImageUrl } from "@/lib/imageUrl";
 import PriceWithDiscount from "@/components/shared/PriceWithDiscount";
 import { getDiscountPercent } from "@/lib/discount";
+import { Truck } from "lucide-react";
 
 export default function ProductCard({
   product,
@@ -228,7 +229,8 @@ export default function ProductCard({
               ) : null}
             </div>
             {showFreeDeliveryLabel && (
-              <div className="inline-flex w-fit items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 sm:text-[10px]">
+              <div className="inline-flex w-fit items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 sm:text-[10px]">
+                <Truck className="h-3 w-3 shrink-0" aria-hidden="true" />
                 Free Delivery
               </div>
             )}
