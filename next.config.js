@@ -75,9 +75,7 @@ const nextConfig = {
       // Next.js lets the LAST matching rule win. Uploaded media is served
       // straight from Hostinger in production; these are the legacy local
       // copies, so a shorter cache is a safe compromise.
-      ...['/images/:path*', '/assets/:path*',
-          '/recovered-product-images/:path*', '/recovered-product-images-2/:path*',
-          '/recovered-product-images-2-products/:path*'].map((source) => ({
+      ...['/images/:path*', '/assets/:path*'].map((source) => ({
         source,
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=86400' },
