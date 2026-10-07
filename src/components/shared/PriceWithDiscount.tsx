@@ -93,7 +93,7 @@ export function DiscountBadge({
   }, [value]);
 
   const baseClass =
-    "inline-flex items-center gap-1 rounded-full border border-emerald-200/70 bg-[linear-gradient(135deg,#0f766e,#22c55e)] font-semibold text-white shadow-[0_8px_16px_rgba(15,118,110,0.28)]";
+    "inline-flex items-center whitespace-nowrap rounded-full border border-emerald-200/70 bg-[linear-gradient(135deg,#0f766e,#22c55e)] font-semibold text-white shadow-[0_8px_16px_rgba(15,118,110,0.28)]";
 
   return (
     <span
