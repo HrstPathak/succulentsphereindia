@@ -147,11 +147,15 @@ export default function CollectionGridClient({
   const parsedQueryState = useMemo(
     () =>
       parseCatalogQueryState(searchParams, {
-        defaultPage: page,
+        // NOTE: the fallback must always be 1, never the server-rendered `page`
+        // prop. Filter/sort/chip changes strip `?page=` from the URL to reset to
+        // page 1 — if the fallback were the stale server page (e.g. 2), the grid
+        // would keep requesting page 2 of the filtered set and render empty.
+        defaultPage: 1,
         defaultSort,
         defaultPriceRange: normalizedEnforcedPriceRange || { min: PRICE_MIN, max: PRICE_MAX },
       }),
-    [defaultSort, normalizedEnforcedPriceRange, page, searchParams]
+    [defaultSort, normalizedEnforcedPriceRange, searchParams]
   );
 
   const currentPage = parsedQueryState.page;
@@ -440,6 +444,17 @@ export default function CollectionGridClient({
 
     doSearch();
   }, [currentPage, doSearch, isDefaultState, normalizedProducts, page, queryStateReady, totalPages, urlMatchesServerRender]);
+
+  // Safety net: if the URL page is beyond the last available page (e.g. a deep
+  // link like /shop?page=5&chips=combo, or back/forward after a filter shrinks
+  // the result set), the fetch above returns an empty list. Bounce back to
+  // page 1 instead of showing an empty grid.
+  useEffect(() => {
+    if (!queryStateReady || loading) return;
+    if (currentPage > resolvedTotalPages) {
+      syncUrlState(sort, filters, 1);
+    }
+  }, [currentPage, filters, loading, queryStateReady, resolvedTotalPages, sort, syncUrlState]);
 
   const handleFiltersChange = useCallback(
     (nextFilters: CatalogFiltersState) => {
