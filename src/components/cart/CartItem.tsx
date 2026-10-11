@@ -4,7 +4,7 @@ import Link from "next/link";
 import QuantitySelector from "../product/QuantitySelector";
 import { useCallback } from "react";
 import { formatINR } from "@/lib/currency";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 
 type CartItemShape = {
   id: string;
@@ -44,10 +44,10 @@ export default function CartItem({
       <div className="w-20 h-20 sm:w-24 sm:h-24 relative flex-shrink-0">
         {hasLink ? (
           <Link href={`/collections/succulents/${item.handle}`}>
-            <Image src={imageSrc} alt={item.imageAlt || item.title} fill style={{ objectFit: "cover" }} className="rounded" unoptimized={shouldBypassImageOptimization(imageSrc)} />
+            <Image src={imageSrc} alt={item.imageAlt || item.title} fill style={{ objectFit: "cover" }} className="rounded" unoptimized={true} />
           </Link>
         ) : (
-          <Image src={imageSrc} alt={item.imageAlt || item.title} fill style={{ objectFit: "cover" }} className="rounded" unoptimized={shouldBypassImageOptimization(imageSrc)} />
+          <Image src={imageSrc} alt={item.imageAlt || item.title} fill style={{ objectFit: "cover" }} className="rounded" unoptimized={true} />
         )}
       </div>
       <div className="flex-1 min-w-0">

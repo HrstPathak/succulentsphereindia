@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
 import { mediaAsset } from "@/lib/media";
-import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
 const brandStoryImage = mediaAsset("sites/images/128bdb7cd1-brand-lifestyle.png");
 export default function BrandStory() {
@@ -21,7 +20,7 @@ export default function BrandStory() {
           <Image
             src={brandStoryImage}
             alt="Our story lifestyle"
-            unoptimized={shouldBypassImageOptimization(brandStoryImage)}
+            unoptimized={true}
             fill
             style={{ objectFit: "cover" }}
             sizes="(max-width: 768px) 100vw, 50vw"

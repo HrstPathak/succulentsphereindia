@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
-import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 import { mediaAsset } from "@/lib/media";
 
 const categories = [
@@ -106,7 +105,7 @@ export default function CategoryGrid({ excludeHrefs = [], className = "" }: Cate
                 loading="lazy"
                 placeholder="blur"
                 blurDataURL={SHIMMER_BLUR_DATA_URL}
-                unoptimized={shouldBypassImageOptimization(c.img)}
+                unoptimized={true}
                 className="transition-transform duration-700 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,0.25))] opacity-60" />

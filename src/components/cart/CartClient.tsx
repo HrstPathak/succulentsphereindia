@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CartItem from "./CartItem";
 import CartSummary from "./CartSummary";
 import { useCart } from "../../context/CartContext";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 import { formatINR } from "@/lib/currency";
 import {
   DISCOUNT_THRESHOLD,
@@ -328,7 +328,7 @@ export default function CartClient() {
                                 <div className="grid h-full w-full grid-cols-2 grid-rows-2 gap-1">
                                   {collageImages.map((img, idx) => (
                                     <div key={`${bundleId}-img-${idx}`} className="relative overflow-hidden rounded">
-                                      <Image src={normalizeImageUrl(img.src)} alt={img.alt} fill style={{ objectFit: "cover" }} unoptimized={shouldBypassImageOptimization(img.src)} />
+                                      <Image src={normalizeImageUrl(img.src)} alt={img.alt} fill style={{ objectFit: "cover" }} unoptimized={true} />
                                     </div>
                                   ))}
                                 </div>
