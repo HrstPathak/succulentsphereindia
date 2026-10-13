@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import OrderProductReviewBox from "@/components/reviews/OrderProductReviewBox";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 
 type OrderLineItem = {
   id: string;
@@ -151,7 +151,7 @@ export default function OrderLineItemsClient({
                 <div className="grid h-full w-full grid-cols-2 grid-rows-2 gap-1">
                   {collage.map((img, idx) => (
                     <div key={`${bundle.id}-img-${idx}`} className="relative overflow-hidden rounded">
-                      <Image src={img.src} alt={img.alt} fill sizes="80px" className="object-cover" unoptimized={shouldBypassImageOptimization(img.src)} />
+                      <Image src={img.src} alt={img.alt} fill sizes="80px" className="object-cover" />
                     </div>
                   ))}
                 </div>
@@ -195,7 +195,6 @@ export default function OrderLineItemsClient({
                           fill
                           sizes="96px"
                           className="object-cover"
-                          unoptimized={shouldBypassImageOptimization(item.image)}
                         />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -264,7 +263,6 @@ export default function OrderLineItemsClient({
                 fill
                 sizes="112px"
                 className="object-cover"
-                unoptimized={shouldBypassImageOptimization(item.image)}
               />
             </div>
             <div className="min-w-0 flex-1">

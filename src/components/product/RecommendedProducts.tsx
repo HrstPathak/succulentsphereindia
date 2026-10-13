@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { useCart } from "../../context/CartContext";
 import { showSuccessToast } from "../../lib/toast";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 import PriceWithDiscount from "@/components/shared/PriceWithDiscount";
 
 type ProductItem = {
@@ -172,7 +172,6 @@ export default function RecommendedProducts({
                         loadedImages[product.id] ? "opacity-100" : "opacity-0"
                       }`}
                       loading="lazy"
-                      unoptimized={shouldBypassImageOptimization(imageSrc)}
                       onLoad={() =>
                         setLoadedImages((prev) => ({
                           ...prev,

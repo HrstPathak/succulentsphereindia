@@ -10,14 +10,23 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
   images: {
+    // ---------------------------------------------------------------------
+    // Image optimization is DISABLED FOR NOW: we kept hitting Vercel's Image
+    // Optimization quota (transformations + cache writes). With
+    // `unoptimized: true`, every `next/image` renders the original file
+    // straight from its source host, so nothing ever requests `/_next/image`
+    // and optimizer usage stays at zero. Delete this one line to re-enable
+    // the optimizer settings below.
+    // ---------------------------------------------------------------------
+    unoptimized: true,
     formats: ['image/avif', 'image/webp'],
     qualities: [60, 70, 75, 80],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Explicit allowlist. A `hostname: '**'` entry (which this file used to
-    // have) turns the image optimizer into an open proxy: anyone could pipe
-    // arbitrary third-party URLs through your Vercel bandwidth. These entries
-    // must stay in sync with OPTIMIZABLE_HOSTS in src/lib/imageUrl.ts.
+    // Explicit allowlist, kept for when the optimizer is re-enabled (see
+    // above). A `hostname: '**'` entry (which this file used to have) turns
+    // the image optimizer into an open proxy: anyone could pipe arbitrary
+    // third-party URLs through your Vercel bandwidth.
     remotePatterns: [
       { protocol: 'https', hostname: 'whitesmoke-cattle-754161.hostingersite.com', pathname: '/**' },
       { protocol: 'https', hostname: '*.hostingersite.com', pathname: '/**' },
@@ -56,12 +65,6 @@ const nextConfig = {
       // changed name. One year is the standard cap for immutable assets.
       {
         source: '/_next/static/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-      {
-        source: '/_next/image',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],

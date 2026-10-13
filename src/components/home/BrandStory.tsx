@@ -20,7 +20,6 @@ export default function BrandStory() {
           <Image
             src={brandStoryImage}
             alt="Our story lifestyle"
-            unoptimized={true}
             fill
             style={{ objectFit: "cover" }}
             sizes="(max-width: 768px) 100vw, 50vw"

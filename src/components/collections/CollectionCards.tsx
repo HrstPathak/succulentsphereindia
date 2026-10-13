@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { showSuccessToast } from "../../lib/toast";
-import { shouldBypassImageOptimization } from "../../lib/imageUrl";
 
 type CollectionItem = {
   id: string;
@@ -53,7 +52,6 @@ export default function CollectionCards({ collections }: { collections: Collecti
               alt={collection.name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 20vw"
-              unoptimized={shouldBypassImageOptimization(collection.image)}
               style={{ objectFit: "cover", objectPosition: collection.imgPosition ?? "center" }}
               className="transition-transform duration-700 group-hover:scale-110"
             />

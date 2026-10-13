@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { formatINR } from "@/lib/currency";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 
 type ComboProduct = {
@@ -137,7 +137,6 @@ export default function ComboBuilder({ products }: Props) {
                   fill
                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  unoptimized={shouldBypassImageOptimization(product.image)}
                 />
                 {isSelected && (
                   <div className="absolute inset-0 flex items-start justify-end bg-emerald-900/20 p-3">
@@ -165,7 +164,7 @@ export default function ComboBuilder({ products }: Props) {
               <div className="flex -space-x-3">
                 {selected.map((item) => (
                   <div key={item.id} className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-white/90">
-                    <Image src={normalizeImageUrl(item.image)} alt={item.imageAlt || item.title} fill className="object-cover" unoptimized={shouldBypassImageOptimization(item.image)} />
+                    <Image src={normalizeImageUrl(item.image)} alt={item.imageAlt || item.title} fill className="object-cover" />
                     <button
                       type="button"
                       onClick={() => removeSelected(item.id)}

@@ -147,7 +147,6 @@ export default async function PlantCarePage() {
                       {article.image?.url ? (
                         <Image
                           src={article.image.url}
-                          unoptimized={true}
                           alt={article.image.altText || article.title}
                           fill
                           loading={article.pinned ? "eager" : "lazy"}

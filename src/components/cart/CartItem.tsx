@@ -44,10 +44,10 @@ export default function CartItem({
       <div className="w-20 h-20 sm:w-24 sm:h-24 relative flex-shrink-0">
         {hasLink ? (
           <Link href={`/collections/succulents/${item.handle}`}>
-            <Image src={imageSrc} alt={item.imageAlt || item.title} fill style={{ objectFit: "cover" }} className="rounded" unoptimized={true} />
+            <Image src={imageSrc} alt={item.imageAlt || item.title} fill style={{ objectFit: "cover" }} className="rounded" />
           </Link>
         ) : (
-          <Image src={imageSrc} alt={item.imageAlt || item.title} fill style={{ objectFit: "cover" }} className="rounded" unoptimized={true} />
+          <Image src={imageSrc} alt={item.imageAlt || item.title} fill style={{ objectFit: "cover" }} className="rounded" />
         )}
       </div>
       <div className="flex-1 min-w-0">

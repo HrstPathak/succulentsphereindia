@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
 import { mediaAsset } from "@/lib/media";
-import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
 const COMBO_BANNER_IMAGE = mediaAsset("sites/images/271c9484fa-Combo_Builder.png");
 
@@ -100,7 +99,6 @@ export default function ComboTeaserBanner() {
         <Image
           src={COMBO_BANNER_IMAGE}
           alt=""
-          unoptimized={shouldBypassImageOptimization(COMBO_BANNER_IMAGE)}
           fill
           sizes="100vw"
           loading="lazy"

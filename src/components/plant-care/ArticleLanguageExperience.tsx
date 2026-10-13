@@ -341,7 +341,6 @@ export default function ArticleLanguageExperience({ article, contentHtml }: Arti
               <Image
                 src={article.image.url}
                 alt={article.image.altText || article.title}
-                unoptimized={true}
                 fill
                 priority
                 className="object-cover"

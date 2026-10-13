@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -8,7 +8,7 @@ import { showSuccessToast } from "../../lib/toast";
 import DarkModeToggle from "../ui/DarkModeToggle";
 import WishlistButton from "../wishlist/WishlistButton";
 import { useGtmViewItem } from "@/hooks/useGtmViewItem";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 import PincodeServiceabilityCard from "@/components/shared/PincodeServiceabilityCard";
 import { rememberRecentlyViewedProduct } from "@/lib/recentlyViewed";
 import ProductReviewsSection from "@/components/reviews/ProductReviewsSection";
@@ -188,7 +188,6 @@ export default function RevampedProductDetail({ product }: Props) {
                 width={1200}
                 height={1200}
                 className="h-full max-h-full w-full max-w-full cursor-zoom-in object-contain transition-transform duration-200"
-                unoptimized={shouldBypassImageOptimization(images[index])}
                 onClick={() => setLightbox(true)}
               />
             </div>
@@ -204,7 +203,7 @@ export default function RevampedProductDetail({ product }: Props) {
           <div className="mt-4 flex gap-3">
             {images.map((img, i) => (
               <button key={i} onClick={() => setIndex(i)} className={`relative h-20 w-20 overflow-hidden rounded-lg ${i === index ? 'ring-2 ring-[var(--color-brand)]' : 'border'} `}>
-                <Image src={img} alt={imageAlts[i] || `${product.title} thumbnail ${i + 1}`} fill sizes="80px" className="object-cover" unoptimized={shouldBypassImageOptimization(img)} />
+                <Image src={img} alt={imageAlts[i] || `${product.title} thumbnail ${i + 1}`} fill sizes="80px" className="object-cover" />
               </button>
             ))}
           </div>
@@ -400,7 +399,6 @@ export default function RevampedProductDetail({ product }: Props) {
                   alt={imageAlts[index] || `${product.title} image ${index + 1}`}
                   width={1600}
                   height={1600}
-                  unoptimized={shouldBypassImageOptimization(images[index])}
                   onWheel={onWheelZoom}
                   onDoubleClick={onDoubleClickToggle}
                   onTouchStart={onTouchStart}

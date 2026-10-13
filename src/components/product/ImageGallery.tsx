@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent } from "react";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 
 export default function ImageGallery({
   images,
@@ -97,7 +97,6 @@ export default function ImageGallery({
             priority={index === 0}
             placeholder="blur"
             blurDataURL={SHIMMER_BLUR_DATA_URL}
-            unoptimized={shouldBypassImageOptimization(normalizedImages[index])}
             onLoad={() => {
               setMainImageLoaded(true);
             }}
@@ -146,7 +145,6 @@ export default function ImageGallery({
               loading="lazy"
               placeholder="blur"
               blurDataURL={SHIMMER_BLUR_DATA_URL}
-              unoptimized={shouldBypassImageOptimization(img)}
             />
           </button>
         ))}

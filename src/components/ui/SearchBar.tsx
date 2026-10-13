@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 import PriceWithDiscount from "@/components/shared/PriceWithDiscount";
 
 type Result = {
@@ -237,7 +237,6 @@ export default function SearchBar() {
                             width={56}
                             height={56}
                             style={{ objectFit: "cover" }}
-                            unoptimized={shouldBypassImageOptimization(result.image)}
                           />
                         ) : (
                           <div className="h-14 w-14 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600" />

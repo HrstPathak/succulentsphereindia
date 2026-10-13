@@ -5,7 +5,7 @@ import Image from "next/image";
 import { memo, useCallback } from "react";
 import { X } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 import { useWishlist } from "@/context/WishlistContext";
 import { showSuccessToast } from "@/lib/toast";
 import type { WishlistProduct } from "@/lib/wishlist";
@@ -41,7 +41,6 @@ function WishlistItem({ item }: { item: WishlistProduct }) {
             fill
             sizes="(max-width: 640px) 96px, 112px"
             className="object-cover"
-            unoptimized={shouldBypassImageOptimization(imageSrc)}
           />
         </Link>
         <div className="min-w-0 flex-1">

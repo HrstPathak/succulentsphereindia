@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 
 const FALLBACK_SRC = "/assets/product-1.jpg";
 
@@ -51,7 +51,6 @@ export default function SafeProductImage({
       loading={priority ? undefined : "lazy"}
       placeholder="blur"
       blurDataURL={SHIMMER_BLUR_DATA_URL}
-      unoptimized={shouldBypassImageOptimization(resolved)}
       className={className}
       onError={() => {
         // Only fall back once, and never "retry" the placeholder itself.

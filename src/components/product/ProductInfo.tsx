@@ -8,7 +8,7 @@ import QuantitySelector from "./QuantitySelector";
 import { useCart } from "../../context/CartContext";
 import { showSuccessToast } from "../../lib/toast";
 import { resolveProductImageAlt } from "@/lib/imageAlt";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 import PincodeServiceabilityCard from "@/components/shared/PincodeServiceabilityCard";
 import ProductReviewsSection from "@/components/reviews/ProductReviewsSection";
 import PriceWithDiscount from "@/components/shared/PriceWithDiscount";
@@ -285,7 +285,6 @@ export default function ProductInfo({ product, tabsSlot }: { product: any; tabsS
                   fill
                   sizes="56px"
                   className="object-cover"
-                  unoptimized={shouldBypassImageOptimization(wishlistProduct.image)}
                 />
               </div>
               <div className="min-w-0 flex-1">

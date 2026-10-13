@@ -4,7 +4,6 @@ import { ArrowRight } from "lucide-react";
 
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
 import { mediaAsset } from "@/lib/media";
-import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
 const heroImage = {
   src: mediaAsset("sites/images/HomePage/AfterMonsoonHero.webp"),
@@ -17,7 +16,6 @@ export default function HeroSection() {
       <Image
         src={heroImage.src}
         alt={heroImage.alt}
-        unoptimized={shouldBypassImageOptimization(heroImage.src)}
         fill
         priority
         fetchPriority="high"

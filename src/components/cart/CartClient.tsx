@@ -328,7 +328,7 @@ export default function CartClient() {
                                 <div className="grid h-full w-full grid-cols-2 grid-rows-2 gap-1">
                                   {collageImages.map((img, idx) => (
                                     <div key={`${bundleId}-img-${idx}`} className="relative overflow-hidden rounded">
-                                      <Image src={normalizeImageUrl(img.src)} alt={img.alt} fill style={{ objectFit: "cover" }} unoptimized={true} />
+                                      <Image src={normalizeImageUrl(img.src)} alt={img.alt} fill style={{ objectFit: "cover" }} />
                                     </div>
                                   ))}
                                 </div>

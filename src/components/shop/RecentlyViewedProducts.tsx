@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { normalizeImageUrl, shouldBypassImageOptimization } from "@/lib/imageUrl";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 import { getRecentlyViewedProducts, type RecentlyViewedProduct } from "@/lib/recentlyViewed";
 import PriceWithDiscount from "@/components/shared/PriceWithDiscount";
 
@@ -74,7 +74,6 @@ export default function RecentlyViewedProducts({ className = "" }: Props) {
                     alt={item.title}
                     fill
                     sizes="170px"
-                    unoptimized={shouldBypassImageOptimization(imageSrc)}
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>

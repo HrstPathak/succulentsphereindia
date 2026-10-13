@@ -1,4 +1,4 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
 import { mediaAsset } from "@/lib/media";
@@ -29,7 +29,6 @@ export default function InstagramFeed() {
             <Image
               src={p.img}
               alt={p.alt}
-              unoptimized={true}
               width={144}
               height={144}
               style={{ objectFit: "cover" }}

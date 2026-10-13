@@ -3,7 +3,6 @@ import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/image-placeholder";
 import { mediaAsset } from "@/lib/media";
-import { shouldBypassImageOptimization } from "@/lib/imageUrl";
 
 // ─── Replace these with your hosted product/lifestyle video URLs ────────────
 const VIDEOS = [
@@ -89,7 +88,6 @@ function VideoCard({ video, isCenter, onClick, isPlaying, onEnded }) {
       {video.poster && !isPlaying && (
         <Image
           src={video.poster}
-          unoptimized={shouldBypassImageOptimization(video.poster)}
           alt={video.label}
           fill
           sizes={isCenter ? "220px" : "140px"}

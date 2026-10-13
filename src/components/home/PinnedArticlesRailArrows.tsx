@@ -93,7 +93,6 @@ export function ArticleCard({ article, index }: { article: PinnedArticleCard; in
           {article.image?.url ? (
             <Image
               src={article.image.url}
-              unoptimized={true}
               alt={article.image.altText || article.title}
               fill
               loading={index < 2 ? "eager" : "lazy"}
