@@ -8,14 +8,17 @@
  *
  *   1. Immutable build output under /_next/static  (content-hashed filenames,
  *      safe to hold forever, and the CDN already serves them).
- *   2. Optimized product images under /_next/image (also content-addressed by
- *      the optimizer's own query params).
+ *   2. Local media under /images and /assets (content-derived filenames).
+ *
+ * Note: /_next/image is deliberately NOT cached (or used at all) any more -
+ * image optimization is disabled globally, and images load straight from
+ * their source host.
  *
  * Everything else - documents, /api/*, /cart, /checkout, /account, /admin -
  * is explicitly excluded and always goes to the network.
  */
 
-const CACHE_VERSION = "ss-static-v1";
+const CACHE_VERSION = "ss-static-v2";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 const PRECACHE_URLS = ["/", "/offline"];
@@ -40,7 +43,6 @@ function isCacheableAsset(url) {
   if (NEVER_CACHE.some((prefix) => url.pathname.startsWith(prefix))) return false;
   return (
     url.pathname.startsWith("/_next/static/") ||
-    url.pathname.startsWith("/_next/image") ||
     url.pathname.startsWith("/images/") ||
     url.pathname.startsWith("/assets/")
   );
