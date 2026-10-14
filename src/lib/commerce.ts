@@ -4,7 +4,7 @@ import { cache } from "react";
 import { FieldPath } from "firebase-admin/firestore";
 import { MAX_PINNED_ARTICLES, comparePinnedOrder } from "@/lib/article-pinning";
 import { getFirebaseDb } from "@/lib/firebase-admin";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { getReviewStats, type ProductReview } from "@/lib/reviews";
 import { getWalletSummary, type WalletSummary } from "@/lib/wallet";
 import { getOrderGrandTotal, getOrderPaymentSummary } from "@/lib/orderAmounts";
@@ -234,41 +234,35 @@ async function getReviewsForProduct(productId: string): Promise<ProductReview[]>
 // pagination request and every ISR regeneration, that alone could exhaust the
 // Firestore free-tier daily read quota.
 //
-// The cache has two tiers now:
-//
-//   1. per-instance memory  — microseconds, but dies with the process
-//   2. unstable_cache       — Next's shared data cache; survives cold starts
-//                             and is revalidated by tag/TTL, WITHOUT any
-//                             network fetch during render (the old Upstash
-//                             tier did a no-store REST fetch here, which
-//                             flipped every ISR page to dynamic at runtime)
-//   3. Firestore            — only when both miss
-//
-// The matching client half of this lives in src/lib/cachedFetch.ts.
-const CATALOG_CACHE_TTL_MS =
-  Math.max(30_000, Number.parseInt(process.env.CATALOG_CACHE_TTL_MS || "", 10) || 5 * 60 * 1000);
-let catalogCache: { at: number; items: ReturnType<typeof mapProduct>[] } | null = null;
-let catalogRefresh: Promise<ReturnType<typeof mapProduct>[]> | null = null;
-
+// Catalog data uses Next's shared data cache. This avoids request-time REST
+// fetches during render and lets admin edits invalidate one shared cache across
+// all running instances.
 /**
  * Clears the catalog everywhere it is held.
  *
- * Must also expire the shared unstable_cache copy, not just this instance's
- * memory. The admin product routes call this after a write; without the tag
- * invalidation the new price would stay invisible sitewide until the cache
- * TTL expired, which for a store means selling at the wrong number.
- * `{ expire: 0 }` matches the old Redis DEL semantics: the next render blocks
- * on a fresh read instead of being served one stale copy first.
+ * Use the shared Next.js cache as the only server-side cache: a process-local
+ * layer cannot be invalidated across all running instances after an admin edit.
+ * `{ expire: 0 }` makes the next catalog read block on fresh product data.
  */
 export function invalidateCatalogCache() {
-  catalogCache = null;
-  catalogRefresh = null;
-  try {
-    revalidateTag("catalog", { expire: 0 });
-  } catch {
-    // Outside a Next.js render/handler context (plain script, tests) there is
-    // no cache to invalidate; the TTL still bounds staleness.
-  }
+  revalidateTag("catalog", { expire: 0 });
+  revalidatePath("/api/products");
+  revalidatePath("/api/filters");
+  revalidatePath("/api/search");
+  revalidatePath("/api/recommendations");
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath("/collections/[collectionHandle]", "page");
+  revalidatePath("/products/[handle]", "page");
+  revalidatePath("/collections/[collectionHandle]/[plantHandle]", "page");
+  revalidatePath("/collections/succulents/[handle]", "page");
+  revalidatePath("/collections/beginner-friendly");
+  revalidatePath("/collections/cactus");
+  revalidatePath("/collections/pots");
+  revalidatePath("/collections/succulents");
+  revalidatePath("/collections/succulents-under-40");
+  revalidatePath("/combo");
+  revalidatePath("/combo-builder");
 }
 
 async function readCatalogFromFirestore() {
@@ -279,8 +273,8 @@ async function readCatalogFromFirestore() {
   return snapshot.docs.map((doc) => mapProduct(doc.id, doc.data()));
 }
 
-// unstable_cache wraps the raw Firestore read (not allProducts()) so the
-// per-instance stale-while-revalidate tier below stays the only consumer.
+// unstable_cache wraps the raw Firestore read so the shared cache is the only
+// server-side catalog cache and can be invalidated consistently across instances.
 //
 // JSON round-trip: unstable_cache stores JSON.stringify(result), the same
 // round-trip the old Redis tier performed. mapProduct() normalises every
@@ -298,43 +292,7 @@ async function loadCatalog() {
   return readCatalogCached();
 }
 
-async function allProducts() {
-  const now = Date.now();
-  if (catalogCache && now - catalogCache.at < CATALOG_CACHE_TTL_MS) {
-    return catalogCache.items;
-  }
-
-  // Stale-while-revalidate: once the TTL lapses, return the previous snapshot
-  // immediately and refresh in the background. Callers never queue behind a
-  // cold Firestore read, and a single shared refresh serves every concurrent
-  // request instead of one read per request.
-  if (catalogCache) {
-    if (!catalogRefresh) {
-      catalogRefresh = loadCatalog()
-        .then((items) => {
-          catalogCache = { at: Date.now(), items };
-          return items;
-        })
-        .finally(() => {
-          catalogRefresh = null;
-        });
-    }
-    return catalogCache.items;
-  }
-
-  // Cold start: nothing to serve yet, so wait for the first real read.
-  if (!catalogRefresh) {
-    catalogRefresh = loadCatalog()
-      .then((items) => {
-        catalogCache = { at: Date.now(), items };
-        return items;
-      })
-      .finally(() => {
-        catalogRefresh = null;
-      });
-  }
-  return catalogRefresh;
-}
+async function allProducts() { return loadCatalog(); }
 
 function sortProducts(items: any[], options: ProductQueryOptions) {
   const multiplier = options.reverse ? -1 : 1;
@@ -400,24 +358,13 @@ export async function fetchProductsByIds(ids: string[]) {
   const uniqueIds = [...new Set(ids.map((id) => string(id).trim()).filter(Boolean))].slice(0, 30);
   if (!uniqueIds.length) return [];
 
-  // The wishlist hydrates through this function on every page load. When the
-  // in-memory catalog cache is already warm (any storefront catalog page warms
-  // it) serve the hits straight from memory and only round-trip Firestore for
-  // ids that are not in it — no reads, no added latency for the common case.
+  // Wishlist product details are read directly so they are not coupled to
+  // the shared catalog cache or its refresh lifecycle.
   const byId = new Map<string, any>();
-  if (catalogCache && Date.now() - catalogCache.at < CATALOG_CACHE_TTL_MS) {
-    const wanted = new Set(uniqueIds);
-    for (const item of catalogCache.items) {
-      if (wanted.has(item.id)) byId.set(item.id, item);
-    }
-  }
-
-  const missingIds = uniqueIds.filter((id) => !byId.has(id));
-  if (missingIds.length) {
-    const chunks: string[][] = []; for (let i = 0; i < missingIds.length; i += 30) chunks.push(missingIds.slice(i, i + 30));
-    const snapshots = await Promise.all(chunks.map((chunk) => getFirebaseDb().collection("products").where(FieldPath.documentId(), "in", chunk).get()));
-    for (const doc of snapshots.flatMap((snapshot) => snapshot.docs)) byId.set(doc.id, mapProduct(doc.id, doc.data()));
-  }
+  const chunks: string[][] = [];
+  for (let i = 0; i < uniqueIds.length; i += 30) chunks.push(uniqueIds.slice(i, i + 30));
+  const snapshots = await Promise.all(chunks.map((chunk) => getFirebaseDb().collection("products").where(FieldPath.documentId(), "in", chunk).get()));
+  for (const doc of snapshots.flatMap((snapshot) => snapshot.docs)) byId.set(doc.id, mapProduct(doc.id, doc.data()));
 
   return uniqueIds.map((id) => byId.get(id)).filter(Boolean);
 }

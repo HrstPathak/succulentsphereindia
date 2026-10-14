@@ -22,10 +22,10 @@ type PendingEntry = { promise: Promise<unknown> };
 const memoryCache = new Map<string, CacheEntry>();
 const inFlight = new Map<string, PendingEntry>();
 
-/** Default freshness window before a background refresh is triggered. */
-const DEFAULT_TTL_MS = 60_000;
-/** Hard cap so a tab left open for hours still revalidates. */
-const MAX_STALE_MS = 5 * 60_000;
+/** Default freshness window for public data before it is fetched again. */
+const DEFAULT_TTL_MS = 15_000;
+/** Do not keep stale public product data in a tab for more than one minute. */
+const MAX_STALE_MS = 60_000;
 
 function readCache(key: string): unknown | undefined {
   const hit = memoryCache.get(key);

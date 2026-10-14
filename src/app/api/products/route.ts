@@ -168,10 +168,9 @@ export async function GET(req: Request) {
     const totalPages = Math.max(1, Math.ceil(total / limit));
     const page = Math.floor(offset / limit) + 1;
 
-    // s-maxage lets the Vercel edge serve repeat catalog requests without
-    // invoking this function at all; stale-while-revalidate refreshes in the
-    // background so a price/stock change lands within one stale window instead
-    // of blocking the visitor behind a cold read.
+    // Keep the public catalog fast, but cap edge staleness so product price and
+    // stock edits reach shoppers quickly even if an edge cache has not yet
+    // received the explicit revalidation.
     return NextResponse.json(
       {
         results,
@@ -186,7 +185,7 @@ export async function GET(req: Request) {
       },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+          "Cache-Control": "public, s-maxage=15, stale-while-revalidate=15",
         },
       },
     );
