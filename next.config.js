@@ -10,6 +10,8 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
   images: {
+    // Serve source URLs directly; do not send image requests through Vercel.
+    unoptimized: true,
     formats: ['image/avif', 'image/webp'],
     qualities: [60, 70, 75, 80],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
