@@ -4,7 +4,7 @@ import { cache } from "react";
 import { FieldPath } from "firebase-admin/firestore";
 import { MAX_PINNED_ARTICLES, comparePinnedOrder } from "@/lib/article-pinning";
 import { getFirebaseDb } from "@/lib/firebase-admin";
-import { cacheDelete, cacheGet, cacheSet } from "@/lib/redis";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { getReviewStats, type ProductReview } from "@/lib/reviews";
 import { getWalletSummary, type WalletSummary } from "@/lib/wallet";
 import { getOrderGrandTotal, getOrderPaymentSummary } from "@/lib/orderAmounts";
@@ -119,9 +119,6 @@ const PRODUCT_REVIEW_DISPLAY_LIMIT = 50;
  */
 const FALLBACK_REVIEW_READ_LIMIT = 200;
 
-/** Redis key for one product's published reviews. */
-const reviewsRedisKey = (productId: string) => `catalog:reviews:v1:${productId}`;
-
 /**
  * Drops a product's cached review list.
  *
@@ -130,11 +127,21 @@ const reviewsRedisKey = (productId: string) => `catalog:reviews:v1:${productId}`
  * A newly published review is the case that matters most — the storefront
  * product page and its star rating are both rendered from this cache, so a
  * stale entry means a review the customer just wrote never appears.
+ *
+ * `expire: 0` matches the old Redis DEL semantics: the next render blocks on a
+ * fresh Firestore read instead of being served a stale copy (the docs' `max`
+ * profile would serve one stale response first, which is wrong for "the
+ * customer just posted this review and must see it").
  */
 export function invalidateProductReviewsCache(productId: string | null | undefined): void {
   const id = String(productId || "").trim();
   if (!id) return;
-  void cacheDelete(reviewsRedisKey(id));
+  try {
+    revalidateTag(reviewsCacheTag(id), { expire: 0 });
+  } catch {
+    // Outside a Next.js render/handler context (plain script, tests) there is
+    // no cache to invalidate; the TTL still bounds staleness.
+  }
 }
 
 async function readReviewsFromFirestore(productId: string) {
@@ -184,17 +191,41 @@ async function readReviewsFromFirestore(productId: string) {
   }
 }
 
-async function getReviewsForProduct(productId: string): Promise<ProductReview[]> {
-  const key = reviewsRedisKey(productId);
-  const cached = await cacheGet<ProductReview[]>(key);
-  // An empty array is a legitimate cache value ("this product has no reviews"),
-  // so only null/undefined counts as a miss. JSON round-tripping is safe here
-  // because every field on ProductReview is a string, number or boolean.
-  if (Array.isArray(cached)) return cached;
+/**
+ * Tag shared by every product's cached review list (bulk invalidation hook),
+ * plus a per-product tag so one product's write does not flush the others.
+ */
+const reviewsCacheTag = (productId: string) => `reviews:v1:${productId}`;
 
-  const reviews = await readReviewsFromFirestore(productId);
-  void cacheSet(key, reviews);
-  return reviews;
+/**
+ * unstable_cache copy of the Firestore review read, created per product so
+ * each entry carries its own tag alongside the shared "reviews" tag. The
+ * cache key already includes the productId argument, so entries never
+ * collide. revalidate 86400 matches the product page's own ISR window.
+ *
+ * JSON round-trip: unstable_cache stores JSON.stringify(result) — the same
+ * round-trip the old Redis cacheSet did — and every field on ProductReview is
+ * a string, number or boolean (src/lib/reviews.ts), so the value callers get
+ * back is identical to what the Redis tier returned.
+ */
+const reviewsCacheFns = new Map<string, (productId: string) => Promise<ProductReview[]>>();
+
+function readReviewsCached(productId: string): Promise<ProductReview[]> {
+  let cached = reviewsCacheFns.get(productId);
+  if (!cached) {
+    cached = unstable_cache(readReviewsFromFirestore, ["product-reviews"], {
+      revalidate: 86400,
+      tags: ["reviews", reviewsCacheTag(productId)],
+    });
+    reviewsCacheFns.set(productId, cached);
+  }
+  return cached(productId);
+}
+
+async function getReviewsForProduct(productId: string): Promise<ProductReview[]> {
+  // An empty array is a legitimate cached value ("this product has no
+  // reviews"); unstable_cache returns it like any other result.
+  return readReviewsCached(productId);
 }
 
 // Catalog cache: allProducts() powers every storefront catalog path (shop,
@@ -203,39 +234,41 @@ async function getReviewsForProduct(productId: string): Promise<ProductReview[]>
 // pagination request and every ISR regeneration, that alone could exhaust the
 // Firestore free-tier daily read quota.
 //
-// The cache has three tiers now:
+// The cache has two tiers now:
 //
 //   1. per-instance memory  — microseconds, but dies with the process
-//   2. shared Redis         — survives cold starts, so a NEW Vercel instance
-//                             pays 1 Redis GET instead of 147 Firestore reads
-//   3. Firestore            — only when both miss, and only the winner writes
-//
-// Tier 2 is the one that matters on serverless. The CDN (s-maxage in
-// next.config.js) already absorbs repeat visits, so by the time a request
-// reaches this function the CDN entry has usually expired — meaning it is
-// typically a COLD instance. Before Redis, every one of those paid a full
-// Firestore read. Now only the very first pays.
+//   2. unstable_cache       — Next's shared data cache; survives cold starts
+//                             and is revalidated by tag/TTL, WITHOUT any
+//                             network fetch during render (the old Upstash
+//                             tier did a no-store REST fetch here, which
+//                             flipped every ISR page to dynamic at runtime)
+//   3. Firestore            — only when both miss
 //
 // The matching client half of this lives in src/lib/cachedFetch.ts.
 const CATALOG_CACHE_TTL_MS =
   Math.max(30_000, Number.parseInt(process.env.CATALOG_CACHE_TTL_MS || "", 10) || 5 * 60 * 1000);
-const CATALOG_REDIS_KEY = "catalog:products:v1";
 let catalogCache: { at: number; items: ReturnType<typeof mapProduct>[] } | null = null;
 let catalogRefresh: Promise<ReturnType<typeof mapProduct>[]> | null = null;
 
 /**
  * Clears the catalog everywhere it is held.
  *
- * Must also drop the shared Redis copy, not just this instance's memory. The
- * admin product routes call this after a write; without the DEL the new price
- * would stay invisible sitewide until the Redis TTL expired, which for a store
- * means selling at the wrong number. The Redis delete is fire-and-forget so a
- * cache outage cannot delay or fail the admin's save.
+ * Must also expire the shared unstable_cache copy, not just this instance's
+ * memory. The admin product routes call this after a write; without the tag
+ * invalidation the new price would stay invisible sitewide until the cache
+ * TTL expired, which for a store means selling at the wrong number.
+ * `{ expire: 0 }` matches the old Redis DEL semantics: the next render blocks
+ * on a fresh read instead of being served one stale copy first.
  */
 export function invalidateCatalogCache() {
   catalogCache = null;
   catalogRefresh = null;
-  void cacheDelete(CATALOG_REDIS_KEY);
+  try {
+    revalidateTag("catalog", { expire: 0 });
+  } catch {
+    // Outside a Next.js render/handler context (plain script, tests) there is
+    // no cache to invalidate; the TTL still bounds staleness.
+  }
 }
 
 async function readCatalogFromFirestore() {
@@ -246,27 +279,23 @@ async function readCatalogFromFirestore() {
   return snapshot.docs.map((doc) => mapProduct(doc.id, doc.data()));
 }
 
-/** Reads the shared copy. Returns null on a miss, a bad shape, or any error. */
-async function readCatalogFromRedis() {
-  const cached = await cacheGet<ReturnType<typeof mapProduct>[]>(CATALOG_REDIS_KEY);
-  if (!Array.isArray(cached) || !cached.length) return null;
-  // Guard the shape: a truncated or hand-edited key must degrade to Firestore
-  // rather than poison the storefront with undefined products.
-  if (!cached.every((item) => item && typeof item === "object" && typeof item.id === "string")) {
-    return null;
-  }
-  return cached;
-}
+// unstable_cache wraps the raw Firestore read (not allProducts()) so the
+// per-instance stale-while-revalidate tier below stays the only consumer.
+//
+// JSON round-trip: unstable_cache stores JSON.stringify(result), the same
+// round-trip the old Redis tier performed. mapProduct() normalises every
+// field it exposes (price/compareAtPrice to fixed strings, tags/collections
+// to string[], inventory to number, etc.), and the spread of raw Firestore
+// data carries only JSON-safe primitives/arrays/objects — Firestore
+// Timestamps are converted by mapProduct's string()/numeric() coercions. So
+// the cached shape is identical to what callers received from Redis.
+const readCatalogCached = unstable_cache(readCatalogFromFirestore, ["catalog-products-v1"], {
+  revalidate: 3600,
+  tags: ["catalog"],
+});
 
 async function loadCatalog() {
-  const cached = await readCatalogFromRedis();
-  if (cached) return cached;
-
-  const items = await readCatalogFromFirestore();
-  // Best-effort populate for the next cold instance. A failure here costs
-  // nothing but a future Firestore read.
-  void cacheSet(CATALOG_REDIS_KEY, items);
-  return items;
+  return readCatalogCached();
 }
 
 async function allProducts() {

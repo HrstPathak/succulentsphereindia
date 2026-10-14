@@ -1,6 +1,1 @@
-{
-  "crons": [
-    { "path": "/api/shipments/process?limit=25", "schedule": "0 3 * * *" },
-    { "path": "/api/cron/blog-automation", "schedule": "30 23 * * 0,2,4" }
-  ]
-}
+{}
