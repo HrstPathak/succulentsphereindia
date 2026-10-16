@@ -232,6 +232,10 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
   const strength = useMemo(() => passwordStrength(passwordDraft.newPassword), [passwordDraft.newPassword]);
 
   useEffect(() => {
+    setSessionCustomer(customer, isAdmin);
+  }, [customer, isAdmin, setSessionCustomer]);
+
+  useEffect(() => {
     if (sessionCustomer) setData(sessionCustomer);
   }, [sessionCustomer]);
 
