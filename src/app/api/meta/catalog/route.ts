@@ -226,7 +226,7 @@ export async function GET(request: Request) {
       });
     } catch (fallbackError) {
       console.info(`[meta catalog] fallback generation failed: ${String((fallbackError as Error)?.message || fallbackError)}`);
-      return new Response("Service unavailable", { status: 503 });
+      return new Response("Service unavailable", { status: 503, headers: { "Cache-Control": "no-store" } });
     }
   }
 }

@@ -897,32 +897,6 @@ export async function updateDelhiveryManifest(orderId: string) {
   };
 }
 
-export async function processPendingShipments(limit = 5) {
-  const db = getFirebaseDb();
-  const [pending, ready, processing] = await Promise.all([
-    db.collection("shipments").where("status", "==", "pending").orderBy("createdAt").limit(limit).get(),
-    db.collection("shipments").where("status", "==", "ready").orderBy("createdAt").limit(limit).get(),
-    db.collection("shipments").where("status", "==", "processing").limit(limit).get(),
-  ]);
-  const staleCutoff = Date.now() - 10 * 60 * 1000;
-  const jobs = [
-    ...pending.docs,
-    ...ready.docs,
-    ...processing.docs.filter(
-      (doc) => new Date(String(doc.get("updatedAt") || 0)).getTime() < staleCutoff,
-    ),
-  ].slice(0, limit);
-  const results: Array<Record<string, unknown>> = [];
-  for (const doc of jobs) {
-    try {
-      results.push({ id: doc.id, ...(await processShipmentJob(doc.id)) });
-    } catch (error) {
-      results.push({ id: doc.id, ok: false, error: String((error as Error).message || error) });
-    }
-  }
-  return results;
-}
-
 /** Read the durable shipment job for an order (used by the admin UI). */
 export async function getShipmentJob(orderId: string): Promise<Record<string, unknown> | null> {
   const db = getFirebaseDb();

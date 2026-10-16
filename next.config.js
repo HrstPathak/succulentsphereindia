@@ -90,8 +90,6 @@ const nextConfig = {
       // at the edge; stale-while-revalidate keeps p99 flat instead of spiking
       // while a background refresh runs.
       ...[
-        ['/api/products', 300, 600],
-        ['/api/filters', 1800, 3600],
         ['/api/search', 300, 600],
         ['/api/plant-suggestions', 3600, 86400],
         ['/api/pincode-serviceability', 1800, 3600],
@@ -130,7 +128,8 @@ const nextConfig = {
       // another, so they are explicitly no-store. Declared last so these rules
       // win over the broad '/(.*)' match above.
       ...[
-        '/api/:path*',
+        // Public catalog endpoints keep their route-specific CDN cache headers.
+        '/api/((?!products$|filters$|meta/catalog$).*)',
         '/account/:path*',
         '/cart',
         '/checkout',

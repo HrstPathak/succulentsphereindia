@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import CartCountBadge from "./CartCountBadge";
@@ -7,6 +7,7 @@ import SearchBar from "../ui/SearchBar";
 import MobileDrawer from "./MobileDrawer";
 import DarkModeToggle from "../ui/DarkModeToggle";
 import WishlistCounter from "../wishlist/WishlistCounter";
+import { useCustomerSession } from "@/context/CustomerSessionContext";
 import { AlignLeft, CircleUserRound, Heart, LogOut, Search, ShieldCheck, ShoppingCart, User, X } from "lucide-react";
 
 type HeaderCustomer = {
@@ -37,13 +38,13 @@ function getCustomerInitial(customer: HeaderCustomer | null): string | null {
 
 export default function Header() {
   const router = useRouter();
+  const { customer, isAdmin, setCustomer } = useCustomerSession();
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [infoIndex, setInfoIndex] = useState(0);
-  const [customerInitial, setCustomerInitial] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const customerInitial = getCustomerInitial(customer);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   const infoMessages = [
@@ -62,27 +63,6 @@ export default function Header() {
   const noticeBarHeight = showShoppingNotice ? 36 : 0;
   const navHeight = 64;
   const headerOffset = noticeBarHeight + navHeight;
-
-  const loadCustomer = useCallback(async () => {
-    try {
-      const response = await fetch("/api/customer", {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store",
-      });
-      if (!response.ok) {
-        setCustomerInitial(null);
-        setIsAdmin(false);
-        return;
-      }
-      const json = await response.json();
-      setCustomerInitial(getCustomerInitial(json?.customer || null));
-      setIsAdmin(Boolean(json?.isAdmin));
-    } catch {
-      setCustomerInitial(null);
-      setIsAdmin(false);
-    }
-  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -107,18 +87,6 @@ export default function Header() {
   }, [infoMessages.length, showShoppingNotice]);
 
   useEffect(() => {
-    loadCustomer();
-  }, [loadCustomer, pathname]);
-
-  useEffect(() => {
-    const onAuthChanged = () => {
-      loadCustomer();
-    };
-    window.addEventListener("auth:changed", onAuthChanged);
-    return () => window.removeEventListener("auth:changed", onAuthChanged);
-  }, [loadCustomer]);
-
-  useEffect(() => {
     function onPointerDown(event: MouseEvent) {
       const target = event.target as HTMLElement | null;
       if (!target?.closest("[data-account-menu='true']")) {
@@ -137,8 +105,7 @@ export default function Header() {
     try {
       const response = await fetch("/api/logout", { method: "POST" });
       if (!response.ok) return;
-      setCustomerInitial(null);
-      setIsAdmin(false);
+      setCustomer(null, false);
       setAccountMenuOpen(false);
       window.dispatchEvent(new Event("auth:changed"));
       router.replace("/login");

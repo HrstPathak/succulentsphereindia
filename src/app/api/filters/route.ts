@@ -124,18 +124,21 @@ export async function GET(req: Request) {
     const minPrice = prices.length ? Math.max(PRICE_MIN, Math.floor(Math.min(...prices))) : PRICE_MIN;
     const maxPrice = prices.length ? Math.min(PRICE_MAX, Math.ceil(Math.max(...prices))) : PRICE_MAX;
 
-    return NextResponse.json({
-      facets: {
-        collections,
-        productType,
-        plantGenus,
-        potSize,
-        potMaterial,
-        careLevel,
-        availability: true,
-        priceRange: { min: minPrice, max: maxPrice },
+    return NextResponse.json(
+      {
+        facets: {
+          collections,
+          productType,
+          plantGenus,
+          potSize,
+          potMaterial,
+          careLevel,
+          availability: true,
+          priceRange: { min: minPrice, max: maxPrice },
+        },
       },
-    });
+      { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } },
+    );
   } catch (error) {
     return NextResponse.json(
       {
@@ -151,7 +154,7 @@ export async function GET(req: Request) {
         },
         error: (error as Error).message,
       },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store" } }
     );
   }
 }

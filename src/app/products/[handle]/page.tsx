@@ -4,12 +4,17 @@ import type { Metadata } from "next";
 import { mockProducts } from "../../../data/mockProducts";
 import RecommendedProducts from "../../../components/product/RecommendedProducts";
 import ProductFaqs from "../../../components/product/ProductFaqs";
-import { fetchProductByHandle } from "../../../lib/commerce";
+import { fetchProductByHandle, fetchProductHandlesForStaticGeneration } from "../../../lib/commerce";
 import UnifiedProductDetail from "@/components/product/UnifiedProductDetail";
 import { absoluteUrl } from "@/lib/seo";
 import { buildProductFaqStructuredData, buildProductStructuredData, toJsonLd } from "@/lib/structured-data";
 
-export const revalidate = 86400;
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const handles = await fetchProductHandlesForStaticGeneration();
+  return handles.map((handle) => ({ handle }));
+}
 
 function cleanProductDescription(input: unknown, fallback: string): string {
   const value = String(input || "")
@@ -24,7 +29,7 @@ async function resolveProductByHandle(handle: string) {
   let product = null;
 
   try {
-    product = await fetchProductByHandle(handle);
+    product = await fetchProductByHandle(handle, { bypassReviewCache: true });
   } catch (error) {
     console.error("Failed to fetch product by handle:", error);
   }

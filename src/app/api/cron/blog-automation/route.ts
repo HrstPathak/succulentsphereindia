@@ -141,7 +141,7 @@ async function runAutomation() {
 
 async function handleAutomation(req: Request) {
   try {
-    // Dual-auth copied from src/app/api/shipments/process/route.ts: Vercel Cron
+    // Vercel Cron and logged-in admins use separate authentication paths.
     // sends the Bearer secret; a logged-in admin (manual "Run now") passes the
     // session-cookie requireAdmin() path instead.
     const cronSecret = String(process.env.CRON_SECRET || "").trim();

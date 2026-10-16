@@ -17,6 +17,7 @@ import {
 import { COD_DEPOSIT_AMOUNT, COD_FEE_AMOUNT, COD_ORDER_LIMIT } from "@/lib/checkoutConfig";
 import { checkPincodeServiceability, normalizePincode } from "@/lib/pincodeServiceability";
 import WalletCashbackBadge from "./WalletCashbackBadge";
+import { useCustomerSession } from "@/context/CustomerSessionContext";
 
 type CheckoutStep = 1 | 2 | 3;
 
@@ -100,6 +101,7 @@ function composeFullAddress(baseAddress: string, landmark: string): string {
 }
 
 export default function CheckoutClient() {
+  const { customer: sessionCustomer, status: sessionStatus } = useCustomerSession();
   const router = useRouter();
   const { items, clear } = useCart();
   const [step, setStep] = useState<CheckoutStep>(1);
@@ -282,51 +284,68 @@ export default function CheckoutClient() {
   }, [isVerifyingPayment]);
 
   useEffect(() => {
-    let cancelled = false;
+    if (sessionStatus === "loading") return;
+    if (!sessionCustomer) {
+      setCustomerProfile(null);
+      setSavedAddresses([]);
+      setSelectedAddressId(null);
+      return;
+    }
 
-    const prefillFromAccount = async () => {
-      try {
-        const response = await fetch("/api/customer", { method: "GET" });
-        if (!response.ok) return;
-
-        const payload = await response.json();
-        const customer = payload?.customer as CustomerProfile | undefined;
-        if (!customer || cancelled) return;
-
-        setCustomerProfile(customer);
-        setSavedAddresses(customer.addresses || []);
-
-        const defaultAddress =
-          customer.addresses?.find((address) => address.id === customer.defaultAddressId) ||
-          customer.addresses?.[0];
-
-        const fullName = [defaultAddress?.firstName || customer.firstName, defaultAddress?.lastName || customer.lastName]
-          .filter(Boolean)
-          .join(" ")
-          .trim();
-
-        setSelectedAddressId(defaultAddress?.id || null);
-
-        setInfo((prev) => ({
-          fullName: prev.fullName || fullName,
-          email: prev.email || customer.email || "",
-          phone: prev.phone || defaultAddress?.phone || customer.phone || "",
-          address: prev.address || buildAddressLine(defaultAddress),
-          landmark: prev.landmark || "",
-          city: prev.city || defaultAddress?.city || "",
-          state: prev.state || defaultAddress?.province || "",
-          pincode: prev.pincode || normalizePincode(defaultAddress?.zip || ""),
-        }));
-      } catch {
-        // Keep checkout usable for guests if profile lookup fails.
-      }
+    const customer: CustomerProfile = {
+      firstName: sessionCustomer.firstName,
+      lastName: sessionCustomer.lastName,
+      email: sessionCustomer.email,
+      phone: sessionCustomer.phone,
+      defaultAddressId: sessionCustomer.defaultAddressId,
+      addresses: sessionCustomer.addresses.map((address) => ({
+        id: address.id,
+        firstName: address.firstName,
+        lastName: address.lastName,
+        address1: address.address1,
+        address2: address.address2,
+        city: address.city,
+        province: address.province,
+        country: address.country,
+        zip: address.zip,
+        phone: address.phone,
+      })),
+      wallet: sessionCustomer.wallet
+        ? {
+            balance: sessionCustomer.wallet.balance,
+            availableBalance: sessionCustomer.wallet.availableBalance,
+            heldBalance: sessionCustomer.wallet.heldBalance,
+            activeCredits: sessionCustomer.wallet.activeCredits.map(({ id, amount, expiresAt }) => ({
+              id,
+              amount,
+              expiresAt,
+            })),
+          }
+        : undefined,
     };
+    setCustomerProfile(customer);
+    setSavedAddresses(customer.addresses);
 
-    prefillFromAccount();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    const defaultAddress =
+      customer.addresses.find((address) => address.id === customer.defaultAddressId) ||
+      customer.addresses[0];
+    const fullName = [defaultAddress?.firstName || customer.firstName, defaultAddress?.lastName || customer.lastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    setSelectedAddressId((current) => current || defaultAddress?.id || null);
+    setInfo((prev) => ({
+      fullName: prev.fullName || fullName,
+      email: prev.email || customer.email || "",
+      phone: prev.phone || defaultAddress?.phone || customer.phone || "",
+      address: prev.address || buildAddressLine(defaultAddress),
+      landmark: prev.landmark || "",
+      city: prev.city || defaultAddress?.city || "",
+      state: prev.state || defaultAddress?.province || "",
+      pincode: prev.pincode || normalizePincode(defaultAddress?.zip || ""),
+    }));
+  }, [sessionCustomer, sessionStatus]);
 
   function applySavedAddress(address: CustomerAddress) {
     const fullName = buildAddressName(address, customerProfile);
@@ -1104,7 +1123,6 @@ export default function CheckoutClient() {
     </>
   );
 }
-
 
 
 

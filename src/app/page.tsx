@@ -5,7 +5,7 @@ import CategoryGrid from "../components/home/CategoryGrid";
 import BestSellerGrid from "../components/home/BestSellerGrid";
 import ComboTeaserBanner from "../components/home/ComboTeaserBanner";
 import { SITE_NAME, absoluteUrl } from "@/lib/seo";
-import { fetchAllProductsList } from "@/lib/commerce";
+import { fetchAllProductsListFromFirestore } from "@/lib/commerce";
 import { resolveProductImageAlt } from "@/lib/imageAlt";
 import { buildPageMetadata } from "@/lib/page-metadata";
 import { toJsonLd } from "@/lib/structured-data";
@@ -116,7 +116,7 @@ function buildBestSellerPool(primary: HomeBestSellerCandidate[], desiredCount = 
 
 async function getHomeBestSellerProducts() {
   try {
-    const products = await fetchAllProductsList({
+    const products = await fetchAllProductsListFromFirestore({
       sortKey: "CREATED_AT",
       reverse: true,
     });

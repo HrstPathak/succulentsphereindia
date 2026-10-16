@@ -246,6 +246,17 @@ async function readCatalogFromFirestore() {
   return snapshot.docs.map((doc) => mapProduct(doc.id, doc.data()));
 }
 
+export async function fetchAllProductsListFromFirestore(options: ProductQueryOptions = {}) {
+  return sortProducts(await readCatalogFromFirestore(), options);
+}
+
+export async function fetchProductHandlesForStaticGeneration() {
+  const snapshot = await getFirebaseDb().collection("products").select("handle").get();
+  return snapshot.docs
+    .map((doc) => string(doc.get("handle")).trim())
+    .filter(Boolean);
+}
+
 /** Reads the shared copy. Returns null on a miss, a bad shape, or any error. */
 async function readCatalogFromRedis() {
   const cached = await cacheGet<ReturnType<typeof mapProduct>[]>(CATALOG_REDIS_KEY);
@@ -356,16 +367,22 @@ export async function fetchAllProductsList(options: ProductQueryOptions = {}) { 
  * Outside a React render (a script, a cron) `cache()` degrades to a plain
  * call, so behaviour is unchanged there.
  */
-const fetchProductByHandleCached = cache(async (handle: string) => {
+const fetchProductByHandleCached = cache(async (handle: string, bypassReviewCache: boolean) => {
   const snapshot = await getFirebaseDb().collection("products").where("handle", "==", handle).limit(1).get();
   if (snapshot.empty) return null;
   const doc = snapshot.docs[0]!;
-  return mapProduct(doc.id, doc.data(), await getReviewsForProduct(doc.id));
+  const reviews = bypassReviewCache
+    ? await readReviewsFromFirestore(doc.id)
+    : await getReviewsForProduct(doc.id);
+  return mapProduct(doc.id, doc.data(), reviews);
 });
 
-export async function fetchProductByHandle(handleInput: unknown) {
+export async function fetchProductByHandle(
+  handleInput: unknown,
+  options: { bypassReviewCache?: boolean } = {},
+) {
   const handle = normaliseHandle(handleInput); if (!handle) return null;
-  return fetchProductByHandleCached(handle);
+  return fetchProductByHandleCached(handle, options.bypassReviewCache === true);
 }
 export async function fetchProductsByIds(ids: string[]) {
   const uniqueIds = [...new Set(ids.map((id) => string(id).trim()).filter(Boolean))].slice(0, 30);

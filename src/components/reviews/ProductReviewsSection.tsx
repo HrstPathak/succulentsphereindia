@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import type { ProductReview } from "@/lib/reviews";
+import { useCustomerSession } from "@/context/CustomerSessionContext";
 
 type Props = {
   productId: string;
@@ -38,6 +39,7 @@ export default function ProductReviewsSection({
   initialReviewCount = 0,
   initialRating = 0,
 }: Props) {
+  const { customer, status } = useCustomerSession();
   const [reviews, setReviews] = useState<ProductReview[]>(initialReviews);
   const [reviewCount, setReviewCount] = useState(initialReviewCount || initialReviews.length);
   const [rating, setRating] = useState(initialRating);
@@ -59,29 +61,22 @@ export default function ProductReviewsSection({
   const visibleReviews = showAllReviews ? reviews : reviews.slice(0, 1);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const response = await fetch("/api/customer", { method: "GET", credentials: "include", cache: "no-store" });
-        if (!response.ok) return;
-        const json = await response.json();
-        const email = String(json?.customer?.email || "").trim().toLowerCase();
-        if (!cancelled && email) {
-          setViewerEmail(email);
-          setForm((prev) => ({
-            ...prev,
-            name:
-              [json?.customer?.firstName, json?.customer?.lastName].filter(Boolean).join(" ").trim() ||
-              String(json?.customer?.displayName || ""),
-            email,
-          }));
-        }
-      } catch {}
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    if (status === "loading") return;
+    const email = String(customer?.email || "").trim().toLowerCase();
+    setViewerEmail(email);
+    if (!email) {
+      if (viewerEmail) setForm((prev) => ({ ...prev, name: "", email: "" }));
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      name:
+        [customer?.firstName, customer?.lastName].filter(Boolean).join(" ").trim() ||
+        String(customer?.displayName || ""),
+      email,
+    }));
+  }, [customer, status, viewerEmail]);
 
   async function submitReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

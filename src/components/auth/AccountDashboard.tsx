@@ -22,6 +22,7 @@ import OrdersListClient from "./OrdersListClient";
 import WalletSection from "./WalletSection";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import type { FirebaseAuthenticatedCustomer, FirebaseCustomerAddress } from "@/lib/commerce";
+import { useCustomerSession } from "@/context/CustomerSessionContext";
 
 type AccountDashboardProps = {
   customer: FirebaseAuthenticatedCustomer;
@@ -181,6 +182,7 @@ function AccountMenuItem({
 
 export default function AccountDashboard({ customer, isGoogleLogin = false, isAdmin = false }: AccountDashboardProps) {
   const router = useRouter();
+  const { customer: sessionCustomer, refresh, setCustomer: setSessionCustomer } = useCustomerSession();
   const [data, setData] = useState(customer);
   const [expandedSection, setExpandedSection] = useState<SectionKey>(null);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -229,42 +231,24 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
 
   const strength = useMemo(() => passwordStrength(passwordDraft.newPassword), [passwordDraft.newPassword]);
 
+  useEffect(() => {
+    if (sessionCustomer) setData(sessionCustomer);
+  }, [sessionCustomer]);
+
   const refreshCustomerData = useCallback(
     async (showLoader = false) => {
       if (showLoader) setRefreshingOrders(true);
       try {
-        const response = await fetch("/api/customer", {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-        });
-        const json = await response.json();
-        if (!response.ok) {
-          if (response.status === 401) {
-            showErrorToast(String(json?.error || "Session expired. Please login again."));
-            router.replace("/login");
-            return;
-          }
-          throw new Error(String(json?.error || "Unable to refresh account details."));
-        }
-        if (json?.customer) setData(json.customer);
+        const refreshed = await refresh();
+        if (refreshed.customer) setData(refreshed.customer);
       } catch (error) {
         if (showLoader) showErrorToast((error as Error).message || "Unable to refresh orders.");
       } finally {
         if (showLoader) setRefreshingOrders(false);
       }
     },
-    [router]
+    [refresh]
   );
-
-  useEffect(() => {
-    if (expandedSection !== "orders") return;
-    refreshCustomerData(false);
-    const timer = setInterval(() => {
-      refreshCustomerData(false);
-    }, 30000);
-    return () => clearInterval(timer);
-  }, [expandedSection, refreshCustomerData]);
 
   function toggleSection(section: Exclude<SectionKey, null>) {
     setExpandedSection((prev) => (prev === section ? null : section));
@@ -287,6 +271,8 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
         showErrorToast(String(json?.error || "Logout failed."));
         return;
       }
+      setSessionCustomer(null, false);
+      window.dispatchEvent(new Event("auth:changed"));
       showSuccessToast("You are logged out.");
       router.replace("/login");
       router.refresh();
@@ -322,7 +308,10 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
         if (response.status === 401) router.replace("/login");
         return;
       }
-      if (json?.customer) setData(json.customer);
+      if (json?.customer) {
+        setData(json.customer);
+        setSessionCustomer(json.customer, isAdmin);
+      }
       showSuccessToast("Profile updated.");
       setProfileModalOpen(false);
       router.refresh();
@@ -356,6 +345,8 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
         return;
       }
       setPasswordDraft({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setSessionCustomer(null, false);
+      window.dispatchEvent(new Event("auth:changed"));
       showSuccessToast("Password updated successfully.");
       router.refresh();
     } catch (error) {
@@ -420,6 +411,7 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
       }
       if (json?.customer) {
         setData(json.customer);
+        setSessionCustomer(json.customer, isAdmin);
       } else {
         await refreshCustomerData(false);
       }
@@ -448,7 +440,10 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
         if (response.status === 401) router.replace("/login");
         return;
       }
-      if (json?.customer) setData(json.customer);
+      if (json?.customer) {
+        setData(json.customer);
+        setSessionCustomer(json.customer, isAdmin);
+      }
       setDeleteAddressId(null);
       showSuccessToast("Address removed.");
       router.refresh();
@@ -473,7 +468,10 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
         if (response.status === 401) router.replace("/login");
         return;
       }
-      if (json?.customer) setData(json.customer);
+      if (json?.customer) {
+        setData(json.customer);
+        setSessionCustomer(json.customer, isAdmin);
+      }
       showSuccessToast("Default address updated.");
       router.refresh();
     } catch (error) {
