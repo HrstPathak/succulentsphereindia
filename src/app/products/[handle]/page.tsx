@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { mockProducts } from "../../../data/mockProducts";
 import RecommendedProducts from "../../../components/product/RecommendedProducts";
 import ProductFaqs from "../../../components/product/ProductFaqs";
-import { fetchProductByHandle, fetchProductHandlesForStaticGeneration } from "../../../lib/commerce";
+import { fetchProductByHandleRedis, fetchProductHandlesForStaticGenerationFromRedis } from "../../../../lib/product-cache";
 import UnifiedProductDetail from "@/components/product/UnifiedProductDetail";
 import { absoluteUrl } from "@/lib/seo";
 import { buildProductFaqStructuredData, buildProductStructuredData, toJsonLd } from "@/lib/structured-data";
@@ -12,7 +12,7 @@ import { buildProductFaqStructuredData, buildProductStructuredData, toJsonLd } f
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  const handles = await fetchProductHandlesForStaticGeneration();
+  const handles = await fetchProductHandlesForStaticGenerationFromRedis();
   return handles.map((handle) => ({ handle }));
 }
 
@@ -29,7 +29,7 @@ async function resolveProductByHandle(handle: string) {
   let product = null;
 
   try {
-    product = await fetchProductByHandle(handle, { bypassReviewCache: true });
+    product = await fetchProductByHandleRedis(handle, { useRedis: true });
   } catch (error) {
     console.error("Failed to fetch product by handle:", error);
   }

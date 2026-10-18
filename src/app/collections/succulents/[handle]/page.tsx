@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { mockProducts } from "../../../../data/mockProducts";
 import RecommendedProducts from "../../../../components/product/RecommendedProducts";
 import ProductFaqs from "../../../../components/product/ProductFaqs";
-import { fetchProductByHandle, fetchProductHandlesForStaticGenerationCached } from "../../../../lib/commerce";
+import { fetchProductByHandleRedis, fetchProductHandlesForStaticGenerationFromRedis } from "../../../../lib/product-cache";
 import UnifiedProductDetail from "@/components/product/UnifiedProductDetail";
 import { absoluteUrl } from "@/lib/seo";
 import { buildProductFaqStructuredData, buildProductStructuredData, toJsonLd } from "@/lib/structured-data";
@@ -14,7 +14,7 @@ export const dynamicParams = true;
 
 export async function generateStaticParams() {
   try {
-    const handles = await fetchProductHandlesForStaticGenerationCached();
+    const handles = await fetchProductHandlesForStaticGenerationFromRedis();
     return handles.map((handle) => ({ handle }));
   } catch {
     // Never fail the build over handle discovery.
@@ -55,7 +55,7 @@ async function resolveProductByHandle(handle: string) {
   // bypassReviewCache: true, builds as SSG while this page built as dynamic).
   // Bypass the review cache here to match the sibling route until Phase 2
   // introduces a prerender-safe per-product Redis cache.
-  const product = await fetchProductByHandle(handle, { bypassReviewCache: true });
+  const product = await fetchProductByHandleRedis(handle, { useRedis: true });
   if (product) return product;
 
   return mockProducts.find((p) => p.handle === handle) ?? null;
