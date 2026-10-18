@@ -4,12 +4,23 @@ import type { Metadata } from "next";
 import { mockProducts } from "../../../../data/mockProducts";
 import RecommendedProducts from "../../../../components/product/RecommendedProducts";
 import ProductFaqs from "../../../../components/product/ProductFaqs";
-import { fetchProductByHandle } from "../../../../lib/commerce";
+import { fetchProductByHandle, fetchProductHandlesForStaticGenerationCached } from "../../../../lib/commerce";
 import UnifiedProductDetail from "@/components/product/UnifiedProductDetail";
 import { absoluteUrl } from "@/lib/seo";
 import { buildProductFaqStructuredData, buildProductStructuredData, toJsonLd } from "@/lib/structured-data";
 
 export const revalidate = 86400;
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  try {
+    const handles = await fetchProductHandlesForStaticGenerationCached();
+    return handles.map((handle) => ({ handle }));
+  } catch {
+    // Never fail the build over handle discovery.
+    return [];
+  }
+}
 
 function cleanProductDescription(input: unknown, fallback: string): string {
   const value = String(input || "")
@@ -20,20 +31,34 @@ function cleanProductDescription(input: unknown, fallback: string): string {
   return value.length > 220 ? `${value.slice(0, 217).trimEnd()}...` : value;
 }
 
+/**
+ * Resolve a product for a statically generated (ISR) route.
+ *
+ * `fetchProductByHandle` returns `null` ONLY for a genuine miss (empty
+ * Firestore snapshot) — that case keeps the historical behaviour: fall back to
+ * the bundled mock catalog, and the caller may `notFound()`.
+ *
+ * Infrastructure failures (Firestore quota/network errors, a Redis outage) are
+ * deliberately NOT caught here. Swallowing them would fall through to
+ * `mockProducts` and then `notFound()`, which with ISR would cache placeholder
+ * content or a 404 for the full 24h `revalidate`. Letting the throw bubble
+ * makes Next.js keep serving the last good static snapshot instead.
+ *
+ * generateMetadata() shares this function, so it inherits the same guarantee
+ * and cannot return "Product Not Found" metadata because of a transient error.
+ */
 async function resolveProductByHandle(handle: string) {
-  let product = null;
+  // NOTE (ISR root cause): getReviewsForProduct() reads Upstash Redis, whose
+  // SDK issues fetch(..., { cache: "no-store" }) by default. A single
+  // no-store fetch in the render opts the whole route out of static
+  // generation (this is why /products/[handle], which passes
+  // bypassReviewCache: true, builds as SSG while this page built as dynamic).
+  // Bypass the review cache here to match the sibling route until Phase 2
+  // introduces a prerender-safe per-product Redis cache.
+  const product = await fetchProductByHandle(handle, { bypassReviewCache: true });
+  if (product) return product;
 
-  try {
-    product = await fetchProductByHandle(handle);
-  } catch (error) {
-    console.error("Failed to fetch product by handle:", error);
-  }
-
-  if (!product) {
-    product = mockProducts.find((p) => p.handle === handle) ?? null;
-  }
-
-  return product;
+  return mockProducts.find((p) => p.handle === handle) ?? null;
 }
 
 export async function generateMetadata({

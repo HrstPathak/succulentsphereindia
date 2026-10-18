@@ -257,6 +257,37 @@ export async function fetchProductHandlesForStaticGeneration() {
     .filter(Boolean);
 }
 
+/**
+ * Handle list for `generateStaticParams()` on the product detail routes.
+ *
+ * Reads handles from the shared Redis catalog key first (one Redis GET for the
+ * whole list, zero Firestore reads) and only falls back to the Firestore
+ * `select("handle")` query when that key misses.
+ *
+ * Every failure returns `[]`: an empty list makes Next.js simply skip
+ * prerendering so pages generate on first visit, which is always better than a
+ * failed build or caching a wrong list. This must never throw.
+ */
+export async function fetchProductHandlesForStaticGenerationCached(): Promise<string[]> {
+  try {
+    const cached = await readCatalogFromRedis();
+    if (Array.isArray(cached) && cached.length) {
+      const handles = cached
+        .map((item) => string(item?.handle).trim())
+        .filter(Boolean);
+      if (handles.length) return handles;
+    }
+  } catch {
+    // Fall through to the Firestore query below.
+  }
+
+  try {
+    return await fetchProductHandlesForStaticGeneration();
+  } catch {
+    return [];
+  }
+}
+
 /** Reads the shared copy. Returns null on a miss, a bad shape, or any error. */
 async function readCatalogFromRedis() {
   const cached = await cacheGet<ReturnType<typeof mapProduct>[]>(CATALOG_REDIS_KEY);
