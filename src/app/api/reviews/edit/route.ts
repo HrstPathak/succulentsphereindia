@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { clearAuthCookies, getAuthenticatedCustomer } from "@/lib/auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { getReviewStats, type ProductReview } from "@/lib/reviews";
-import { invalidateProductReviewsCache } from "@/lib/commerce";
+import { invalidateProductCaches } from "@/lib/cache-invalidation";
 
 export async function POST(request: Request) {
   try {
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       return response;
     }
 
-    const { reviewId, productId, title, content, rating } = await request.json();
+    const { reviewId, title, content, rating } = await request.json();
     const ref = getFirebaseDb().collection("reviews").doc(String(reviewId || ""));
     const snapshot = await ref.get();
     if (!snapshot.exists || snapshot.get("userId") !== session.uid) {
@@ -43,8 +43,13 @@ export async function POST(request: Request) {
       verifiedPurchase: Boolean(prior.verifiedPurchase),
       orderNumber: String(prior.orderNumber || "") || undefined,
     };
-    invalidateProductReviewsCache(productId || snapshot.get("productId"));
-    const reviews = (await getFirebaseDb().collection("reviews").where("productId", "==", String(productId || snapshot.get("productId"))).where("status", "==", "published").get()).docs.map((doc) => ({ id: doc.id, ...doc.data() } as ProductReview));
+    const productKey = String(snapshot.get("productId") || "");
+    if (productKey) {
+      const productDoc = await getFirebaseDb().collection("products").doc(productKey).get();
+      const handle = productDoc.exists ? String(productDoc.get("handle") || "").trim() : "";
+      await invalidateProductCaches({ ids: [productKey], handles: handle ? [handle] : [], scope: "reviews" });
+    }
+    const reviews = (await getFirebaseDb().collection("reviews").where("productId", "==", productKey).where("status", "==", "published").get()).docs.map((doc) => ({ id: doc.id, ...doc.data() } as ProductReview));
     const stats = getReviewStats(reviews);
     return NextResponse.json({ ok: true, review, reviews, reviewCount: stats.reviewCount, rating: stats.averageRating });
   } catch (error) {

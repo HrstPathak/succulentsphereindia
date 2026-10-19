@@ -109,7 +109,7 @@ const nextConfig = {
         ['/combo', 300],
         ['/combo-builder', 300],
         ['/products/:path*', 300],
-        ['/collections/:path*', 300],
+        ['/collections/:path((?!succulents/[^/]+$).*)', 300],
         ['/plant-care/:path*', 600],
         ['/about', 600],
         ['/contact', 600],

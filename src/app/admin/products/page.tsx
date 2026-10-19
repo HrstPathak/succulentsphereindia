@@ -25,6 +25,7 @@ export default function AdminProductsPage() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [cacheMessage, setCacheMessage] = useState<string | null>(null);
   const { submitBulkUpdates, isLoading: isSubmitting } = useBulkEdit();
 
   // Fetch all products on mount
@@ -93,6 +94,24 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleClearProductCache = async () => {
+    setCacheMessage(null);
+    try {
+      const response = await fetch('/api/admin/revalidate-products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Unable to clear product cache.');
+      }
+      setCacheMessage('Product cache cleared successfully.');
+    } catch (error) {
+      setCacheMessage(error instanceof Error ? error.message : 'Unable to clear product cache.');
+    }
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading products...</div>;
   }
@@ -113,15 +132,29 @@ export default function AdminProductsPage() {
             {selectedProducts.size} of {products.length} selected
           </span>
         </div>
-        {selectedProducts.size > 0 && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsBulkEditOpen(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+            type="button"
+            onClick={handleClearProductCache}
+            className="px-4 py-2 border border-gray-300 bg-white text-gray-800 rounded hover:bg-gray-100 font-medium"
           >
-            Bulk Edit ({selectedProducts.size})
+            Clear product cache
           </button>
-        )}
+          {selectedProducts.size > 0 && (
+            <button
+              onClick={() => setIsBulkEditOpen(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+            >
+              Bulk Edit ({selectedProducts.size})
+            </button>
+          )}
+        </div>
       </div>
+      {cacheMessage && (
+        <div className="mb-4 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+          {cacheMessage}
+        </div>
+      )}
 
       {/* Products Table */}
       <div className="overflow-x-auto border border-gray-200 rounded-lg">

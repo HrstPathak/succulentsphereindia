@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { initializeFirebaseAdmin } from '@/lib/firebase-admin';
 import { invalidateCatalogCache } from '@/lib/commerce';
 import { invalidateAdminScopes } from '@/lib/admin-cache';
+import { invalidateProductCaches } from '@/lib/cache-invalidation';
 
 interface BulkUpdateRequest {
   updates: Array<{
@@ -49,6 +50,22 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const productRefs = validUpdates.map((update) =>
+      db.collection('products').doc(update.id),
+    );
+    const productsBeforeUpdate = validUpdates.length <= 10
+      ? await db.getAll(...productRefs)
+      : [];
+    const oldHandles = productsBeforeUpdate
+      .map((product) => String(product.get('handle') || '').trim())
+      .filter(Boolean);
+    const oldHandlesById = new Map(
+      productsBeforeUpdate.map((product) => [
+        product.id,
+        String(product.get('handle') || '').trim(),
+      ]),
+    );
 
     // Perform batch update
     const batch = db.batch();
@@ -97,10 +114,28 @@ export async function POST(req: NextRequest) {
     invalidateCatalogCache();
     invalidateAdminScopes("products");
 
+    const handles = validUpdates.map((update) => {
+      const oldHandle = oldHandlesById.get(update.id) || '';
+      return String(update.changes.handle ?? oldHandle).trim();
+    }).filter(Boolean);
+    const handleChanged = validUpdates.some((update) => {
+      const oldHandle = oldHandlesById.get(update.id) || '';
+      return update.changes.handle !== undefined &&
+        String(update.changes.handle).trim() !== oldHandle;
+    });
+    const cache = await invalidateProductCaches({
+      handles,
+      oldHandles,
+      scope: 'product',
+      allProductPages: validUpdates.length > 10,
+      includeSitemap: handleChanged,
+    });
+
     return NextResponse.json({
       success: true,
       message: `Successfully updated ${results.updated.length} product(s)`,
       results,
+      cache,
     });
   } catch (error) {
     console.error('Bulk update error:', error);

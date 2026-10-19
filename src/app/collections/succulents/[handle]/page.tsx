@@ -4,9 +4,8 @@ import type { Metadata } from "next";
 import { mockProducts } from "../../../../data/mockProducts";
 import RecommendedProducts from "../../../../components/product/RecommendedProducts";
 import ProductFaqs from "../../../../components/product/ProductFaqs";
-import { fetchProductByHandleRedis, fetchProductHandlesForStaticGenerationFromRedis } from "../../../../lib/product-cache";
+import { fetchProductByHandle, fetchProductHandlesForStaticGeneration } from "@/lib/commerce";
 import UnifiedProductDetail from "@/components/product/UnifiedProductDetail";
-import { absoluteUrl } from "@/lib/seo";
 import { buildProductFaqStructuredData, buildProductStructuredData, toJsonLd } from "@/lib/structured-data";
 
 export const revalidate = 86400;
@@ -14,10 +13,9 @@ export const dynamicParams = true;
 
 export async function generateStaticParams() {
   try {
-    const handles = await fetchProductHandlesForStaticGenerationFromRedis();
+    const handles = await fetchProductHandlesForStaticGeneration();
     return handles.map((handle) => ({ handle }));
   } catch {
-    // Never fail the build over handle discovery.
     return [];
   }
 }
@@ -48,14 +46,7 @@ function cleanProductDescription(input: unknown, fallback: string): string {
  * and cannot return "Product Not Found" metadata because of a transient error.
  */
 async function resolveProductByHandle(handle: string) {
-  // NOTE (ISR root cause): getReviewsForProduct() reads Upstash Redis, whose
-  // SDK issues fetch(..., { cache: "no-store" }) by default. A single
-  // no-store fetch in the render opts the whole route out of static
-  // generation (this is why /products/[handle], which passes
-  // bypassReviewCache: true, builds as SSG while this page built as dynamic).
-  // Bypass the review cache here to match the sibling route until Phase 2
-  // introduces a prerender-safe per-product Redis cache.
-  const product = await fetchProductByHandleRedis(handle, { useRedis: true });
+  const product = await fetchProductByHandle(handle, { bypassReviewCache: true });
   if (product) return product;
 
   return mockProducts.find((p) => p.handle === handle) ?? null;

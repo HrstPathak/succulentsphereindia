@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { sendOrderConfirmationEmail } from "@/lib/order-email";
+import { invalidateProductCaches } from "@/lib/cache-invalidation";
 
 const text = (value: unknown) => String(value || "").trim();
 const email = (value: unknown) => text(value).toLowerCase();
@@ -40,12 +41,14 @@ export async function POST(request: Request) {
       .limit(1)
       .get();
     const customerUid = matchingCustomer.docs[0]?.id || null;
+    let stockChanges: { id: string; handle: string; before: number; after: number }[] = [];
     const result: {
       orderId: string;
       orderNumber: number;
       items: { title: string; quantity: number; price: string }[];
       total: number;
     } = await db.runTransaction(async (tx) => {
+      stockChanges = [];
       const refs = items.map((item) =>
         db.collection("products").doc(item.productId),
       );
@@ -61,6 +64,16 @@ export async function POST(request: Request) {
           available < items[index]!.quantity
         )
           throw new Error(`Insufficient stock for item ${index + 1}.`);
+      });
+      stockChanges = products.map((product, index) => {
+        const data = product.data() || {};
+        const before = Number(product.get("inventoryQuantity") ?? 0);
+        return {
+          id: product.id,
+          handle: text(data.handle),
+          before,
+          after: Math.max(0, before - items[index]!.quantity),
+        };
       });
       const counterRef = db.collection("system").doc("counters");
       const counter = await tx.get(counterRef);
@@ -135,11 +148,7 @@ export async function POST(request: Request) {
       });
       products.forEach((product, index) =>
         tx.update(product.ref, {
-          inventoryQuantity: Math.max(
-            0,
-            Number(product.get("inventoryQuantity") || 0) -
-              items[index]!.quantity,
-          ),
+          inventoryQuantity: stockChanges[index]!.after,
           updatedAt: now,
         }),
       );
@@ -154,6 +163,30 @@ export async function POST(request: Request) {
         total,
       };
     });
+    const soldOutProducts = stockChanges.filter(
+      (product) => product.before > 0 && product.after <= 0,
+    );
+    if (soldOutProducts.length) {
+      try {
+        let timeout: ReturnType<typeof setTimeout> | undefined;
+        try {
+          await Promise.race([
+            invalidateProductCaches({
+              ids: soldOutProducts.map((product) => product.id),
+              handles: soldOutProducts.map((product) => product.handle),
+              scope: "stock",
+            }),
+            new Promise<void>((resolve) => {
+              timeout = setTimeout(resolve, 3000);
+            }),
+          ]);
+        } finally {
+          if (timeout) clearTimeout(timeout);
+        }
+      } catch {
+        /* never fail the order */
+      }
+    }
     await sendOrderConfirmationEmail({
       ...result,
       customerName,

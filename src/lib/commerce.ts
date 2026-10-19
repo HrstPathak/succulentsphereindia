@@ -4,7 +4,7 @@ import { cache } from "react";
 import { FieldPath } from "firebase-admin/firestore";
 import { MAX_PINNED_ARTICLES, comparePinnedOrder } from "@/lib/article-pinning";
 import { getFirebaseDb } from "@/lib/firebase-admin";
-import { cacheDelete, cacheGet, cacheSet } from "@/lib/redis";
+import { cacheDelete, cacheDeleteAwaited, cacheGet, cacheSet } from "@/lib/redis";
 import { getReviewStats, type ProductReview } from "@/lib/reviews";
 import { getWalletSummary, type WalletSummary } from "@/lib/wallet";
 import { getOrderGrandTotal, getOrderPaymentSummary } from "@/lib/orderAmounts";
@@ -137,6 +137,12 @@ export function invalidateProductReviewsCache(productId: string | null | undefin
   void cacheDelete(reviewsRedisKey(id));
 }
 
+export async function invalidateProductReviewsCacheAsync(productId: string | null | undefined): Promise<void> {
+  const id = String(productId || "").trim();
+  if (!id) return;
+  await cacheDeleteAwaited(reviewsRedisKey(id));
+}
+
 async function readReviewsFromFirestore(productId: string) {
   const map = (snapshot: FirebaseFirestore.QuerySnapshot) =>
     snapshot.docs
@@ -238,6 +244,12 @@ export function invalidateCatalogCache() {
   void cacheDelete(CATALOG_REDIS_KEY);
 }
 
+export async function invalidateCatalogCacheAsync(): Promise<void> {
+  catalogCache = null;
+  catalogRefresh = null;
+  await cacheDeleteAwaited(CATALOG_REDIS_KEY);
+}
+
 async function readCatalogFromFirestore() {
   const snapshot = await getFirebaseDb().collection("products").limit(1000).get();
   // Catalog and filter pages do not need every individual review document.
@@ -255,37 +267,6 @@ export async function fetchProductHandlesForStaticGeneration() {
   return snapshot.docs
     .map((doc) => string(doc.get("handle")).trim())
     .filter(Boolean);
-}
-
-/**
- * Handle list for `generateStaticParams()` on the product detail routes.
- *
- * Reads handles from the shared Redis catalog key first (one Redis GET for the
- * whole list, zero Firestore reads) and only falls back to the Firestore
- * `select("handle")` query when that key misses.
- *
- * Every failure returns `[]`: an empty list makes Next.js simply skip
- * prerendering so pages generate on first visit, which is always better than a
- * failed build or caching a wrong list. This must never throw.
- */
-export async function fetchProductHandlesForStaticGenerationCached(): Promise<string[]> {
-  try {
-    const cached = await readCatalogFromRedis();
-    if (Array.isArray(cached) && cached.length) {
-      const handles = cached
-        .map((item) => string(item?.handle).trim())
-        .filter(Boolean);
-      if (handles.length) return handles;
-    }
-  } catch {
-    // Fall through to the Firestore query below.
-  }
-
-  try {
-    return await fetchProductHandlesForStaticGeneration();
-  } catch {
-    return [];
-  }
 }
 
 /** Reads the shared copy. Returns null on a miss, a bad shape, or any error. */

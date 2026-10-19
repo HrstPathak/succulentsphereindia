@@ -116,3 +116,10 @@ export async function cacheDelete(...keys: string[]): Promise<void> {
     // Intentionally ignored: a stale key is bounded by its TTL.
   }
 }
+
+/** Deletes one or more keys and propagates Redis failures to the caller. */
+export async function cacheDeleteAwaited(...keys: string[]): Promise<void> {
+  const redis = getRedis();
+  if (!redis || !keys.length) return;
+  await redis.del(...keys);
+}

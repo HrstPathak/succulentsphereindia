@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { invalidateCatalogCache } from "@/lib/commerce";
 import { invalidateAdminScopes } from "@/lib/admin-cache";
+import { invalidateProductCaches } from "@/lib/cache-invalidation";
 
 const text = (value: unknown, fallback = "") => typeof value === "string" ? value.trim() : value == null ? fallback : String(value).trim();
 const number = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -115,11 +116,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       update.imageAlt = text(input.imageAlt).slice(0, 500);
     }
     const ref = getFirebaseDb().collection("products").doc(text(id));
-    if (!(await ref.get()).exists) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+    const existing = await ref.get();
+    if (!existing.exists) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+    const previousHandle = String(existing.get("handle") || "").trim();
     await ref.set(update, { merge: true });
     invalidateCatalogCache();
     invalidateAdminScopes("products");
-    return NextResponse.json({ ok: true, product: productPayload(text(id), update) });
+    const nextHandle = text(update.handle || previousHandle);
+    const cache = await invalidateProductCaches({
+      handles: [nextHandle],
+      oldHandles: previousHandle ? [previousHandle] : [],
+      scope: "product",
+      includeSitemap: previousHandle !== nextHandle,
+    });
+    return NextResponse.json({ ok: true, product: productPayload(text(id), update), cache });
   } catch (error) {
     return NextResponse.json({ error: text((error as Error).message, "Unable to save product.") }, { status: text((error as Error).message) === "ADMIN_REQUIRED" ? 404 : 500 });
   }

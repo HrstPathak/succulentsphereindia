@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { invalidateAdminScopes } from "@/lib/admin-cache";
-import { invalidateProductReviewsCache } from "@/lib/commerce";
+import { invalidateProductCaches } from "@/lib/cache-invalidation";
 
 export async function PATCH(request: Request) {
   try {
@@ -21,11 +21,14 @@ export async function PATCH(request: Request) {
     // storefront immediately, and the request body only carries the review id.
     const ref = getFirebaseDb().collection("reviews").doc(String(id));
     const existing = await ref.get();
+    const productId = String(existing.get("productId") || "").trim();
     await ref.set({ status, moderatedAt: new Date().toISOString() }, { merge: true });
     // Hiding a review removes it from the storefront immediately, so the
     // Reviews tab must not keep serving the pre-moderation row.
     invalidateAdminScopes("reviews");
-    invalidateProductReviewsCache(existing.get("productId"));
+    const productDoc = productId ? await getFirebaseDb().collection("products").doc(productId).get() : null;
+    const handle = productDoc && productDoc.exists ? String(productDoc.get("handle") || "").trim() : "";
+    await invalidateProductCaches({ ids: productId ? [productId] : [], handles: handle ? [handle] : [], scope: "reviews" });
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json(
@@ -73,7 +76,8 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     const db = getFirebaseDb();
-    if (!(await db.collection("products").doc(safeProductId).get()).exists)
+    const productDoc = await db.collection("products").doc(safeProductId).get();
+    if (!productDoc.exists)
       return NextResponse.json(
         { error: "Product not found." },
         { status: 404 },
@@ -101,7 +105,8 @@ export async function POST(request: Request) {
     });
     await ref.update({ id: ref.id });
     invalidateAdminScopes("reviews");
-    invalidateProductReviewsCache(safeProductId);
+    const handle = String(productDoc.get("handle") || "").trim();
+    await invalidateProductCaches({ ids: [safeProductId], handles: handle ? [handle] : [], scope: "reviews" });
     return NextResponse.json({ ok: true, id: ref.id });
   } catch (error) {
     return NextResponse.json(

@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { invalidateCatalogCache } from "@/lib/commerce";
 import { invalidateAdminScopes } from "@/lib/admin-cache";
+import { invalidateProductCaches } from "@/lib/cache-invalidation";
 
 const clean = (value: unknown) => String(value || "").trim();
 const safeNumber = (value: unknown, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
@@ -150,7 +151,12 @@ export async function POST(request: Request) {
     await productRef.set(productData);
     invalidateCatalogCache();
     invalidateAdminScopes("products");
-    return NextResponse.json({ ok: true, product: productData });
+    const cache = await invalidateProductCaches({
+      handles: [handle],
+      scope: "product",
+      includeSitemap: true,
+    });
+    return NextResponse.json({ ok: true, product: productData, cache });
   } catch (error) {
     return NextResponse.json({ error: String((error as Error).message || error) }, { status: 500 });
   }
@@ -170,11 +176,20 @@ export async function PATCH(request: Request) {
     if (["active", "draft", "archived", "unlisted"].includes(clean(input.status).toLowerCase())) update.status = clean(input.status).toLowerCase();
     if (typeof input.tags === "string") update.tags = input.tags.split(",").map((tag: string) => tag.trim()).filter(Boolean).slice(0, 50);
     if (Object.keys(update).length === 1) return NextResponse.json({ error: "Choose at least one change to apply." }, { status: 400 });
-    const db = getFirebaseDb(); const batch = db.batch();
-    productIds.forEach((id) => batch.update(db.collection("products").doc(id), update));
+    const db = getFirebaseDb();
+    const productRefs = productIds.map((id) => db.collection("products").doc(id));
+    const products = productIds.length <= 10 ? await db.getAll(...productRefs) : [];
+    const handles = products.map((product) => String(product.get("handle") || "").trim()).filter(Boolean);
+    const batch = db.batch();
+    productRefs.forEach((ref) => batch.update(ref, update));
     await batch.commit();
     invalidateCatalogCache();
     invalidateAdminScopes("products");
-    return NextResponse.json({ ok: true, updated: productIds.length });
+    const cache = await invalidateProductCaches({
+      handles,
+      scope: "product",
+      allProductPages: productIds.length > 10,
+    });
+    return NextResponse.json({ ok: true, updated: productIds.length, cache });
   } catch (error) { return NextResponse.json({ error: String((error as Error).message) === "ADMIN_REQUIRED" ? "Not found." : (error as Error).message }, { status: String((error as Error).message) === "ADMIN_REQUIRED" ? 404 : 500 }); }
 }

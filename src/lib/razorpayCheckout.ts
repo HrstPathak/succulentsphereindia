@@ -1,6 +1,7 @@
 ﻿import "server-only";
 import crypto from "crypto";
 import { getFirebaseDb } from "@/lib/firebase-admin";
+import { invalidateProductCaches } from "@/lib/cache-invalidation";
 import { calculateOrderPricing, MIN_ORDER_AMOUNT } from "@/lib/pricing";
 import { COD_DEPOSIT_AMOUNT, COD_FEE_AMOUNT, COD_ORDER_LIMIT } from "@/lib/checkoutConfig";
 import type { OrderConfirmationEmail } from "@/lib/order-email";
@@ -241,12 +242,14 @@ export async function recordPaymentAgainstSession(input: { razorpayOrderId: stri
 export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: string; paymentId: string; paymentStatus: string; amountPaise: number; currency: string; waitForLockMs?: number }) {
   const db = getFirebaseDb();
   const sessionRef = sessions().doc(input.razorpayOrderId);
+  let stockChanges: { id: string; handle: string; before: number; after: number }[] = [];
   let result: { firebaseOrderId?: string; orderNumber?: number; alreadyCreated: boolean; processing: boolean; email?: OrderConfirmationEmail; shipment?: ShipmentCreationSummary } = {
     alreadyCreated: false,
     processing: false,
   };
 
   await db.runTransaction(async (tx) => {
+    stockChanges = [];
     const snap = await tx.get(sessionRef);
     if (!snap.exists) throw new Error("Checkout session not found.");
 
@@ -321,6 +324,16 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
       if (!product.exists || product.get("available") === false || available < Number(session.items[index]?.quantity || 1)) {
         throw new Error("One or more items are now out of stock.");
       }
+    });
+    stockChanges = products.map((product, index) => {
+      const data = product.data() || {};
+      const before = Number(product.get("inventoryQuantity") ?? product.get("quantity") ?? 0);
+      return {
+        id: product.id,
+        handle: clean(data.handle),
+        before,
+        after: before - Number(session.items[index]?.quantity || 1),
+      };
     });
 
     const counterRef = db.collection("system").doc("counters");
@@ -423,7 +436,7 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
 
     productRefs.forEach((ref, index) =>
       tx.update(ref, {
-        inventoryQuantity: Number(products[index]!.get("inventoryQuantity") ?? products[index]!.get("quantity") ?? 0) - Number(session.items[index]?.quantity || 1),
+        inventoryQuantity: stockChanges[index]!.after,
         updatedAt: new Date().toISOString(),
       }),
     );
@@ -477,6 +490,31 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
       },
     };
   });
+
+  const soldOutProducts = !result.alreadyCreated
+    ? stockChanges.filter((product) => product.before > 0 && product.after <= 0)
+    : [];
+  if (soldOutProducts.length) {
+    try {
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          invalidateProductCaches({
+            ids: soldOutProducts.map((product) => product.id),
+            handles: soldOutProducts.map((product) => product.handle),
+            scope: "stock",
+          }),
+          new Promise<void>((resolve) => {
+            timeout = setTimeout(resolve, 3000);
+          }),
+        ]);
+      } finally {
+        if (timeout) clearTimeout(timeout);
+      }
+    } catch {
+      /* never fail the order */
+    }
+  }
 
   // Only captured money may create an AWB. Authorized payments can already
   // have a pending Firestore order; their capture webhook/status retry will
