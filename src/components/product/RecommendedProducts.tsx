@@ -51,8 +51,7 @@ export default function RecommendedProducts({
   const [ready, setReady] = useState(false);
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const sectionRef = useRef<HTMLElement | null>(null);
-  // Defer the recommendations API call until the widget is close to the
-  // viewport so product pages stay interactive on first paint.
+  // Defer recommendations until the widget enters the viewport.
   const [nearViewport, setNearViewport] = useState(false);
 
   useEffect(() => {
@@ -68,8 +67,7 @@ export default function RecommendedProducts({
           observer.disconnect();
         }
       },
-      // Start loading shortly before the widget scrolls into view.
-      { rootMargin: "400px 0px" }
+      { rootMargin: "0px" }
     );
     observer.observe(node);
     return () => observer.disconnect();
@@ -134,7 +132,7 @@ export default function RecommendedProducts({
         </div>
       </div>
 
-      {loading ? (
+      {!nearViewport ? null : loading ? (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {Array.from({ length: maxItems }).map((_, index) => (
             <div key={`skeleton-${index}`} className="animate-pulse rounded-2xl border border-[#e6ddcf] bg-white/80 p-3 shadow-[0_8px_20px_rgba(52,78,65,0.08)]">

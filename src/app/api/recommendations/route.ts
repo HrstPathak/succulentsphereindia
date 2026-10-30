@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rankProductsWithHF, type ProductRankingCandidate } from "@/lib/huggingface";
 import { fetchProductsList, fetchRecommendationCandidates, type RecommendationProduct } from "@/lib/commerce";
+import { cacheGet, cacheSet } from "@/lib/redis";
 
 type RecommendationRequest = {
   handle?: string;
@@ -28,6 +29,33 @@ type CacheEntry = {
 
 const recommendationCache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_TTL_SECONDS = Math.ceil(CACHE_TTL_MS / 1000);
+
+function isRecommendationResponseItem(value: unknown): value is RecommendationResponseItem {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Partial<RecommendationResponseItem>;
+  return (
+    typeof item.id === "string" &&
+    typeof item.title === "string" &&
+    typeof item.handle === "string" &&
+    typeof item.price === "string" &&
+    typeof item.currency === "string" &&
+    typeof item.image === "string" &&
+    typeof item.reason === "string" &&
+    typeof item.score === "number" &&
+    typeof item.available === "boolean"
+  );
+}
+
+function storeRecommendations(
+  cacheKey: string,
+  sharedCacheKey: string,
+  recommendations: RecommendationResponseItem[],
+  now: number
+) {
+  recommendationCache.set(cacheKey, { recommendations, expiresAt: now + CACHE_TTL_MS });
+  void cacheSet(sharedCacheKey, recommendations, CACHE_TTL_SECONDS);
+}
 
 function toNum(value: string): number {
   const parsed = Number(value);
@@ -162,17 +190,24 @@ export async function POST(request: NextRequest) {
 
   const limit = Math.max(1, Math.min(Number(body?.limit || 4), 4));
   const cacheKey = `${handle}:${limit}`;
+  const sharedCacheKey = `recommendations:v1:${encodeURIComponent(handle)}:${limit}`;
   const now = Date.now();
   const cached = recommendationCache.get(cacheKey);
   if (cached && cached.expiresAt > now) {
     return NextResponse.json({ recommendations: cached.recommendations, source: "cache" });
   }
 
+  const sharedCached = await cacheGet<unknown>(sharedCacheKey);
+  if (Array.isArray(sharedCached) && sharedCached.every(isRecommendationResponseItem)) {
+    recommendationCache.set(cacheKey, { recommendations: sharedCached, expiresAt: now + CACHE_TTL_MS });
+    return NextResponse.json({ recommendations: sharedCached, source: "cache" });
+  }
+
   try {
     const { current, candidates } = await fetchRecommendationCandidates(handle, 30);
     if (!current || candidates.length === 0) {
       const recommendations = await randomCatalogFallback(handle, limit);
-      recommendationCache.set(cacheKey, { recommendations, expiresAt: now + CACHE_TTL_MS });
+      storeRecommendations(cacheKey, sharedCacheKey, recommendations, now);
       return NextResponse.json({ recommendations, source: "catalog-random" });
     }
 
@@ -210,7 +245,7 @@ export async function POST(request: NextRequest) {
         : fallbackRank(current, selectedCandidates, limit);
 
     const result = recommendations.length > 0 ? recommendations : fallbackRank(current, selectedCandidates, limit);
-    recommendationCache.set(cacheKey, { recommendations: result, expiresAt: now + CACHE_TTL_MS });
+    storeRecommendations(cacheKey, sharedCacheKey, result, now);
 
     return NextResponse.json({
       recommendations: result,
@@ -220,7 +255,7 @@ export async function POST(request: NextRequest) {
   } catch {
     try {
       const recommendations = await randomCatalogFallback(handle, limit);
-      recommendationCache.set(cacheKey, { recommendations, expiresAt: now + CACHE_TTL_MS });
+      storeRecommendations(cacheKey, sharedCacheKey, recommendations, now);
       return NextResponse.json({ recommendations, source: "catalog-random" });
     } catch {
       return NextResponse.json({ recommendations: [], source: "fallback-empty" });
