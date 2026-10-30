@@ -87,7 +87,7 @@ export default function AdminWhatsAppTrackingButton({
         ? "opacity-60 cursor-not-allowed"
         : disabled || !hasValidPhone || !hasTracking
           ? "border-red-200 bg-red-50 text-red-700 disabled:opacity-50"
-          : "border-[#dde5dd] text-[#1f4a35] hover:bg-[#eef3ee]"
+          : "border-[#25D366] bg-[#25D366] text-white hover:bg-[#1EBE55] hover:border-[#1EBE55]"
         } ${className || ""}`}
       title={
         disabled || !hasValidPhone || !hasTracking
