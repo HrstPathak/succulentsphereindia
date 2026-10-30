@@ -25,12 +25,14 @@ import {
   type ManualOrderDraft,
 } from "@/lib/delhiveryTracking";
 import AdminConfirmModal from "@/components/admin/AdminConfirmModal";
+import AdminWhatsAppTrackingButton from "@/components/admin/AdminWhatsAppTrackingButton";
 
 type CreatedOrder = {
   orderId: string;
   orderReference: string;
   awb: string;
   name: string;
+  phone: string;
   pincode: string;
   amount: number;
   paymentMode: string;
@@ -310,6 +312,7 @@ export default function AdminDelhiveryWorkspace({ adminEmail }: { adminEmail: st
           orderReference: String(payload.orderReference || payload.orderId),
           awb: String(payload.awb || ""),
           name: draft.name,
+          phone: draft.phone,
           pincode: draft.pincode,
           amount: Number(payload.record?.amount || draft.amount || 0),
           paymentMode: String(payload.record?.paymentMode || draft.paymentMode),
@@ -601,6 +604,14 @@ export default function AdminDelhiveryWorkspace({ adminEmail }: { adminEmail: st
                   >
                     Track ↗
                   </a>
+                  <AdminWhatsAppTrackingButton
+                    phone={entry.phone}
+                    orderNumber={entry.orderReference}
+                    awb={entry.awb}
+                    trackingUrl={buildDelhiveryTrackingUrl(entry.awb)}
+                    customerName={entry.name}
+                    label="WhatsApp"
+                  />
                 </li>
               ))}
             </ul>
@@ -695,6 +706,14 @@ export default function AdminDelhiveryWorkspace({ adminEmail }: { adminEmail: st
                     </a>
                   ) : null}
                   <span className="flex items-center gap-1.5">
+                    <AdminWhatsAppTrackingButton
+                      phone={entry.phone}
+                      orderNumber={entry.orderReference}
+                      awb={entry.awb}
+                      trackingUrl={entry.trackingUrl}
+                      customerName={entry.name}
+                      label="WhatsApp"
+                    />
                     <button
                       type="button"
                       onClick={() => openEdit(entry)}
