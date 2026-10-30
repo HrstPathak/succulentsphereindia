@@ -104,11 +104,11 @@ export default function AdminDelhiveryWorkspace({ adminEmail }: { adminEmail: st
   const [stored, setStored] = useState<StoredOrder[]>([]);
   const [storedLoading, setStoredLoading] = useState(true);
   const [storedError, setStoredError] = useState("");
-  const [editing, setEditing] = useState<StoredOrder | null>(null);
+  const [editing, setEditing] = useState<CreatedOrder | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [editBusy, setEditBusy] = useState(false);
   const [editError, setEditError] = useState("");
-  const [deleting, setDeleting] = useState<StoredOrder | null>(null);
+  const [deleting, setDeleting] = useState<CreatedOrder | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const lastLookup = useRef("");
 
@@ -225,16 +225,17 @@ export default function AdminDelhiveryWorkspace({ adminEmail }: { adminEmail: st
     setError("");
   }
 
-  function openEdit(order: StoredOrder) {
+  function openEdit(order: CreatedOrder) {
+    const s = order as StoredOrder;
     setEditing(order);
     setEditError("");
     setEditForm({
       name: order.name || "",
       phone: order.phone || "",
-      email: order.email || "",
-      address: order.address || "",
-      city: order.city || "",
-      state: order.state || "",
+      email: s.email || "",
+      address: s.address || "",
+      city: s.city || "",
+      state: s.state || "",
       pincode: order.pincode || "",
       amount: String(order.amount ?? ""),
       paymentMode: order.paymentMode || "COD",
@@ -249,13 +250,15 @@ export default function AdminDelhiveryWorkspace({ adminEmail }: { adminEmail: st
 
   async function saveEdit() {
     if (!editing) return;
+    const stored = editing as StoredOrder;
+    if (!stored.id) return; // session-only orders cannot be persisted
     setEditBusy(true);
     setEditError("");
     try {
       const response = await fetch("/api/admin/delhivery/manual-order", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: editing.id, ...editForm }),
+        body: JSON.stringify({ id: stored.id, ...editForm }),
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.ok) {
@@ -272,10 +275,12 @@ export default function AdminDelhiveryWorkspace({ adminEmail }: { adminEmail: st
 
   async function confirmDelete() {
     if (!deleting) return;
+    const stored = deleting as StoredOrder;
+    if (!stored.id) return; // session-only orders cannot be deleted from Firestore
     setDeleteBusy(true);
     try {
       const response = await fetch(
-        `/api/admin/delhivery/manual-order?id=${encodeURIComponent(deleting.id)}`,
+        `/api/admin/delhivery/manual-order?id=${encodeURIComponent(stored.id)}`,
         { method: "DELETE" },
       );
       const payload = await response.json().catch(() => null);
