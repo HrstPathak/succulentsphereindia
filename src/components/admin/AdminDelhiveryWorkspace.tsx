@@ -576,42 +576,68 @@ export default function AdminDelhiveryWorkspace({ adminEmail }: { adminEmail: st
               {history.map((entry) => (
                 <li
                   key={entry.awb}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3 text-sm"
+                  className="flex flex-nowrap items-center gap-x-2 py-3 text-sm overflow-hidden"
                 >
-                  <span className="inline-flex items-center gap-1.5 font-bold text-[#1f4a35]">
-                    <CheckCircle2 className="size-4" aria-hidden="true" />
+                  <span className="inline-flex items-center gap-1 font-bold text-[#1f4a35] shrink-0">
+                    <CheckCircle2 className="size-3.5" aria-hidden="true" />
                     {entry.orderReference}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 text-[#5a6b5d]">
-                    <User className="size-3.5" aria-hidden="true" />
+                  <span className="inline-flex items-center gap-1 text-[#5a6b5d] shrink-0">
+                    <User className="size-3" aria-hidden="true" />
                     {entry.name}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 text-[#5a6b5d]">
-                    <MapPin className="size-3.5" aria-hidden="true" />
+                  <span className="font-mono text-xs text-[#5a6b5d] shrink-0">
+                    {entry.phone}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-xs text-[#5a6b5d] shrink-0">
+                    <MapPin className="size-3" aria-hidden="true" />
                     {entry.pincode}
                   </span>
-                  <span className="text-[#5a6b5d]">
+                  <span className="text-xs text-[#5a6b5d] shrink-0">
                     ₹{entry.amount} · {entry.paymentMode}
                   </span>
-                  <span className="ml-auto font-mono font-bold text-[#102419]">
-                    {entry.awb}
+                  <span className="ml-auto flex items-center gap-1 shrink-0">
+                    <span className="font-mono font-bold text-xs text-[#102419]">
+                      {entry.awb}
+                    </span>
+                    <a
+                      href={buildDelhiveryTrackingUrl(entry.awb)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-1 font-semibold text-xs text-[#1f4a35] underline underline-offset-2 hover:no-underline"
+                    >
+                      Track ↗
+                    </a>
+                    <AdminWhatsAppTrackingButton
+                      phone={entry.phone}
+                      orderNumber={entry.orderReference}
+                      awb={entry.awb}
+                      trackingUrl={buildDelhiveryTrackingUrl(entry.awb)}
+                      customerName={entry.name}
+                      label="WhatsApp"
+                      className="ml-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openEdit(entry)}
+                      aria-label={`Edit ${entry.orderReference}`}
+                      title="Edit order details"
+                      className="ml-1 inline-flex items-center gap-1 rounded-full border border-[#dde5dd] px-2 py-1 text-xs font-semibold text-[#1f4a35] transition hover:bg-[#eef3ee] disabled:opacity-50"
+                    >
+                      <Pencil className="size-3" aria-hidden="true" />
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleting(entry)}
+                      aria-label={`Delete ${entry.orderReference}`}
+                      title="Delete this record"
+                      className="ml-1 inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                    >
+                      <Trash2 className="size-3" aria-hidden="true" />
+                      Delete
+                    </button>
                   </span>
-                  <a
-                    href={buildDelhiveryTrackingUrl(entry.awb)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold text-[#1f4a35] underline underline-offset-2"
-                  >
-                    Track ↗
-                  </a>
-                  <AdminWhatsAppTrackingButton
-                    phone={entry.phone}
-                    orderNumber={entry.orderReference}
-                    awb={entry.awb}
-                    trackingUrl={buildDelhiveryTrackingUrl(entry.awb)}
-                    customerName={entry.name}
-                    label="WhatsApp"
-                  />
                 </li>
               ))}
             </ul>
@@ -666,46 +692,48 @@ export default function AdminDelhiveryWorkspace({ adminEmail }: { adminEmail: st
               {stored.map((entry) => (
                 <li
                   key={entry.id}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3 text-sm"
+                  className="flex flex-nowrap items-center gap-x-2 py-3 text-sm overflow-hidden"
                 >
-                  <span className="inline-flex items-center gap-1.5 font-bold text-[#1f4a35]">
-                    <CheckCircle2 className="size-4" aria-hidden="true" />
+                  <span className="inline-flex items-center gap-1 font-bold text-[#1f4a35] shrink-0">
+                    <CheckCircle2 className="size-3.5" aria-hidden="true" />
                     {entry.orderReference}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 text-[#5a6b5d]">
-                    <User className="size-3.5" aria-hidden="true" />
+                  <span className="inline-flex items-center gap-1 text-[#5a6b5d] shrink-0">
+                    <User className="size-3" aria-hidden="true" />
                     {entry.name}
                   </span>
                   {entry.phone ? (
-                    <span className="font-mono text-[#5a6b5d]">{entry.phone}</span>
+                    <span className="font-mono text-xs text-[#5a6b5d] shrink-0">
+                      {entry.phone}
+                    </span>
                   ) : null}
-                  <span className="inline-flex items-center gap-1.5 text-[#5a6b5d]">
-                    <MapPin className="size-3.5" aria-hidden="true" />
+                  <span className="inline-flex items-center gap-1 text-xs text-[#5a6b5d] shrink-0">
+                    <MapPin className="size-3" aria-hidden="true" />
                     {[entry.city, entry.state].filter(Boolean).join(", ") ||
                       entry.pincode}
                   </span>
-                  <span className="text-[#5a6b5d]">
+                  <span className="text-xs text-[#5a6b5d] shrink-0">
                     ₹{entry.amount} · {entry.paymentMode}
                   </span>
                   {entry.createdAt ? (
-                    <span className="text-xs text-[#9aa89a]">
+                    <span className="text-xs text-[#9aa89a] shrink-0">
                       {formatWhen(entry.createdAt)}
                     </span>
                   ) : null}
-                  <span className="ml-auto font-mono font-bold text-[#102419]">
-                    {entry.awb}
-                  </span>
-                  {entry.trackingUrl ? (
-                    <a
-                      href={entry.trackingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-[#1f4a35] underline underline-offset-2"
-                    >
-                      Track ↗
-                    </a>
-                  ) : null}
-                  <span className="flex items-center gap-1.5">
+                  <span className="ml-auto flex items-center gap-1 shrink-0">
+                    <span className="font-mono font-bold text-xs text-[#102419]">
+                      {entry.awb}
+                    </span>
+                    {entry.trackingUrl ? (
+                      <a
+                        href={entry.trackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-1 font-semibold text-xs text-[#1f4a35] underline underline-offset-2 hover:no-underline"
+                      >
+                        Track ↗
+                      </a>
+                    ) : null}
                     <AdminWhatsAppTrackingButton
                       phone={entry.phone}
                       orderNumber={entry.orderReference}
@@ -713,15 +741,16 @@ export default function AdminDelhiveryWorkspace({ adminEmail }: { adminEmail: st
                       trackingUrl={entry.trackingUrl}
                       customerName={entry.name}
                       label="WhatsApp"
+                      className="ml-1"
                     />
                     <button
                       type="button"
                       onClick={() => openEdit(entry)}
                       aria-label={`Edit ${entry.orderReference}`}
                       title="Edit order details"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-[#dde5dd] px-2.5 py-1 text-xs font-semibold text-[#1f4a35] transition hover:bg-[#eef3ee] disabled:opacity-50"
+                      className="ml-1 inline-flex items-center gap-1 rounded-full border border-[#dde5dd] px-2 py-1 text-xs font-semibold text-[#1f4a35] transition hover:bg-[#eef3ee] disabled:opacity-50"
                     >
-                      <Pencil className="size-3.5" aria-hidden="true" />
+                      <Pencil className="size-3" aria-hidden="true" />
                       Edit
                     </button>
                     <button
@@ -729,9 +758,9 @@ export default function AdminDelhiveryWorkspace({ adminEmail }: { adminEmail: st
                       onClick={() => setDeleting(entry)}
                       aria-label={`Delete ${entry.orderReference}`}
                       title="Delete this record"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                      className="ml-1 inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
                     >
-                      <Trash2 className="size-3.5" aria-hidden="true" />
+                      <Trash2 className="size-3" aria-hidden="true" />
                       Delete
                     </button>
                   </span>
