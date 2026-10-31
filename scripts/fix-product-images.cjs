@@ -1,9 +1,12 @@
 /**
  * fix-product-images.cjs
  *
- * Fixes products where the `image` field contains the literal string "[object Object]"
- * instead of a valid URL. Extracts the first valid HTTP URL from the `images[]` array
- * and uses it to repair the `image` field.
+ * Fixes products where:
+ * 1. The `image` field contains the literal string "[object Object]" instead of a valid URL.
+ * 2. Entries within the `images[]` array contain the literal string "[object Object]".
+ *
+ * Extracts the first valid HTTP URL from the product's images array (or the top-level
+ * image field) and uses it to repair broken entries.
  *
  * Does NOT change `status` or `available` fields.
  *
@@ -23,13 +26,19 @@ const app = getApps()[0] || initializeApp({
 });
 const db = getFirestore(app);
 
-/** Extract the first valid HTTP image URL from a product's images array */
-function extractFirstValidImage(images) {
-  if (!Array.isArray(images)) return null;
-  for (const img of images) {
-    if (typeof img === "string" && img.startsWith("http")) return img;
-    if (typeof img === "object" && img && img.url && typeof img.url === "string" && img.url.startsWith("http"))
-      return img.url;
+/** Check if a value is a valid HTTP image URL string */
+function isValidHttpUrl(value) {
+  return typeof value === "string" && value.startsWith("http");
+}
+
+/** Extract the first valid HTTP image URL from any source */
+function extractFirstValidUrl(imageField, images) {
+  if (isValidHttpUrl(imageField)) return imageField;
+  if (Array.isArray(images)) {
+    for (const img of images) {
+      if (isValidHttpUrl(img)) return img;
+      if (typeof img === "object" && img && img.url && isValidHttpUrl(img.url)) return img.url;
+    }
   }
   return null;
 }
@@ -48,30 +57,65 @@ async function main() {
     const image = data.image;
     const images = data.images;
 
-    // Detect the "[object Object]" string bug
+    const updates = {};
+    let changed = false;
+
+    // Fix 1: Top-level image field is "[object Object]"
     if (typeof image === "string" && image === "[object Object]") {
-      const validUrl = extractFirstValidImage(images);
+      const validUrl = extractFirstValidUrl(null, images);
       if (validUrl) {
-        batch.update(doc.ref, { image: validUrl, updatedAt: new Date().toISOString() });
-        fixCount++;
-        fixes.push({
-          id: doc.id,
-          title: data.title,
-          oldImage: image,
-          newImage: validUrl,
-        });
-        console.log(`[FIX] ${doc.id}`);
+        updates.image = validUrl;
+        updates.updatedAt = new Date().toISOString();
+        changed = true;
+        console.log(`[FIX top-level] ${doc.id}`);
         console.log(`      Title: ${data.title}`);
         console.log(`      Old image: "${image}"`);
         console.log(`      New image: ${validUrl}`);
       } else {
-        console.log(`[SKIP] ${doc.id} - "[object Object]" image but no valid URL in images[] array`);
+        console.log(`[SKIP top-level] ${doc.id} - "[object Object]" image but no valid URL available`);
       }
+    }
+
+    // Fix 2: Entries within images[] array contain "[object Object]"
+    if (Array.isArray(images) && images.length > 0) {
+      const newImages = [...images];
+      let arrayChanged = false;
+
+      newImages.forEach((img, idx) => {
+        if (typeof img === "string" && img === "[object Object]") {
+          const validUrl = extractFirstValidUrl(image, images);
+          if (validUrl) {
+            newImages[idx] = validUrl;
+            arrayChanged = true;
+            console.log(`[FIX array[${idx}]] ${doc.id}`);
+            console.log(`      Title: ${data.title}`);
+            console.log(`      Replaced "[object Object]" with: ${validUrl}`);
+          } else {
+            console.log(`[SKIP array[${idx}]] ${doc.id} - "[object Object]" but no valid URL available`);
+          }
+        }
+      });
+
+      if (arrayChanged) {
+        updates.images = newImages;
+        updates.updatedAt = new Date().toISOString();
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      batch.update(doc.ref, updates);
+      fixCount++;
+      fixes.push({
+        id: doc.id,
+        title: data.title,
+        updates,
+      });
     }
   });
 
   if (fixCount === 0) {
-    console.log("\nNo products need image fixing. All image fields are valid.");
+    console.log("\nNo products need image fixing. All image fields and array entries are valid.");
     return;
   }
 
@@ -80,13 +124,13 @@ async function main() {
   console.log(`\nSuccessfully fixed ${fixCount} product(s).`);
   console.log("Status and available fields were NOT changed.");
 
-  console.log(`\n========================================`);
-  console.log(`SUMMARY OF FIXES`);
-  console.log(`========================================`);
+  console.log("\n========================================");
+  console.log("SUMMARY OF FIXES");
+  console.log("========================================");
   fixes.forEach((f, i) => {
     console.log(`\n${i + 1}. ${f.id}`);
     console.log(`   Title: ${f.title}`);
-    console.log(`   Fixed image: ${f.newImage}`);
+    console.log(`   Updates: ${JSON.stringify(f.updates, null, 4)}`);
   });
 }
 
