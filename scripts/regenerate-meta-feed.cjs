@@ -73,6 +73,10 @@ async function main() {
     "sale_price",
     "link",
     "image_link",
+    "additional_image_link",
+    "additional_image_link_2",
+    "additional_image_link_3",
+    "additional_image_link_4",
     "brand",
     "product_type",
   ];
@@ -106,6 +110,13 @@ async function main() {
         product.handle || product.id || product.title || product.name
       );
 
+      const images = Array.isArray(product.images)
+        ? product.images.map((img) =>
+            typeof img === "string" ? img : img && typeof img.url === "string" ? img.url : ""
+          ).filter(Boolean)
+        : [];
+      const extraImages = images.slice(1);
+
       return [
         retailerId,
         product.title || product.name || "",
@@ -123,6 +134,10 @@ async function main() {
           siteUrl
         ),
         absoluteUrl(product.image, siteUrl),
+        absoluteUrl(extraImages[0] || "", siteUrl),
+        absoluteUrl(extraImages[1] || "", siteUrl),
+        absoluteUrl(extraImages[2] || "", siteUrl),
+        absoluteUrl(extraImages[3] || "", siteUrl),
         String(product.vendor || "Succulent Sphere"),
         String(product.productType || product.type || "Plants"),
       ].map(csv).join(",");
@@ -138,12 +153,19 @@ async function main() {
     console.log(`  ${i}: ${line.substring(0, 200)}${line.length > 200 ? "..." : ""}`);
   });
 
-  // Show a few image_link values to confirm they're valid URLs
-  console.log(`\nSample image_link values:`);
+  // Show a few image_link and additional_image_link values to confirm they're valid URLs
+  console.log(`\nSample image_link / additional_image_link values:`);
   rows.slice(0, 5).forEach((row) => {
     const cols = row.split(",");
-    const imageLink = cols[10] ? cols[10].replace(/^"|"$/g, "") : "";
-    console.log(`  ${imageLink}`);
+    const imageLink = cols[8] ? cols[8].replace(/^"|"$/g, "") : "";
+    const addl1 = cols[9] ? cols[9].replace(/^"|"$/g, "") : "";
+    const addl2 = cols[10] ? cols[10].replace(/^"|"$/g, "") : "";
+    const addl3 = cols[11] ? cols[11].replace(/^"|"$/g, "") : "";
+    console.log(`  main: ${imageLink}`);
+    console.log(`  addl1: ${addl1}`);
+    console.log(`  addl2: ${addl2}`);
+    console.log(`  addl3: ${addl3}`);
+    console.log(`  ---`);
   });
 }
 

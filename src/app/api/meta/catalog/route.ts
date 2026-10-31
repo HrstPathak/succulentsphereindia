@@ -118,6 +118,10 @@ export async function GET(request: Request) {
       "sale_price",
       "link",
       "image_link",
+      "additional_image_link",
+      "additional_image_link_2",
+      "additional_image_link_3",
+      "additional_image_link_4",
       "brand",
       "product_type",
     ];
@@ -133,6 +137,10 @@ export async function GET(request: Request) {
         const displayPrice = Number.isFinite(mainPrice) && mainPrice > 0 ? mainPrice : salePrice;
         const discountedPrice = Number.isFinite(salePrice) && salePrice > 0 ? salePrice : displayPrice;
         const retailerId = normalizeRetailerId(product.handle || product.id || product.title || product.name);
+        const images = Array.isArray(product.images)
+          ? product.images.map((img) => typeof img === "string" ? img : img.url).filter(Boolean)
+          : [];
+        const extraImages = images.slice(1);
 
         return [
           retailerId,
@@ -144,6 +152,10 @@ export async function GET(request: Request) {
           Number.isFinite(discountedPrice) && Number(product.compareAtPrice ?? 0) > 0 && discountedPrice < displayPrice ? `${discountedPrice.toFixed(2)} INR` : "",
           absoluteUrl(`/products/${encodeURIComponent(String(product.handle || product.id || ""))}`, siteUrl),
           absoluteUrl(product.image, siteUrl),
+          absoluteUrl(extraImages[0] || "", siteUrl),
+          absoluteUrl(extraImages[1] || "", siteUrl),
+          absoluteUrl(extraImages[2] || "", siteUrl),
+          absoluteUrl(extraImages[3] || "", siteUrl),
           String(product.vendor || "Succulent Sphere"),
           String(product.productType || product.type || "Plants"),
         ].map(csv).join(",");
@@ -194,6 +206,10 @@ export async function GET(request: Request) {
             "",
             absoluteUrl(`/products/${encodeURIComponent(String(product.handle || product.id || ""))}`, siteUrl),
             absoluteUrl(product.image, siteUrl),
+            "",
+            "",
+            "",
+            "",
             String(product.productType || product.type || "Succulent Plant"),
             String(product.productType || product.type || "Plants"),
           ].map(csv).join(",");
