@@ -4,6 +4,8 @@ import { fetchProductsByQuery } from "@/lib/commerce";
 import { resolveProductImageAlt } from "@/lib/imageAlt";
 import ComboCollectionGrid from "@/components/combo/ComboCollectionGrid";
 import { mediaAsset } from "@/lib/media";
+import { unstable_cache } from "next/cache";
+import { CATALOG_TAG, COMBO_CACHE_SECONDS, COMBO_PRODUCTS_TAG } from "@/lib/comboCache";
 
 export const revalidate = 300;
 
@@ -18,28 +20,39 @@ function productCardImage(url: string) {
   return url;
 }
 
+async function loadComboReadyProducts() {
+  const res = await fetchProductsByQuery(`product_type:"${COMBO_PRODUCT_TYPE}"`, {
+    first: 60,
+    sortKey: "BEST_SELLING",
+    reverse: false,
+  });
+  return (res.edges || []).map((edge: any, idx: number) => {
+    const node = edge?.node || {};
+    const image = String(node?.image || "/assets/product-1.jpg");
+    const imageAlt = resolveProductImageAlt(node?.imageAlt || node?.title || "Combo product");
+    const price = String(node?.price ?? "0.00");
+    return {
+      id: String(node.id || `combo-ready-${idx}`),
+      title: String(node.title || "Untitled"),
+      handle: String(node.handle || ""),
+      price,
+      image: productCardImage(image),
+      imageAlt,
+    };
+  });
+}
+
+const getComboReadyProductsCached = unstable_cache(
+  loadComboReadyProducts,
+  ["combo-ready-products", "v1"],
+  { revalidate: COMBO_CACHE_SECONDS, tags: [CATALOG_TAG, COMBO_PRODUCTS_TAG] },
+);
+
 async function getComboReadyProducts() {
   try {
-    const res = await fetchProductsByQuery(`product_type:"${COMBO_PRODUCT_TYPE}"`, {
-      first: 60,
-      sortKey: "BEST_SELLING",
-      reverse: false,
-    });
-    return (res.edges || []).map((edge: any, idx: number) => {
-      const node = edge?.node || {};
-      const image = String(node?.image || "/assets/product-1.jpg");
-      const imageAlt = resolveProductImageAlt(node?.imageAlt || node?.title || "Combo product");
-      const price = String(node?.price ?? "0.00");
-      return {
-        id: String(node.id || `combo-ready-${idx}`),
-        title: String(node.title || "Untitled"),
-        handle: String(node.handle || ""),
-        price,
-        image: productCardImage(image),
-        imageAlt,
-      };
-    });
-  } catch {
+    return await getComboReadyProductsCached();
+  } catch (e) {
+    console.error("combo products failed", e);
     return [];
   }
 }

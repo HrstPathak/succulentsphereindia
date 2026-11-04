@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { invalidateCatalogCache } from "@/lib/commerce";
+import { invalidateComboPages } from "@/lib/comboCache";
 
 export async function POST(request: Request) {
   try {
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
 
     if (all) {
       invalidateCatalogCache();
+      invalidateComboPages();
       revalidatePath("/collections/succulents");
       revalidatePath("/collections/succulents/[handle]", "page");
       revalidatePath("/products/[handle]", "page");
@@ -35,6 +37,7 @@ export async function POST(request: Request) {
     }
     if (handles.length) {
       invalidateCatalogCache();
+      invalidateComboPages();
     }
 
     return NextResponse.json({ ok: true, revalidated: paths });

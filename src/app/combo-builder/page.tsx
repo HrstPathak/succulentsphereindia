@@ -3,6 +3,8 @@ import Link from "next/link";
 import ComboBuilder from "@/components/combo/ComboBuilder";
 import { fetchProductsByQuery } from "@/lib/commerce";
 import { resolveProductImageAlt } from "@/lib/imageAlt";
+import { unstable_cache } from "next/cache";
+import { CATALOG_TAG, COMBO_BUILDER_TAG, COMBO_CACHE_SECONDS } from "@/lib/comboCache";
 
 export const revalidate = 300;
 
@@ -15,28 +17,39 @@ function productCardImage(url: string) {
   return url;
 }
 
+async function loadComboProducts() {
+  const res = await fetchProductsByQuery(`tag:"combo"`, {
+    first: 60,
+    sortKey: "BEST_SELLING",
+    reverse: false,
+  });
+  return (res.edges || []).map((edge: any, idx: number) => {
+    const node = edge?.node || {};
+    const image = String(node?.image || "/assets/product-1.jpg");
+    const imageAlt = resolveProductImageAlt(node?.imageAlt || node?.title || "Combo product");
+    const price = String(node?.price ?? "0.00");
+    return {
+      id: String(node.id || `combo-${idx}`),
+      title: String(node.title || "Untitled"),
+      handle: String(node.handle || ""),
+      price,
+      image: productCardImage(image),
+      imageAlt,
+    };
+  });
+}
+
+const getComboProductsCached = unstable_cache(
+  loadComboProducts,
+  ["combo-builder-products", "v1"],
+  { revalidate: COMBO_CACHE_SECONDS, tags: [CATALOG_TAG, COMBO_BUILDER_TAG] },
+);
+
 async function getComboProducts() {
   try {
-    const res = await fetchProductsByQuery(`tag:"combo"`, {
-      first: 60,
-      sortKey: "BEST_SELLING",
-      reverse: false,
-    });
-    return (res.edges || []).map((edge: any, idx: number) => {
-      const node = edge?.node || {};
-      const image = String(node?.image || "/assets/product-1.jpg");
-      const imageAlt = resolveProductImageAlt(node?.imageAlt || node?.title || "Combo product");
-      const price = String(node?.price ?? "0.00");
-      return {
-        id: String(node.id || `combo-${idx}`),
-        title: String(node.title || "Untitled"),
-        handle: String(node.handle || ""),
-        price,
-        image: productCardImage(image),
-        imageAlt,
-      };
-    });
-  } catch {
+    return await getComboProductsCached();
+  } catch (e) {
+    console.error("combo builder products failed", e);
     return [];
   }
 }

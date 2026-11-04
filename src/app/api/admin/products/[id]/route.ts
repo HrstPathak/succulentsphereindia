@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getFirebaseDb } from "@/lib/firebase-admin";
 import { invalidateCatalogCache } from "@/lib/commerce";
+import { invalidateComboPages } from "@/lib/comboCache";
 import { invalidateAdminScopes } from "@/lib/admin-cache";
 import { invalidateProductCaches } from "@/lib/cache-invalidation";
 
@@ -121,6 +122,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const previousHandle = String(existing.get("handle") || "").trim();
     await ref.set(update, { merge: true });
     invalidateCatalogCache();
+    invalidateComboPages();
     invalidateAdminScopes("products");
     const nextHandle = text(update.handle || previousHandle);
     const cache = await invalidateProductCaches({

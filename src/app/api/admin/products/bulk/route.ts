@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getFirestore } from 'firebase-admin/firestore';
 import { initializeFirebaseAdmin } from '@/lib/firebase-admin';
 import { invalidateCatalogCache } from '@/lib/commerce';
+import { invalidateComboPages } from '@/lib/comboCache';
 import { invalidateAdminScopes } from '@/lib/admin-cache';
 import { invalidateProductCaches } from '@/lib/cache-invalidation';
 
@@ -112,6 +113,7 @@ export async function POST(req: NextRequest) {
 
     await batch.commit();
     invalidateCatalogCache();
+    invalidateComboPages();
     invalidateAdminScopes("products");
 
     const handles = validUpdates.map((update) => {
