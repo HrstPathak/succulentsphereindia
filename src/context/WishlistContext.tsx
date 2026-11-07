@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
+import { useCustomerSession } from "@/context/CustomerSessionContext";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import {
   clearGuestWishlist,
@@ -142,6 +143,7 @@ async function requestProductsByIds(ids: string[]): Promise<WishlistProduct[]> {
 }
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
+  const { status: customerStatus } = useCustomerSession();
   const [guestIds, setGuestIds] = useState<string[]>([]);
   const [guestProducts, setGuestProducts] = useState<WishlistProduct[]>([]);
   const [guestHydrating, setGuestHydrating] = useState(false);
@@ -152,12 +154,16 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const guestProductsRef = useRef<WishlistProduct[]>([]);
   const hydratedGuestIdsRef = useRef<string[]>([]);
 
-  const { data, mutate, isLoading } = useSWR<WishlistApiResponse>("/api/wishlist", jsonFetcher, {
+  // The customer session is resolved once by the root provider. Wait for that
+  // result before requesting the account wishlist: anonymous shoppers use the
+  // local wishlist and do not need an empty authenticated-wishlist response.
+  const wishlistKey = customerStatus === "authenticated" ? "/api/wishlist" : null;
+  const { data, mutate, isLoading } = useSWR<WishlistApiResponse>(wishlistKey, jsonFetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 15000,
   });
 
-  const isAuthenticated = Boolean(data?.authenticated);
+  const isAuthenticated = customerStatus === "authenticated" && Boolean(data?.authenticated);
 
   const applyGuestProducts = useCallback(
     (updater: WishlistProduct[] | ((current: WishlistProduct[]) => WishlistProduct[])) => {

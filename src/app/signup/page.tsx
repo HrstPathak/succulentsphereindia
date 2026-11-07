@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import AuthCard from "@/components/auth/AuthCard";
 import SignupForm from "@/components/auth/SignupForm";
-import { getAuthenticatedCustomer } from "@/lib/auth";
+import { getSessionIdentity } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Create Account",
@@ -17,8 +17,8 @@ export const metadata: Metadata = {
 };
 
 export default async function SignupPage() {
-  const session = await getAuthenticatedCustomer();
-  if (session.customer) {
+  const session = await getSessionIdentity();
+  if (session.uid) {
     redirect("/account");
   }
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import AuthCard from "@/components/auth/AuthCard";
 import LoginForm from "@/components/auth/LoginForm";
-import { getAuthenticatedCustomer } from "@/lib/auth";
+import { getSessionIdentity } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -22,8 +22,8 @@ export default async function LoginPage({
 }: {
   searchParams?: Promise<{ error?: string }> | { error?: string };
 }) {
-  const session = await getAuthenticatedCustomer();
-  if (session.customer) {
+  const session = await getSessionIdentity();
+  if (session.uid) {
     redirect("/account");
   }
   const resolved = await Promise.resolve(searchParams || {});

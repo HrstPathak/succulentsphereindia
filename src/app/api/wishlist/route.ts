@@ -28,14 +28,28 @@ export async function GET() {
     const productIds = ids(user.get("wishlistProductIds"));
     return NextResponse.json({ authenticated: true, items: productIds, ids: productIds, products: await productsFor(productIds) });
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    console.error("[wishlist] GET failed", error);
+    return NextResponse.json({ error: "Unable to load wishlist." }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json().catch(() => ({}));
+    let body: Record<string, unknown>;
+    try {
+      const parsed: unknown = await request.json();
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return NextResponse.json({ error: "Invalid wishlist request." }, { status: 400 });
+      }
+      body = parsed as Record<string, unknown>;
+    } catch {
+      return NextResponse.json({ error: "Invalid wishlist request." }, { status: 400 });
+    }
+
     const action = String(body?.action || "set");
+    if (action !== "products" && action !== "merge" && action !== "set") {
+      return NextResponse.json({ error: "Unsupported wishlist action." }, { status: 400 });
+    }
 
     // Guest hydration: the wishlist lives in localStorage for signed-out
     // shoppers, who still need the matching products rendered on /wishlist.
@@ -63,6 +77,7 @@ export async function POST(request: Request) {
     await userRef.set({ wishlistProductIds: productIds, updatedAt: new Date().toISOString() }, { merge: true });
     return NextResponse.json({ ok: true, authenticated: true, items: productIds, ids: productIds, products: await productsFor(productIds) });
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    console.error("[wishlist] POST failed", error);
+    return NextResponse.json({ error: "Unable to update wishlist." }, { status: 500 });
   }
 }
