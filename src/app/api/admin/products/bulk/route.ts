@@ -55,9 +55,10 @@ export async function POST(req: NextRequest) {
     const productRefs = validUpdates.map((update) =>
       db.collection('products').doc(update.id),
     );
-    const productsBeforeUpdate = validUpdates.length <= 10
-      ? await db.getAll(...productRefs)
-      : [];
+    // Read the current handles for every updated product so path-specific
+    // invalidation remains correct for larger batches too. Without these
+    // handles, a non-handle edit in a batch would leave its detail page stale.
+    const productsBeforeUpdate = await db.getAll(...productRefs);
     const oldHandles = productsBeforeUpdate
       .map((product) => String(product.get('handle') || '').trim())
       .filter(Boolean);
