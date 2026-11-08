@@ -1,6 +1,6 @@
 import "server-only";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { invalidateCatalogCacheAsync, invalidateProductReviewsCacheAsync } from "@/lib/commerce";
 
 export type ProductCacheScope = "product" | "stock" | "reviews";
@@ -54,6 +54,14 @@ export async function invalidateProductCaches(
         result.catalog = true;
       } catch (error) {
         markError(result, error, "catalog invalidation");
+      }
+
+      if (input.scope === "product") {
+        try {
+          revalidateTag("home-catalog", { expire: 0 });
+        } catch (error) {
+          markError(result, error, "home catalog invalidation");
+        }
       }
 
       for (const path of [

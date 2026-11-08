@@ -79,13 +79,14 @@ function buildFaqSchema(article: { title: string; excerpt: string; handle: strin
 }
 
 function buildArticleSchema(article: { title: string; seoDescription: string; publishedAt: string; handle: string; image?: { url: string } | null }) {
+  const publishedAt = Date.parse(article.publishedAt || "");
   return {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: article.title,
     description: article.seoDescription || "Succulent care guide — unboxing, potting, watering, and climate-aware tips for Indian homes.",
     author: { "@type": "Organization", name: "Succulent Sphere" },
-    datePublished: article.publishedAt || new Date().toISOString(),
+    ...(Number.isNaN(publishedAt) ? {} : { datePublished: new Date(publishedAt).toISOString() }),
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": `https://www.succulentsphere.in/plant-care/${article.handle}`,

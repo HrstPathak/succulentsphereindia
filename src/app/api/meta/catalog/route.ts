@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 // we use Upstash Redis when configured. The code prefers Redis (shared) then in-process cache.
 let _cachedCsv: string | null = null;
 let _cachedAt = 0;
+let _cachedSiteUrl = "";
 const CACHE_TTL_SECONDS = 60 * 60; // 1 hour
 const REDIS_KEY = "meta:catalog:csv";
 
@@ -22,23 +23,34 @@ try {
   redisClient = null;
 }
 
-async function readRedisCsv() {
+async function readRedisCsv(key: string) {
   if (!redisClient) return null;
   try {
-    const v = await redisClient.get(REDIS_KEY);
+    const v = await redisClient.get(key);
     return typeof v === "string" ? v : null;
   } catch (_e) {
     return null;
   }
 }
 
-async function writeRedisCsv(value: string) {
+async function writeRedisCsv(key: string, value: string) {
   if (!redisClient) return;
   try {
-    await redisClient.set(REDIS_KEY, value, { ex: CACHE_TTL_SECONDS });
+    await redisClient.set(key, value, { ex: CACHE_TTL_SECONDS });
   } catch (_e) {
     // ignore write failures
   }
+}
+
+function csvResponse(value: string, cacheStatus?: string) {
+  return new Response(value, {
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": 'inline; filename="succulent-sphere-meta-catalog.csv"',
+      "Cache-Control": `public, s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=${CACHE_TTL_SECONDS}`,
+      ...(cacheStatus ? { "X-Cache-Status": cacheStatus } : {}),
+    },
+  });
 }
 
 function csv(value: unknown) {
@@ -90,18 +102,24 @@ async function fetchProductsForFeed() {
 /** Public Meta Commerce Manager data feed. Configure it as a scheduled URL feed. */
 export async function GET(request: Request) {
   const siteUrl = siteOrigin(request);
+  // The feed includes absolute product and image URLs, so keep separate shared
+  // entries if the same deployment serves more than one public hostname.
+  const redisKey = `${REDIS_KEY}:${encodeURIComponent(siteUrl)}`;
 
   // Serve cached CSV if fresh.
   const now = Date.now();
-  if (_cachedCsv && now - _cachedAt < CACHE_TTL_SECONDS * 1000) {
-    return new Response(_cachedCsv, {
-      headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": 'inline; filename="succulent-sphere-meta-catalog.csv"',
-        // Let CDN/cache hold the result for the same duration
-        "Cache-Control": `public, s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=${CACHE_TTL_SECONDS}`,
-      },
-    });
+  if (_cachedCsv && _cachedSiteUrl === siteUrl && now - _cachedAt < CACHE_TTL_SECONDS * 1000) {
+    return csvResponse(_cachedCsv, "INSTANCE");
+  }
+
+  // Instance memory is lost on cold starts. Use the shared Redis copy before
+  // scanning Firestore and rebuilding a potentially large CSV.
+  const sharedCsv = await readRedisCsv(redisKey);
+  if (sharedCsv) {
+    _cachedCsv = sharedCsv;
+    _cachedAt = Date.now();
+    _cachedSiteUrl = siteUrl;
+    return csvResponse(sharedCsv, "SHARED");
   }
 
   // Try to build a fresh feed. If Firestore fails, return stale cached data if available.
@@ -166,27 +184,16 @@ export async function GET(request: Request) {
     // Cache the generated CSV
     _cachedCsv = csvText;
     _cachedAt = Date.now();
+    _cachedSiteUrl = siteUrl;
+    await writeRedisCsv(redisKey, csvText);
 
-    return new Response(csvText, {
-      headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": 'inline; filename="succulent-sphere-meta-catalog.csv"',
-        "Cache-Control": `public, s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=${CACHE_TTL_SECONDS}`,
-      },
-    });
+    return csvResponse(csvText, "MISS");
   } catch (error) {
     // If generating fresh feed fails, return stale cached content if available.
     // Log a concise message and avoid printing error objects to prevent source-map noise.
     console.info(`[meta catalog] feed generation failed: ${String((error as Error)?.message || error)}`);
-    if (_cachedCsv) {
-      return new Response(_cachedCsv, {
-        headers: {
-          "Content-Type": "text/csv; charset=utf-8",
-          "Content-Disposition": 'inline; filename="succulent-sphere-meta-catalog.csv"',
-          "Cache-Control": `public, s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=${CACHE_TTL_SECONDS}`,
-          "X-Cache-Status": "STALE",
-        },
-      });
+    if (_cachedCsv && _cachedSiteUrl === siteUrl) {
+      return csvResponse(_cachedCsv, "STALE");
     }
 
     // As a last resort, serve a small fallback feed from bundled mock data so crawlers get a valid payload.
@@ -231,15 +238,10 @@ export async function GET(request: Request) {
       // Cache fallback so subsequent requests are fast
       _cachedCsv = csvText;
       _cachedAt = Date.now();
+      _cachedSiteUrl = siteUrl;
+      await writeRedisCsv(redisKey, csvText);
 
-      return new Response(csvText, {
-        headers: {
-          "Content-Type": "text/csv; charset=utf-8",
-          "Content-Disposition": 'inline; filename="succulent-sphere-meta-catalog.csv"',
-          "Cache-Control": `public, s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=${CACHE_TTL_SECONDS}`,
-          "X-Cache-Status": "FALLBACK_MOCK",
-        },
-      });
+      return csvResponse(csvText, "FALLBACK_MOCK");
     } catch (fallbackError) {
       console.info(`[meta catalog] fallback generation failed: ${String((fallbackError as Error)?.message || fallbackError)}`);
       return new Response("Service unavailable", { status: 503, headers: { "Cache-Control": "no-store" } });

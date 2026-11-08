@@ -180,7 +180,10 @@ export async function PATCH(request: Request) {
     if (Object.keys(update).length === 1) return NextResponse.json({ error: "Choose at least one change to apply." }, { status: 400 });
     const db = getFirebaseDb();
     const productRefs = productIds.map((id) => db.collection("products").doc(id));
-    const products = productIds.length <= 10 ? await db.getAll(...productRefs) : [];
+    // Keep revalidation scoped to the products actually updated. Using the
+    // whole [handle] route for larger batches can trigger needless ISR work
+    // across every product page.
+    const products = await db.getAll(...productRefs);
     const handles = products.map((product) => String(product.get("handle") || "").trim()).filter(Boolean);
     const batch = db.batch();
     productRefs.forEach((ref) => batch.update(ref, update));
@@ -191,7 +194,7 @@ export async function PATCH(request: Request) {
     const cache = await invalidateProductCaches({
       handles,
       scope: "product",
-      allProductPages: productIds.length > 10,
+      allProductPages: false,
     });
     return NextResponse.json({ ok: true, updated: productIds.length, cache });
   } catch (error) { return NextResponse.json({ error: String((error as Error).message) === "ADMIN_REQUIRED" ? "Not found." : (error as Error).message }, { status: String((error as Error).message) === "ADMIN_REQUIRED" ? 404 : 500 }); }

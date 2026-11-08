@@ -10,10 +10,11 @@ export type CustomerSessionSnapshot = {
   customer: FirebaseAuthenticatedCustomer | null;
   status: CustomerSessionStatus;
   isAdmin: boolean;
+  profileLoaded: boolean;
 };
 
 type CustomerSessionContextValue = CustomerSessionSnapshot & {
-  refresh: () => Promise<CustomerSessionSnapshot>;
+  refresh: (includeProfile?: boolean) => Promise<CustomerSessionSnapshot>;
   setCustomer: (customer: FirebaseAuthenticatedCustomer | null, isAdmin?: boolean) => void;
 };
 
@@ -21,6 +22,7 @@ const anonymousSnapshot: CustomerSessionSnapshot = {
   customer: null,
   status: "anonymous",
   isAdmin: false,
+  profileLoaded: false,
 };
 
 const CustomerSessionContext = createContext<CustomerSessionContextValue | null>(null);
@@ -35,14 +37,16 @@ export function CustomerSessionProvider({ children }: { children: ReactNode }) {
   const sessionRevisionRef = useRef(0);
   const lastFetchedAtRef = useRef(0);
 
-  const refresh = useCallback((): Promise<CustomerSessionSnapshot> => {
-    if (requestRef.current) return requestRef.current;
+  const refresh = useCallback((includeProfile = false): Promise<CustomerSessionSnapshot> => {
+    if (requestRef.current) {
+      return includeProfile ? requestRef.current.then(() => refresh(true)) : requestRef.current;
+    }
 
     const revision = sessionRevisionRef.current;
     const request = (async () => {
       let nextSnapshot = anonymousSnapshot;
       try {
-        const response = await fetch("/api/customer", {
+        const response = await fetch(includeProfile ? "/api/customer?profile=1" : "/api/customer", {
           method: "GET",
           credentials: "include",
           cache: "no-store",
@@ -55,6 +59,7 @@ export function CustomerSessionProvider({ children }: { children: ReactNode }) {
             customer: payload.customer as FirebaseAuthenticatedCustomer,
             status: "authenticated",
             isAdmin: Boolean(payload.isAdmin),
+            profileLoaded: includeProfile,
           };
         }
       } catch {
@@ -62,7 +67,17 @@ export function CustomerSessionProvider({ children }: { children: ReactNode }) {
       }
 
       lastFetchedAtRef.current = Date.now();
-      if (revision === sessionRevisionRef.current) setSnapshot(nextSnapshot);
+      if (revision === sessionRevisionRef.current) {
+        setSnapshot((current) => {
+          // A lightweight refresh must not replace a full account profile with
+          // its header-only snapshot. If the cookie now belongs to another
+          // account, accept the new identity instead of retaining old data.
+          if (!includeProfile && current.profileLoaded && current.customer?.id === nextSnapshot.customer?.id) {
+            return { ...current, status: nextSnapshot.status, isAdmin: nextSnapshot.isAdmin };
+          }
+          return nextSnapshot;
+        });
+      }
       return revision === sessionRevisionRef.current ? nextSnapshot : anonymousSnapshot;
     })();
 
@@ -81,6 +96,7 @@ export function CustomerSessionProvider({ children }: { children: ReactNode }) {
         customer,
         status: customer ? "authenticated" : "anonymous",
         isAdmin: customer ? (isAdmin ?? current.isAdmin) : false,
+        profileLoaded: Boolean(customer),
       }));
     },
     [],

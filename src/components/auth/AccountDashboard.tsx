@@ -182,7 +182,7 @@ function AccountMenuItem({
 
 export default function AccountDashboard({ customer, isGoogleLogin = false, isAdmin = false }: AccountDashboardProps) {
   const router = useRouter();
-  const { customer: sessionCustomer, refresh, setCustomer: setSessionCustomer } = useCustomerSession();
+  const { customer: sessionCustomer, profileLoaded, refresh, setCustomer: setSessionCustomer } = useCustomerSession();
   const [data, setData] = useState(customer);
   const [expandedSection, setExpandedSection] = useState<SectionKey>(null);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -236,14 +236,14 @@ export default function AccountDashboard({ customer, isGoogleLogin = false, isAd
   }, [customer, isAdmin, setSessionCustomer]);
 
   useEffect(() => {
-    if (sessionCustomer) setData(sessionCustomer);
-  }, [sessionCustomer]);
+    if (sessionCustomer && profileLoaded) setData(sessionCustomer);
+  }, [sessionCustomer, profileLoaded]);
 
   const refreshCustomerData = useCallback(
     async (showLoader = false) => {
       if (showLoader) setRefreshingOrders(true);
       try {
-        const refreshed = await refresh();
+        const refreshed = await refresh(true);
         if (refreshed.customer) setData(refreshed.customer);
       } catch (error) {
         if (showLoader) showErrorToast((error as Error).message || "Unable to refresh orders.");

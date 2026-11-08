@@ -26,11 +26,8 @@ const STATIC_ROUTES: Array<{
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
-
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
     url: absoluteUrl(route.path),
-    lastModified: now,
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }));
@@ -40,12 +37,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const products = await fetchAllProductsList({ sortKey: "BEST_SELLING", reverse: false });
     productEntries = products
       .filter((product: any) => typeof product?.handle === "string" && product.handle.trim().length > 0)
-      .map((product: any) => ({
-        url: absoluteUrl(`/products/${product.handle}`),
-        lastModified: product?.createdAt ? new Date(product.createdAt) : now,
-        changeFrequency: "weekly" as const,
-        priority: 0.75,
-      }));
+      .map((product: any) => {
+        const lastModified = product?.createdAt ? new Date(product.createdAt) : null;
+        return {
+          url: absoluteUrl(`/products/${product.handle}`),
+          ...(lastModified && !Number.isNaN(lastModified.getTime()) ? { lastModified } : {}),
+          changeFrequency: "weekly" as const,
+          priority: 0.75,
+        };
+      });
   } catch {
     productEntries = [];
   }
@@ -55,12 +55,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const articles = await fetchPlantCareArticles(200);
     articleEntries = articles
       .filter((article) => article.handle)
-      .map((article) => ({
-        url: absoluteUrl(`/plant-care/${article.handle}`),
-        lastModified: article.publishedAt ? new Date(article.publishedAt) : now,
-        changeFrequency: "monthly" as const,
-        priority: 0.65,
-      }));
+      .map((article) => {
+        const lastModified = article.publishedAt ? new Date(article.publishedAt) : null;
+        return {
+          url: absoluteUrl(`/plant-care/${article.handle}`),
+          ...(lastModified && !Number.isNaN(lastModified.getTime()) ? { lastModified } : {}),
+          changeFrequency: "monthly" as const,
+          priority: 0.65,
+        };
+      });
   } catch {
     articleEntries = [];
   }

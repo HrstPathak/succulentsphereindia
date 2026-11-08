@@ -129,7 +129,10 @@ export async function POST(req: NextRequest) {
       handles,
       oldHandles,
       scope: 'product',
-      allProductPages: validUpdates.length > 10,
+      // Each affected handle is known above. Invalidating the whole dynamic
+      // product route for a batch would stale every generated product page,
+      // even when the batch only changed a small subset.
+      allProductPages: false,
       includeSitemap: handleChanged,
     });
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
+import { unstable_cache } from "next/cache";
 import HeroSection from "../components/home/HeroSection";
 import CategoryGrid from "../components/home/CategoryGrid";
 import BestSellerGrid from "../components/home/BestSellerGrid";
@@ -62,14 +63,22 @@ function hasTag(tags: string[] | undefined, wantedTag: string): boolean {
   return tags.some((tag) => normalizeTag(String(tag)) === target);
 }
 
-function shuffleBestSellers<T>(items: T[], desiredCount = 20): T[] {
-  if (!items.length) return [];
-  const pool = [...items];
-  for (let i = pool.length - 1; i > 0; i -= 1) {
-    const j = Math.floor((Date.now() / 1000 + i) % (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+function stableProductPriority(value: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = Math.imul(hash ^ value.charCodeAt(index), 16777619);
   }
-  return pool.slice(0, Math.min(desiredCount, pool.length));
+  return hash >>> 0;
+}
+
+function orderBestSellers<T extends { id?: string; handle?: string }>(items: T[], desiredCount = 20): T[] {
+  return [...items]
+    .sort((a, b) => {
+      const aKey = String(a.handle || a.id || "");
+      const bKey = String(b.handle || b.id || "");
+      return stableProductPriority(aKey) - stableProductPriority(bKey) || aKey.localeCompare(bKey);
+    })
+    .slice(0, Math.min(desiredCount, items.length));
 }
 
 type HomeBestSellerCandidate = Product & {
@@ -111,10 +120,10 @@ function buildBestSellerPool(primary: HomeBestSellerCandidate[], desiredCount = 
     curated.push(product);
   }
 
-  return shuffleBestSellers(curated, desiredCount).map(mapBestSellerProduct);
+  return orderBestSellers(curated, desiredCount).map(mapBestSellerProduct);
 }
 
-async function getHomeBestSellerProducts() {
+const getHomeBestSellerProducts = unstable_cache(async () => {
   try {
     const products = await fetchAllProductsListFromFirestore({
       sortKey: "CREATED_AT",
@@ -141,7 +150,7 @@ async function getHomeBestSellerProducts() {
   } catch {
     return buildBestSellerPool([]);
   }
-}
+}, ["home-best-sellers-v1"], { revalidate: 3600, tags: ["home-catalog"] });
 
 export default async function Home() {
   const websiteJsonLd = buildWebsiteJsonLd();

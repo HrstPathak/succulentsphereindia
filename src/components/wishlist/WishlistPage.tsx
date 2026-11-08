@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { useWishlist } from "@/context/WishlistContext";
-import type { WishlistProduct } from "@/lib/wishlist";
 import WishlistItem from "./WishlistItem";
 
 /**
@@ -28,24 +27,8 @@ function WishlistSkeletonRow() {
   );
 }
 
-export default function WishlistPage({
-  initialProducts = [],
-  initialResolved = false,
-}: {
-  /** Server-rendered snapshot for signed-in shoppers (empty for guests). */
-  initialProducts?: WishlistProduct[];
-  /** True when the server already resolved the signed-in wishlist. */
-  initialResolved?: boolean;
-}) {
-  const { products, count, loading, isAuthenticated } = useWishlist();
-
-  // Signed-in shoppers get their saved products from the server render, so the
-  // grid paints on the first frame instead of flashing a second loading state
-  // while the live wishlist request is still in flight.
-  const showInitial = loading && initialResolved && !isAuthenticated;
-  const visibleProducts = showInitial ? initialProducts : products;
-  const visibleCount = showInitial ? initialProducts.length : count;
-  const showSkeleton = loading && !showInitial;
+export default function WishlistPage() {
+  const { products, count, loading, customerStatus } = useWishlist();
 
   return (
     <section className="auth-shell-bg min-h-screen bg-[var(--color-bg)] px-4 pb-16 pt-8" style={{ paddingTop: "calc(var(--ss-header-offset, 64px) + 24px)" }}>
@@ -56,7 +39,7 @@ export default function WishlistPage({
               <p className="text-xs uppercase tracking-[0.18em] text-[var(--auth-muted)]">Your Collection</p>
               <h1 className="mt-1 font-serif text-4xl text-[var(--color-text)]">Wishlist</h1>
               <p className="mt-2 text-sm text-[var(--auth-muted)]">
-                {visibleCount} {visibleCount === 1 ? "item" : "items"} saved for later.
+                {count} {count === 1 ? "item" : "items"} saved for later.
               </p>
             </div>
             <Link href="/collections" className="rounded-lg bg-[var(--color-brand)] px-3 py-2 text-sm font-semibold text-[var(--color-bg)]">
@@ -64,14 +47,24 @@ export default function WishlistPage({
             </Link>
           </div>
 
-          {showSkeleton ? (
+          {customerStatus === "anonymous" ? (
+            <div className="mt-8 rounded-2xl border border-[var(--auth-border)] bg-white/60 p-8 text-center">
+              <Heart className="mx-auto h-8 w-8 text-[var(--color-brand)]" />
+              <p className="mt-3 text-base font-medium text-[var(--color-text)]">Sign in to view your wishlist</p>
+              <p className="mt-1 text-sm text-[var(--auth-muted)]">Your saved favourites are available when you sign in to your account.</p>
+              <div className="mt-5 flex justify-center gap-3">
+                <Link href="/login" className="rounded-lg border border-[var(--auth-border)] px-4 py-2 text-sm font-semibold text-[var(--color-text)]">Sign in</Link>
+                <Link href="/signup" className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white">Create account</Link>
+              </div>
+            </div>
+          ) : loading ? (
             <div className="mt-6 grid gap-3 sm:grid-cols-2" role="status" aria-busy="true" aria-label="Loading your wishlist">
               <span className="sr-only">Loading your wishlist…</span>
               {Array.from({ length: 4 }).map((_, index) => (
                 <WishlistSkeletonRow key={index} />
               ))}
             </div>
-          ) : visibleProducts.length === 0 ? (
+          ) : products.length === 0 ? (
             <div className="mt-8 rounded-2xl border border-[var(--auth-border)] bg-white/60 p-8 text-center">
               <Heart className="mx-auto h-8 w-8 text-[var(--color-brand)]" />
               <p className="mt-3 text-base font-medium text-[var(--color-text)]">Your wishlist is empty</p>
@@ -79,7 +72,7 @@ export default function WishlistPage({
             </div>
           ) : (
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {visibleProducts.map((item) => (
+              {products.map((item) => (
                 <WishlistItem key={item.id} item={item} />
               ))}
             </div>

@@ -29,6 +29,7 @@ type WishlistContextValue = {
   count: number;
   loading: boolean;
   isAuthenticated: boolean;
+  customerStatus: "loading" | "authenticated" | "anonymous";
   isInWishlist: (productId: string) => boolean;
   toggle: (product: WishlistInputProduct) => Promise<{ added: boolean }>;
   add: (product: WishlistInputProduct) => Promise<void>;
@@ -158,12 +159,12 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   // result before requesting the account wishlist: anonymous shoppers use the
   // local wishlist and do not need an empty authenticated-wishlist response.
   const wishlistKey = customerStatus === "authenticated" ? "/api/wishlist" : null;
-  const { data, mutate, isLoading } = useSWR<WishlistApiResponse>(wishlistKey, jsonFetcher, {
+  const { data, mutate, isLoading, error: wishlistError } = useSWR<WishlistApiResponse>(wishlistKey, jsonFetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 15000,
   });
 
-  const isAuthenticated = customerStatus === "authenticated" && Boolean(data?.authenticated);
+  const isAuthenticated = customerStatus === "authenticated";
 
   const applyGuestProducts = useCallback(
     (updater: WishlistProduct[] | ((current: WishlistProduct[]) => WishlistProduct[])) => {
@@ -194,7 +195,10 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if (!guestIds.length) {
+    // Legacy guest ids are retained only so they can be merged after sign-in.
+    // Signed-out visitors are asked to sign in and never trigger product lookup
+    // requests for a local wishlist.
+    if (!isAuthenticated || !mergedGuest || !guestIds.length) {
       hydratedGuestIdsRef.current = [];
       applyGuestProducts([]);
       setGuestHydrating(false);
@@ -242,7 +246,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     return () => {
       active = false;
     };
-  }, [applyGuestProducts, guestIds]);
+  }, [applyGuestProducts, guestIds, isAuthenticated, mergedGuest]);
 
   useEffect(() => {
     if (!isAuthenticated || mergedGuest || !guestIds.length) return;
@@ -266,10 +270,10 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     merge();
   }, [guestIds, isAuthenticated, mergedGuest, mutate]);
 
-  const ids = useMemo(() => (isAuthenticated ? normalizeWishlistIds(data?.items || []) : guestIds), [data?.items, guestIds, isAuthenticated]);
+  const ids = useMemo(() => (isAuthenticated ? normalizeWishlistIds(data?.items || []) : []), [data?.items, isAuthenticated]);
   const products = useMemo(
-    () => (isAuthenticated ? (Array.isArray(data?.products) ? data!.products : []) : guestProducts),
-    [data, guestProducts, isAuthenticated]
+    () => (isAuthenticated ? (Array.isArray(data?.products) ? data!.products : []) : []),
+    [data, isAuthenticated]
   );
   const idSet = useMemo(() => new Set(ids), [ids]);
 
@@ -279,8 +283,24 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const isInWishlist = useCallback((productId: string) => idSet.has(String(productId || "").trim()), [idSet]);
 
   const toggle = useCallback(async (product: WishlistInputProduct): Promise<{ added: boolean }> => {
+    if (!isAuthenticated) return { added: false };
+    let currentData = data;
+    if (!currentData?.authenticated) {
+      try {
+        currentData = await mutate();
+      } catch {
+        showErrorToast("We couldn't load your wishlist. Please try again.");
+        return { added: false };
+      }
+    }
+    if (!currentData?.authenticated) {
+      showErrorToast("We couldn't load your wishlist. Please try again.");
+      return { added: false };
+    }
+
     if (isAuthenticated) {
-      const result = toggleWishlistId(ids, product.id);
+      const currentIds = normalizeWishlistIds(currentData.items || []);
+      const result = toggleWishlistId(currentIds, product.id);
       const optimisticProducts = result.added
         ? [product, ...products.filter((item) => item.id !== product.id)]
         : products.filter((item) => item.id !== product.id);
@@ -331,7 +351,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     if (result.added) showSuccessToast("Added to your Wishlist");
     window.dispatchEvent(new Event("wishlist:changed"));
     return { added: result.added };
-  }, [applyGuestProducts, guestIds, ids, isAuthenticated, mutate, products]);
+  }, [applyGuestProducts, data, guestIds, ids, isAuthenticated, mutate, products]);
 
   const add = useCallback(async (product: WishlistInputProduct) => {
     if (isInWishlist(product.id)) return;
@@ -380,11 +400,11 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     window.dispatchEvent(new Event("wishlist:changed"));
   }, [applyGuestProducts, guestIds, ids, isAuthenticated, mutate, products]);
 
-  const loading = isLoading || guestHydrating;
+  const loading = customerStatus === "loading" || isLoading || guestHydrating || (isAuthenticated && !data && !wishlistError);
 
   const value = useMemo<WishlistContextValue>(
-    () => ({ ids, products, count: ids.length, loading, isAuthenticated, isInWishlist, toggle, add, remove }),
-    [add, ids, isAuthenticated, isInWishlist, loading, products, remove, toggle]
+    () => ({ ids, products, count: ids.length, loading, isAuthenticated, customerStatus, isInWishlist, toggle, add, remove }),
+    [add, customerStatus, ids, isAuthenticated, isInWishlist, loading, products, remove, toggle]
   );
 
   return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>;

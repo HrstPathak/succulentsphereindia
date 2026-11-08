@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { invalidateCatalogCache } from "@/lib/commerce";
 import { invalidateComboPages } from "@/lib/comboCache";
@@ -19,6 +19,7 @@ export async function POST(request: Request) {
     if (all) {
       invalidateCatalogCache();
       invalidateComboPages();
+      revalidateTag("home-catalog", { expire: 0 });
       revalidatePath("/collections/succulents");
       revalidatePath("/collections/succulents/[handle]", "page");
       revalidatePath("/products/[handle]", "page");
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
     if (handles.length) {
       invalidateCatalogCache();
       invalidateComboPages();
+      revalidateTag("home-catalog", { expire: 0 });
     }
 
     return NextResponse.json({ ok: true, revalidated: paths });
