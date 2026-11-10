@@ -4,6 +4,7 @@ import {
   fetchRazorpayPayment,
   getCheckoutSessionByOrderId,
   getCheckoutSessionByPaymentId,
+  recordPaymentAgainstSession,
 } from "@/lib/razorpayCheckout";
 import { sendOrderConfirmationEmail } from "@/lib/order-email";
 import { getShipmentCreationSummary } from "@/lib/shipping";
@@ -56,6 +57,14 @@ export async function GET(req: Request) {
         keySecret,
       );
       if (String(payment.status).toLowerCase() === "captured") {
+        await recordPaymentAgainstSession({
+          razorpayOrderId: session.razorpayOrderId,
+          paymentId: effectivePaymentId,
+          paymentStatus: "captured",
+          amountPaise: Number(payment.amount),
+          currency: String(payment.currency || "INR"),
+          method: String(payment.method || ""),
+        });
         const result = await ensureFirebaseOrderForPayment({
           razorpayOrderId: session.razorpayOrderId,
           paymentId: effectivePaymentId,

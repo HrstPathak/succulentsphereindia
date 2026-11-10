@@ -134,8 +134,14 @@ export default function CheckoutClient() {
   const [lastCheckedPincode, setLastCheckedPincode] = useState("");
   const [lastCheckedPaymentMode, setLastCheckedPaymentMode] = useState<"prepaid" | "cod_deposit">("prepaid");
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
+  const [showPaymentNavigationDialog, setShowPaymentNavigationDialog] = useState(false);
+  const [navigationRecoveryMessage, setNavigationRecoveryMessage] = useState("");
   const pendingVerificationRef = useRef<RazorpayVerificationPayload | null>(null);
   const backgroundVerificationTriggeredRef = useRef(false);
+  const razorpayOrderIdRef = useRef("");
+  const lastReconciliationAtRef = useRef(0);
+  const navigationRecoveryInFlightRef = useRef(false);
+  const allowPaymentNavigationRef = useRef(false);
   const walletHoldRef = useRef<string | null>(null);
   const isLoggedInCustomer = Boolean(customerProfile?.email);
 
@@ -213,6 +219,78 @@ export default function CheckoutClient() {
     backgroundVerificationTriggeredRef.current = started;
   }
 
+  function triggerOrderReconciliation() {
+    const orderId = razorpayOrderIdRef.current;
+    if (!orderId || typeof window === "undefined") return;
+    const now = Date.now();
+    if (now - lastReconciliationAtRef.current < 2500) return;
+    lastReconciliationAtRef.current = now;
+    const body = JSON.stringify({ razorpay_order_id: orderId });
+    let started = false;
+    if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+      try {
+        started = navigator.sendBeacon("/api/razorpay/reconcile", new Blob([body], { type: "application/json" }));
+      } catch {
+        started = false;
+      }
+    }
+    if (!started) {
+      void fetch("/api/razorpay/reconcile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        keepalive: true,
+      }).catch(() => undefined);
+    }
+  }
+
+  async function reconcileBeforeNavigation() {
+    const orderId = razorpayOrderIdRef.current;
+    if (!orderId || navigationRecoveryInFlightRef.current) return;
+
+    navigationRecoveryInFlightRef.current = true;
+    setNavigationRecoveryMessage("We’re checking the payment status with Razorpay. Please keep this page open for a moment.");
+    try {
+      const response = await fetch("/api/razorpay/reconcile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ razorpay_order_id: orderId }),
+        keepalive: true,
+      });
+      const result = await response.json().catch(() => null);
+      if (result?.status === "confirmed") {
+        setShowPaymentNavigationDialog(false);
+        setNavigationRecoveryMessage("");
+        clearPendingVerification();
+        const params = new URLSearchParams({
+          orderId,
+          paymentId: String(result.paymentId || "").trim(),
+          amount: String((Number(result.amountPaise || 0) / 100).toFixed(2)),
+          paymentMode: result.paymentMode === "cod_deposit" ? "cod_deposit" : "prepaid",
+        });
+        if (result.orderNumber) params.set("orderNumber", String(result.orderNumber));
+        clear();
+        walletHoldRef.current = null;
+        razorpayOrderIdRef.current = "";
+        setPaymentStatus("idle");
+        router.replace(`/order-placed?${params.toString()}`);
+      } else if (result?.status === "failed") {
+        setShowPaymentNavigationDialog(false);
+        setNavigationRecoveryMessage("");
+        setPaymentStatus("failed");
+        setError("Razorpay reported that this payment did not go through. Please check your payment method before trying again.");
+      } else if (result?.status === "processing") {
+        setNavigationRecoveryMessage("Razorpay has not sent a final payment status yet. You can keep waiting or leave; we’ll continue checking the order on our server.");
+      } else {
+        setNavigationRecoveryMessage("We couldn’t confirm the payment yet. You can keep waiting or leave; our server will continue reconciling the order.");
+      }
+    } catch {
+      setNavigationRecoveryMessage("We couldn’t reach the payment service just now. You can keep waiting or leave; our server will continue reconciling the order.");
+    } finally {
+      navigationRecoveryInFlightRef.current = false;
+    }
+  }
+
   useEffect(() => {
     if (items.length > 0 && !hasMinimumOrder) {
       const t = setTimeout(() => router.replace("/cart"), 1200);
@@ -241,6 +319,7 @@ export default function CheckoutClient() {
     if (!isPaymentBusy || typeof window === "undefined") return;
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (allowPaymentNavigationRef.current) return;
       event.preventDefault();
       event.returnValue = "";
     };
@@ -250,38 +329,53 @@ export default function CheckoutClient() {
   }, [isPaymentBusy]);
 
   useEffect(() => {
-    if (!isVerifyingPayment || typeof window === "undefined") return;
+    if (!isPaymentBusy || typeof window === "undefined") return;
 
     setShowNavigationWarning(false);
 
     const handlePopState = () => {
+      if (allowPaymentNavigationRef.current) {
+        allowPaymentNavigationRef.current = false;
+        return;
+      }
+      // Before Razorpay returns an order id there is no payable transaction to
+      // recover, so allow the normal back action while the request is pending.
+      if (!razorpayOrderIdRef.current) return;
       setShowNavigationWarning(true);
+      setShowPaymentNavigationDialog(true);
+      // The callback verification already queries Razorpay. Reuse its result
+      // instead of launching a second request when that verification is live.
+      if (!pendingVerificationRef.current) void reconcileBeforeNavigation();
       window.setTimeout(() => {
         window.history.forward();
       }, 0);
     };
 
-    const handlePageHide = () => {
-      triggerBackgroundVerification();
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        triggerBackgroundVerification();
-      }
-    };
-
     window.addEventListener("popstate", handlePopState);
-    window.addEventListener("pagehide", handlePageHide);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.removeEventListener("popstate", handlePopState);
-      window.removeEventListener("pagehide", handlePageHide);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
       setShowNavigationWarning(false);
+      setShowPaymentNavigationDialog(false);
     };
-  }, [isVerifyingPayment]);
+  }, [isPaymentBusy]);
+
+  useEffect(() => {
+    if (!isPaymentBusy || typeof window === "undefined") return;
+    const recover = () => {
+      if (pendingVerificationRef.current) triggerBackgroundVerification();
+      else triggerOrderReconciliation();
+    };
+    const handleVisibilityChange = () => {
+      recover();
+    };
+    window.addEventListener("pagehide", recover);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.removeEventListener("pagehide", recover);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isPaymentBusy]);
 
   useEffect(() => {
     if (sessionStatus === "loading") return;
@@ -487,6 +581,7 @@ export default function CheckoutClient() {
     setLoading(true);
     if (pincodeStatus !== "error") setError(null);
     setPaymentStatus("processing");
+    let gatewayOpened = false;
 
     try {
       const customerPayload = { ...info, address: composeFullAddress(info.address, info.landmark) };
@@ -511,6 +606,8 @@ export default function CheckoutClient() {
         throw new Error(orderData?.error || "Failed to create payment order.");
       }
       walletHoldRef.current = String(orderData?.walletHoldId || "").trim() || null;
+      razorpayOrderIdRef.current = String(orderData?.id || "").trim();
+      lastReconciliationAtRef.current = 0;
       const serverWalletAmount = Number(orderData?.walletAmountApplied || 0);
       const serverPayableAmount = Number(orderData?.payableAmount || Number(orderData?.amount || 0) / 100 || 0);
       const serverOrderTotalAfterWallet = Number(orderData?.orderTotalAfterWallet || Math.max(0, orderTotal - serverWalletAmount));
@@ -586,6 +683,8 @@ export default function CheckoutClient() {
             }
 
             clearPendingVerification();
+            setShowPaymentNavigationDialog(false);
+            setNavigationRecoveryMessage("");
 
             // Persist purchase analytics payload so order success page can push GA4 purchase event on load.
             if (typeof window !== "undefined") {
@@ -641,16 +740,18 @@ export default function CheckoutClient() {
 
             clear();
             walletHoldRef.current = null;
+            razorpayOrderIdRef.current = "";
             router.replace(`/order-placed?${nextParams.toString()}`);
           } catch (verificationError) {
             clearPendingVerification();
+            setShowPaymentNavigationDialog(false);
             setPaymentStatus("failed");
             setError((verificationError as Error).message);
           }
         },
         modal: {
           ondismiss: () => {
-            void releaseWalletHold();
+            triggerOrderReconciliation();
             setPaymentStatus("idle");
           },
           escape: false,
@@ -661,7 +762,8 @@ export default function CheckoutClient() {
 
       const rzp = new Razorpay(options);
       rzp.on("payment.failed", (failure: any) => {
-        void releaseWalletHold();
+        triggerOrderReconciliation();
+        setShowPaymentNavigationDialog(false);
         setPaymentStatus("failed");
         setError(failure?.error?.description || "Payment failed. Please try again.");
       });
@@ -706,7 +808,12 @@ export default function CheckoutClient() {
       }
 
       rzp.open();
+      gatewayOpened = true;
     } catch (paymentError) {
+      // Once Razorpay has opened, a failure/dismissal can still race with a
+      // late authorization. Keep its wallet hold alive for the server/webhook
+      // to reconcile; release only if the gateway never opened.
+      if (!gatewayOpened) void releaseWalletHold();
       setPaymentStatus("failed");
       setError((paymentError as Error).message);
     } finally {
@@ -767,6 +874,54 @@ export default function CheckoutClient() {
             </div>
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-[rgb(var(--ss-secondary-rgb)/0.25)]">
               <div className="h-full w-1/3 bg-[var(--color-brand)] animate-[paymentBar_1.4s_ease_infinite]" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPaymentNavigationDialog && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/50 px-4" onClick={(event) => event.stopPropagation()}>
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="payment-navigation-title"
+            aria-describedby="payment-navigation-description"
+            className="w-full max-w-md rounded-2xl border border-[#d7cdbf] bg-white p-6 text-[#2f4138] shadow-2xl"
+          >
+            <h2 id="payment-navigation-title" className="text-lg font-semibold text-[#22312a]">
+              Your payment is being processed
+            </h2>
+            <p id="payment-navigation-description" className="mt-2 text-sm text-[#4b5d54]">
+              Please wait while we confirm your payment with Razorpay and finish creating your order. Leaving this page will not cancel a payment that has already gone through.
+            </p>
+            {navigationRecoveryMessage && (
+              <p className="mt-3 rounded-lg bg-[#f5f3ed] px-3 py-2 text-sm text-[#4b5d54]" role="status" aria-live="polite">
+                {navigationRecoveryMessage}
+              </p>
+            )}
+            <div className="mt-5 flex flex-col-reverse justify-end gap-2 sm:flex-row">
+              <button
+                type="button"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                onClick={() => {
+                  allowPaymentNavigationRef.current = true;
+                  setShowPaymentNavigationDialog(false);
+                  window.history.back();
+                  window.setTimeout(() => {
+                    allowPaymentNavigationRef.current = false;
+                  }, 1500);
+                }}
+              >
+                Leave checkout
+              </button>
+              <button
+                type="button"
+                autoFocus
+                className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                onClick={() => setShowPaymentNavigationDialog(false)}
+              >
+                OK, keep waiting
+              </button>
             </div>
           </div>
         </div>

@@ -74,9 +74,41 @@ export type CheckoutSession = {
 };
 
 const sessions = () => getFirebaseDb().collection("checkoutSessions");
+const checkoutRecords = () => getFirebaseDb().collection("checkoutRecords");
 const clean = (value: unknown) => String(value || "").trim();
 const isFirestoreId = (value: string) => value.length > 0 && !value.includes("/") && !value.includes("\\");
 const itemId = (item: CartItem) => clean(item.productId || item.id || item.variantId);
+
+function buildCheckoutRecord(session: CheckoutSession) {
+  return {
+    checkoutId: session.razorpayOrderId,
+    razorpayOrderId: session.razorpayOrderId,
+    receipt: session.receipt,
+    userId: session.userId || null,
+    customer: session.customer,
+    items: session.items,
+    gathering: session.gathering,
+    paymentMode: session.paymentMode,
+    paymentModeLabel: session.paymentMode === "cod_deposit" ? "COD with deposit" : "Online payment",
+    paymentStatus: "pending",
+    checkoutStatus: "awaiting_payment",
+    currency: session.currency,
+    expectedAmountPaise: session.expectedAmountPaise,
+    subtotal: session.subtotal,
+    shipping: session.shipping,
+    discount: session.discount,
+    total: session.total,
+    codFee: session.codFee,
+    totalWithCod: session.totalWithCod,
+    walletAmountApplied: session.walletAmountApplied,
+    payableAmount: session.payableAmount,
+    cashbackBasisAmount: session.cashbackBasisAmount,
+    orderCreated: false,
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
+    paymentAttempts: [],
+  };
+}
 
 export function buildRazorpaySignature(orderId: string, paymentId: string, keySecret: string) {
   return crypto.createHmac("sha256", keySecret).update(`${orderId}|${paymentId}`).digest("hex");
@@ -100,6 +132,18 @@ export async function fetchRazorpayPayment(paymentId: string, keyId: string, key
   const data = await response.json();
   if (!response.ok) throw new Error(data?.error?.description || "Unable to verify payment status with Razorpay.");
   return data;
+}
+
+export async function fetchRazorpayPaymentsForOrder(orderId: string, keyId: string, keySecret: string) {
+  const response = await fetch(`https://api.razorpay.com/v1/orders/${encodeURIComponent(orderId)}/payments?count=100`, {
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`,
+    },
+    cache: "no-store",
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data?.error?.description || "Unable to fetch payments for this Razorpay order.");
+  return Array.isArray(data?.items) ? data.items : [];
 }
 
 export async function priceCartItems(items: CartItem[]) {
@@ -206,7 +250,11 @@ export async function createCheckoutSession(input: Omit<CheckoutSession, "versio
     updatedAt: now,
   };
 
-  await sessions().doc(session.razorpayOrderId).set(session);
+  const db = getFirebaseDb();
+  const batch = db.batch();
+  batch.set(sessions().doc(session.razorpayOrderId), session);
+  batch.set(checkoutRecords().doc(session.razorpayOrderId), buildCheckoutRecord(session));
+  await batch.commit();
   return session;
 }
 
@@ -221,28 +269,76 @@ export async function getCheckoutSessionByPaymentId(paymentId: string) {
 }
 
 export async function noteCheckoutSessionError(orderId: string, errorMessage: string) {
-  await sessions().doc(orderId).set({ lastError: errorMessage, updatedAt: new Date().toISOString() }, { merge: true });
+  const now = new Date().toISOString();
+  const db = getFirebaseDb();
+  const batch = db.batch();
+  batch.set(sessions().doc(orderId), { lastError: errorMessage, updatedAt: now }, { merge: true });
+  batch.set(checkoutRecords().doc(orderId), { lastError: errorMessage, updatedAt: now }, { merge: true });
+  await batch.commit();
 }
 
-export async function recordPaymentAgainstSession(input: { razorpayOrderId: string; paymentId: string; paymentStatus: string; amountPaise: number; currency: string }) {
-  const session = await getCheckoutSessionByOrderId(input.razorpayOrderId);
-  if (!session) throw new Error("Checkout session not found.");
-  if (input.amountPaise !== session.expectedAmountPaise || input.currency !== session.currency) throw new Error("Payment amount does not match checkout session.");
-  await sessions().doc(input.razorpayOrderId).set(
-    {
-      paymentId: input.paymentId,
-      paymentStatus: input.paymentStatus,
-      status: input.paymentStatus === "captured" ? "payment_captured" : "payment_authorized",
-      updatedAt: new Date().toISOString(),
-    },
-    { merge: true },
-  );
+export async function recordPaymentAgainstSession(input: { razorpayOrderId: string; paymentId: string; paymentStatus: string; amountPaise: number; currency: string; method?: string; failureReason?: string }) {
+  const nextStatus = String(input.paymentStatus || "").toLowerCase();
+  if (!String(input.paymentId || "").trim() || !["captured", "authorized", "failed"].includes(nextStatus)) {
+    throw new Error("Invalid Razorpay payment event.");
+  }
+  const db = getFirebaseDb();
+  const sessionRef = sessions().doc(input.razorpayOrderId);
+  const recordRef = checkoutRecords().doc(input.razorpayOrderId);
+  const now = new Date().toISOString();
+  await db.runTransaction(async (tx) => {
+    const [sessionSnap, recordSnap] = await Promise.all([tx.get(sessionRef), tx.get(recordRef)]);
+    if (!sessionSnap.exists) throw new Error("Checkout session not found.");
+    const session = sessionSnap.data() as CheckoutSession;
+    if (input.amountPaise !== session.expectedAmountPaise || input.currency !== session.currency) throw new Error("Payment amount does not match checkout session.");
+
+    const currentStatus = String(session.paymentStatus || "").toLowerCase();
+    const capturedAlready = currentStatus === "captured";
+    const authorizationAlreadyExists = currentStatus === "authorized" && nextStatus === "failed";
+    const paymentAttempts = Array.isArray(recordSnap.get("paymentAttempts"))
+      ? recordSnap.get("paymentAttempts") as Array<Record<string, unknown>>
+      : [];
+    if (!paymentAttempts.some((attempt) => attempt.paymentId === input.paymentId && attempt.status === nextStatus)) {
+      paymentAttempts.push({ paymentId: input.paymentId, status: nextStatus, method: input.method || null, failureReason: input.failureReason || null, updatedAt: now });
+    }
+    const normalizedAttempts = paymentAttempts.slice(-20);
+    const keepCaptured = capturedAlready && nextStatus !== "captured";
+    const statusToStore = keepCaptured
+      ? "captured"
+      : authorizationAlreadyExists
+        ? "authorized"
+        : nextStatus;
+    const checkoutStatus = statusToStore === "captured"
+      ? (session.firebaseOrderId ? "order_created" : "payment_captured")
+      : statusToStore === "authorized" ? "payment_authorized"
+      : statusToStore === "failed" ? "payment_failed"
+      : "awaiting_payment";
+    const paymentPatch = {
+      paymentId: keepCaptured || authorizationAlreadyExists ? session.paymentId : input.paymentId,
+      paymentStatus: statusToStore,
+      status: statusToStore === "captured" ? "payment_captured" : `payment_${statusToStore}`,
+      updatedAt: now,
+    };
+    tx.set(sessionRef, paymentPatch, { merge: true });
+    tx.set(recordRef, {
+      ...(!recordSnap.exists ? buildCheckoutRecord(session) : {}),
+      ...paymentPatch,
+      checkoutStatus,
+      ...(input.method && !keepCaptured && !authorizationAlreadyExists ? { gatewayPaymentMethod: input.method } : {}),
+      paymentAttempts: normalizedAttempts,
+      paymentFailureReason: statusToStore === "failed" ? (input.failureReason || "Payment was declined or cancelled by the payment provider.") : null,
+      updatedAt: now,
+    }, { merge: true });
+  });
 }
 
 export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: string; paymentId: string; paymentStatus: string; amountPaise: number; currency: string; waitForLockMs?: number }) {
   const db = getFirebaseDb();
   const sessionRef = sessions().doc(input.razorpayOrderId);
+  const checkoutRecordRef = checkoutRecords().doc(input.razorpayOrderId);
   let stockChanges: { id: string; handle: string; before: number; after: number }[] = [];
+  let effectivePaymentStatus = input.paymentStatus;
+  let effectivePaymentId = input.paymentId;
   let result: { firebaseOrderId?: string; orderNumber?: number; alreadyCreated: boolean; processing: boolean; email?: OrderConfirmationEmail; shipment?: ShipmentCreationSummary } = {
     alreadyCreated: false,
     processing: false,
@@ -250,11 +346,19 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
 
   await db.runTransaction(async (tx) => {
     stockChanges = [];
-    const snap = await tx.get(sessionRef);
+    const [snap, checkoutRecordSnap] = await Promise.all([tx.get(sessionRef), tx.get(checkoutRecordRef)]);
     if (!snap.exists) throw new Error("Checkout session not found.");
 
     const session = snap.data() as CheckoutSession;
     if (input.amountPaise !== session.expectedAmountPaise || input.currency !== session.currency) throw new Error("Payment amount does not match checkout session.");
+    // A delayed authorized/failed event must not downgrade a captured payment.
+    effectivePaymentStatus = String(session.paymentStatus || "").toLowerCase() === "captured"
+      ? "captured"
+      : input.paymentStatus;
+    effectivePaymentId = effectivePaymentStatus === "captured" && session.paymentId
+      ? session.paymentId
+      : input.paymentId;
+    const checkoutRecordDefaults = checkoutRecordSnap.exists ? {} : buildCheckoutRecord(session);
     if (session.firebaseOrderId) {
       result = {
         firebaseOrderId: session.firebaseOrderId,
@@ -262,7 +366,7 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
         alreadyCreated: true,
         processing: false,
       };
-      if (input.paymentStatus === "captured") {
+      if (effectivePaymentStatus === "captured") {
         const paymentReceived = Number(input.amountPaise) / 100;
         const codDepositAmount =
           session.paymentMode === "cod_deposit" ? session.payableAmount : 0;
@@ -283,7 +387,7 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
           db.collection("orders").doc(session.firebaseOrderId),
           {
             paymentStatus: "captured",
-            razorpayPaymentId: input.paymentId,
+            razorpayPaymentId: effectivePaymentId,
             paymentReceived,
             codDepositAmount,
             cod_balance: codBalance,
@@ -299,9 +403,38 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
         tx.set(
           sessionRef,
           {
-            paymentId: input.paymentId,
+            paymentId: effectivePaymentId,
             paymentStatus: "captured",
             status: "order_created",
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true },
+        );
+        tx.set(
+          checkoutRecordRef,
+          {
+            ...checkoutRecordDefaults,
+            paymentId: effectivePaymentId,
+            paymentStatus: "captured",
+            checkoutStatus: "order_created",
+            firebaseOrderId: session.firebaseOrderId,
+            orderNumber: session.orderNumber,
+            orderCreated: true,
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true },
+        );
+      } else {
+        tx.set(
+          checkoutRecordRef,
+          {
+            ...checkoutRecordDefaults,
+            paymentId: effectivePaymentId,
+            paymentStatus: effectivePaymentStatus,
+            checkoutStatus: "order_created",
+            firebaseOrderId: session.firebaseOrderId,
+            orderNumber: session.orderNumber,
+            orderCreated: true,
             updatedAt: new Date().toISOString(),
           },
           { merge: true },
@@ -425,8 +558,8 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
       currentTotalPrice: { amount: String(session.totalWithCod), currencyCode: "INR" },
       paymentMode: session.paymentMode,
       razorpayOrderId: input.razorpayOrderId,
-      razorpayPaymentId: input.paymentId,
-      financialStatus: session.paymentMode === "cod_deposit" ? (input.paymentStatus === "captured" ? "DEPOSIT_PAID" : "PENDING") : (input.paymentStatus === "captured" ? "PAID" : "PENDING"),
+      razorpayPaymentId: effectivePaymentId,
+      financialStatus: session.paymentMode === "cod_deposit" ? (effectivePaymentStatus === "captured" ? "DEPOSIT_PAID" : "PENDING") : (effectivePaymentStatus === "captured" ? "PAID" : "PENDING"),
       fulfillmentStatus: "UNFULFILLED",
       processedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
@@ -444,11 +577,25 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
     tx.set(
       sessionRef,
       {
-        paymentId: input.paymentId,
-        paymentStatus: input.paymentStatus,
+        paymentId: effectivePaymentId,
+        paymentStatus: effectivePaymentStatus,
         status: "order_created",
         firebaseOrderId: orderRef.id,
         orderNumber,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true },
+    );
+    tx.set(
+      checkoutRecordRef,
+      {
+        ...checkoutRecordDefaults,
+        paymentId: effectivePaymentId,
+        paymentStatus: effectivePaymentStatus,
+        checkoutStatus: "order_created",
+        firebaseOrderId: orderRef.id,
+        orderNumber,
+        orderCreated: true,
         updatedAt: new Date().toISOString(),
       },
       { merge: true },
@@ -519,7 +666,7 @@ export async function ensureFirebaseOrderForPayment(input: { razorpayOrderId: st
   // Only captured money may create an AWB. Authorized payments can already
   // have a pending Firestore order; their capture webhook/status retry will
   // enter this block later and allocate the shipment exactly once.
-  if (result.firebaseOrderId && input.paymentStatus === "captured") {
+  if (result.firebaseOrderId && effectivePaymentStatus === "captured") {
     try {
       result.shipment = await createAutomaticShipmentForOrder(result.firebaseOrderId, {
         orderNumber: result.orderNumber,

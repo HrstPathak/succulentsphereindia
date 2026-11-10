@@ -57,14 +57,37 @@ export async function POST(req: Request) {
         paymentStatus,
         amountPaise: paymentAmount,
         currency: paymentCurrency,
+        method: String(payment?.method || ""),
       });
 
       return NextResponse.json({ received: true, processed: true, awaitingCapture: true });
     }
 
+    if (eventName === "payment.failed") {
+      await recordPaymentAgainstSession({
+        razorpayOrderId: orderId,
+        paymentId,
+        paymentStatus,
+        amountPaise: paymentAmount,
+        currency: paymentCurrency,
+        method: String(payment?.method || ""),
+        failureReason: String(payment?.error_description || payment?.error_reason || "Payment failed at the gateway."),
+      });
+      return NextResponse.json({ received: true, processed: true, paymentStatus: "failed" });
+    }
+
     if (eventName !== "payment.captured") {
       return NextResponse.json({ received: true, ignored: true, reason: "event_not_handled" });
     }
+
+    await recordPaymentAgainstSession({
+      razorpayOrderId: orderId,
+      paymentId,
+      paymentStatus,
+      amountPaise: paymentAmount,
+      currency: paymentCurrency,
+      method: String(payment?.method || ""),
+    });
 
     const result = await ensureFirebaseOrderForPayment({
       razorpayOrderId: orderId,

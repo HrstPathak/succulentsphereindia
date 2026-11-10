@@ -9,6 +9,7 @@ import {
   ChevronRight,
   CircleDollarSign,
   ClipboardList,
+  CreditCard,
   ExternalLink,
   Mail,
   Package,
@@ -27,6 +28,7 @@ import ImageOrderEditor from "./ImageOrderEditor";
 import CollectionPicker from "./CollectionPicker";
 import AdminBlogSection from "./AdminBlogSection";
 import AdminAutomationSection from "./AdminAutomationSection";
+import AdminCheckoutRecords from "./AdminCheckoutRecords";
 import ErrorBoundary from "./ErrorBoundary";
 import dynamic from "next/dynamic";
 const AdminOrderDetailModal = dynamic(() => import("./AdminOrderDetailModal"), { ssr: false });
@@ -89,7 +91,7 @@ type StatsRecord = { summary: Summary; computedAt: string };
 type RowTab = "products" | "orders" | "customers" | "reviews";
 const ROW_TABS: RowTab[] = ["products", "orders", "customers", "reviews"];
 type Tab =
-  "overview" | "products" | "orders" | "customers" | "reviews" | "mail" | "blog" | "automation";
+  "overview" | "products" | "orders" | "checkouts" | "customers" | "reviews" | "mail" | "blog" | "automation";
 type ProductPriceSort = "default" | "price_asc" | "price_desc";
 type ProductDetail = Product & {
   description: string;
@@ -462,6 +464,7 @@ export default function AdminDashboard({
     ["overview", "Command Center", Sparkles],
     ["products", "Products", Package],
     ["orders", "Orders", ClipboardList],
+    ["checkouts", "Checkout records", CreditCard],
     ["customers", "Customers", Users],
     ["reviews", "Reviews", Star],
     ["mail", "Mail", Mail],
@@ -555,7 +558,7 @@ export default function AdminDashboard({
                 {tabs.find(([id]) => id === tab)?.[1]}
               </h2>
             </div>
-            {tab !== "overview" && tab !== "mail" && (
+            {tab !== "overview" && tab !== "mail" && tab !== "checkouts" && (
               <label className="relative ml-auto block w-full max-w-md">
                 <Search
                   className="absolute left-3 top-3 text-[#698170]"
@@ -569,7 +572,7 @@ export default function AdminDashboard({
                 />
               </label>
             )}
-            <button
+            {tab !== "checkouts" && <button
               onClick={() => {
                 // Refreshing only re-reads what this tab actually needs.
                 void loadSummary();
@@ -579,7 +582,7 @@ export default function AdminDashboard({
               className="rounded-2xl border border-[#d5dfd5] bg-white px-4 py-2.5 text-sm font-bold shadow-[0_5px_0_#d4ddd4] active:translate-y-1 active:shadow-none"
             >
               Refresh
-            </button>
+            </button>}
           </header>
           {notice && (
             <div className="mb-4 flex items-center justify-between rounded-2xl border border-[#d5e4d7] bg-[#eff9ef] px-4 py-3 text-sm font-medium text-[#2c633c]">
@@ -691,6 +694,7 @@ export default function AdminDashboard({
           onOpenOrder={(id) => setOpenOrderId(id)}
         />
       )} {" "}
+          {tab === "checkouts" && <AdminCheckoutRecords />}
       {createProductOpen && (
         <CreateProductModal
           availableTags={productTagOptions}

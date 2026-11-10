@@ -11,6 +11,7 @@ const ADMIN_TABS = [
   "overview",
   "products",
   "orders",
+  "checkouts",
   "customers",
   "reviews",
   "mail",

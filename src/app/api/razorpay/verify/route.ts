@@ -5,6 +5,7 @@ import {
   getCheckoutSessionByOrderId,
   isValidRazorpaySignature,
   noteCheckoutSessionError,
+  recordPaymentAgainstSession,
 } from "@/lib/razorpayCheckout";
 import { sendOrderConfirmationEmail } from "@/lib/order-email";
 
@@ -93,14 +94,31 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await ensureFirebaseOrderForPayment({
+    // Persist the verified gateway state before order creation so the audit
+    // record remains accurate even if stock/wallet/order processing needs retry.
+    await recordPaymentAgainstSession({
       razorpayOrderId: orderId,
       paymentId,
       paymentStatus,
       amountPaise: Number(razorpayPayment?.amount || 0),
       currency: String(razorpayPayment?.currency || "INR"),
-      waitForLockMs: 15000,
+      method: String(razorpayPayment?.method || ""),
     });
+
+    let result: Awaited<ReturnType<typeof ensureFirebaseOrderForPayment>>;
+    try {
+      result = await ensureFirebaseOrderForPayment({
+        razorpayOrderId: orderId,
+        paymentId,
+        paymentStatus,
+        amountPaise: Number(razorpayPayment?.amount || 0),
+        currency: String(razorpayPayment?.currency || "INR"),
+        waitForLockMs: 15000,
+      });
+    } catch (error) {
+      await noteCheckoutSessionError(orderId, (error as Error).message || "Order creation failed after payment verification.").catch(() => undefined);
+      throw error;
+    }
     // ensureFirebaseOrderForPayment now attempts to send the email itself and sets `emailSent`.
     if (result.email && !(result as any).emailSent) await sendOrderConfirmationEmail(result.email);
 
