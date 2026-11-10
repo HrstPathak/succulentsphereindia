@@ -667,6 +667,7 @@ export default function AdminDashboard({
               <AdminAutomationSection query={query} />
             </ErrorBoundary>
           )}
+          {tab === "checkouts" && <AdminCheckoutRecords />}
         </section>
       </div>
       {productId && (
@@ -694,7 +695,6 @@ export default function AdminDashboard({
           onOpenOrder={(id) => setOpenOrderId(id)}
         />
       )} {" "}
-          {tab === "checkouts" && <AdminCheckoutRecords />}
       {createProductOpen && (
         <CreateProductModal
           availableTags={productTagOptions}
